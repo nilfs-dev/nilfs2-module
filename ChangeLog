@@ -1,0 +1,91 @@
+nilfs-2.0.0  Mon Feb 18, 2008 JST
+
+	* Removed fastcall specifiers to fix a compile-time error on kernel
+	  2.6.25-rc2.
+	* Reflected the changes of ioctl() interface on the previous release
+	  to ioctl32().  This fixes errors of nilfs-utils arising on 32-bit
+	  Linux environments with a 64-bit kernel.
+	
+nilfs-2.0.0-testing-9  Wed Feb 13, 2008 JST
+
+	* Supported kernel 2.6.25-rc1 experimentally.
+	* Fixed compiler errors that occur where CONFIG_LBD is not defined.
+	* Fixed an elementary bug that causes a NULL-pointer dereference
+	  exception when a snapshot mount was tried with an invalid option.
+	* Fixed a hang problem arising under a near disk full condition.
+	  This change simplifies error handlings of such condition and the
+	  sematics of reserved disk space;  now it works as a margin just for
+	  the cleaner.  Additionally, a lower limit was adopted for the number
+	  of reserved segments to improve the stability on small partitions.
+	* Fixed a few bugs of write routines that cause hang problems.
+	  Thanks to Gergely Gábor for his helpful reports and cooperation.
+
+nilfs-2.0.0-testing-8  Thu Dec 27, 2007 JST
+
+	* Fixed a timing problem of a shrinker that causes a critical list
+	  corrption of B-tree node pages.
+	* Fixed a dead lock problem of the segment constructor that may occur
+	  when issuing direct I/O reads.
+	* Fixed memory allocation failures on ioctl.c due to fragmentation.
+	* Fixed a few minor bugs around the B-tree node buffers.
+	* Revised the segment buffer for simplicity and for maintainability.
+	* Separated some declarations for the list of full segments from the
+	  segment constructor (seglist.h).  This nasty file would be removed
+	  in a future release.
+	
+nilfs-2.0.0-testing-7  Thu Nov 29, 2007 JST
+
+	* Supported kernel 2.6.24-rc3 experimentally.
+	* Fixed failures in case where the block size is smaller than
+	  the page size.
+	* Fixed a compatiblity issue that causes ioctl errors where the
+	  kernel and userland programs have different integer length.
+	* Fixed a leak bug of btree node buffers at nilfs_btree_mark().
+	* Fixed possible failures due to missing exclusion controls of
+	  nilfs_bmap_propagate() and nilfs_bmap_assign().
+	* Fixed a possible race problem in nilfs_prepare_write().
+	* Revised source code around btree node buffers, pages, and shadow
+	  DAT in order to get rid of timing bugs and leak bugs.
+
+nilfs-2.0.0-testing-6  Mon Oct 22, 2007 JST
+
+	* Fixed a bug that may cause corruption of meta data files or
+	  regular files. This fix would resolve serveral serious problems
+	  and improves the stability especially for small memory machines.
+	* Fixed a minor bug that led to a failure when deleting checkpoint
+	  directly through ioctl.
+
+nilfs-2.0.0-testing-5  Mon Oct 15, 2007 JST
+
+	* Fixed a deadlock problem and block address translation errors
+	  caused by a missing initialization of the btree node cache on
+	  shadow DAT.
+
+nilfs-2.0.0-testing-4  Thu Oct 11, 2007 JST
+
+	* Supported kernel 2.6.23
+	* Fixed a security hole arround nilfs_find_entry()
+	* Inserted some printks to analyze problems arround shadow dat pages
+	  for garbage collection.
+
+nilfs-2.0.0-testing-3  Tue Jul 24, 2007 JST
+
+	* Supported kernel 2.6.22
+	* New ioctl ``nilfs_sync()'' is introduced
+	* Fix BUGON issue at nilfs_btnode_prepare_change_key()
+	* Fix BUGON issue at __nilfs_btnode_get_page()
+	* Fix bug around nilfs_delete_inode()
+	* Fix deadlock under memory shortage condition
+	* Supported kernel 2.6.23-rc1 experimentally
+
+nilfs-2.0.0-testing-2  Tue Jun 20, 2007 JST
+
+	* Applied readahead to meta-data files to improve performance.
+	
+nilfs-2.0.0-testing  Wed Jun 13, 2007 JST
+
+	* The first release.
+	* Implemented the Garbage Collector.
+	* Rewrote almost all of the source code.
+--
+ChangeLog,v 1.44 2008-02-18 05:34:22 ryusuke Exp

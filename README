@@ -1,0 +1,189 @@
+NILFS - A New Implementation of a Log-structured File System for Linux
+========================================================================
+
+What is NILFS?
+--------------
+
+NILFS is a new implementation of a log-structured file system for 
+Linux 2.6 operating system.  Conventional features of a log-structured
+file systems (LFS) are high write performance and fast recovery
+time.  In addition, LFS prevents data write operations from overwriting
+the disk blocks, thereby minimizing the damage to file data and system
+consistency on hardware failure.  Furthermore, LFS writes data and
+meta-data in the correct order which helps ensuring consistency in the
+entire file system.  LFS can instantaneously create file system
+snapshots and check the file system speedy.  We implemented ``NILFS''
+using modern technology: For example, the file and inode blocks are
+managed by a B-tree structure, internal data are processed in 64 bit
+wide word size.  The B-tree structure enables ``NILFS'' to create and
+store huge files.  
+
+NILFS will be freely-distributable Open Source software, will be
+released under the GNU GPL.
+
+What is NILFS version 2?
+------------------------
+
+NILFS version 2 is a new implementation of NILFS for Linux 2.6
+operating system.  NILFS version 2 is equipped with the Garbage Collector
+that can keep numerous snapshots of NILFS filesystem.  You can
+preserve some consistent states (checkpoints) of NILFS filesystem as
+snapshots ``after'' the states are established.  For example, when you
+have removed some files accidentally, you can get the snapshot that
+represent the past state which holds the vanished files.  Checkpoints
+are collected by the garbage collector unless they are marked
+as ``snapshot''.
+
+Prerequisites
+-------------
+
+Make sure you have all the following installed:
+
+- Linux 2.6.11~2.6.24
+  The kernel should be used on the build machine, and it should be
+  compiled from the source.  The source tree which was used to build 
+  the kernel is also required.
+- GCC
+- GNU Make
+- GNU Binutils
+- Development package of uuid library (e.g., e2fsprogs-devel or
+  uuid-dev)
+- the proc kernel module
+- newer umount utility
+
+This program was tested on some i386-architecture machines (e.g.,
+Pentium-3 or Pentium-4 with Hyper Threading Technology), x86_64 and
+ppc64 architecture machines. It may cause problems on other
+architectures.
+
+Installation
+------------
+
+1. Get the source package of NILFS2 and NILFS2 utilities, then extract
+   the tar ball files
+
+2. Compile and install NILFS2 
+
+  Kernel module
+   # cd fs
+   # make
+   # make install
+   (you should run "make uninstall" if you have already installed)
+
+   The file "/lib/modules/`uname -r`/kernel/nilfs/nilfs2.ko" may be
+   created.
+
+  Userland tools
+   # ./configure
+   # make
+   # make install
+
+3. Format a disk partition for a new NILFS2 file system, and mount it
+
+   e.g.
+   # mkfs -t nilfs2 /dev/sda2
+   # mkdir /nilfs
+   # mount -t nilfs2 /dev/sda2 /nilfs
+
+4. NILFS2 cleaner configuration
+
+   You can tune the behavior of the garbage collector.
+   See /etc/nilfs_cleanerd.conf 
+
+5. How to make a snapshot and mount your snapshot
+   Two important terminology, ``checkpoint'' and ``snapshot''.
+
+   A checkpoint represents a consistent state of NILFS filesystem,
+   many checkpoints are created automatically and continuously.
+   Each checkpoint has a unique checkpoint number.  Checkpoints may
+   be collected by the garbage collector.  There is a cleaner parameter
+   ``protection_period'', means a checkpoint has never collected within
+   the period (in second) from its creation time.  So, if you want to
+   recover some files that made yesterday, you specify larger (> 86400) 
+   protection_period to /etc/nilfs_cleanerd.conf.
+
+   A snapshot is a checkpoint that is marked as a snapshot.
+   Some userland commands perform the marking operation.
+   Snapshots are protected from garbage collection, they remains
+   forever. Snapshots are mountable as read-only filesystem.
+
+   mkcp     makes a checkpoint immediately.
+   mkcp -s  makes a checkpoint immediately and mark it as a snapshot.
+   lscp     shows checkpoints.
+   chcp     makes existing checkpoints to snapshots and vise versa.
+
+   # mount -t nilfs2 /dev/sda2 /nilfs
+   # --- some operation ---
+   # lscp
+                 CNO        DATE     TIME  MODE  NBLKINC       ICNT
+                   1  2007-06-13 11:38:27  cp         11          3
+                   2  2007-06-13 11:39:16  cp     102769      22017
+                   3  2007-06-13 11:39:29  cp          9      22017
+                   4  2007-06-13 11:39:48  cp       7543      22315
+   # chcp ss 2
+   # lscp
+                 CNO        DATE     TIME  MODE  NBLKINC       ICNT
+                   1  2007-06-13 11:38:27  cp         11          3
+                   2  2007-06-13 11:39:16  ss     102769      22017
+                   3  2007-06-13 11:39:29  cp          9      22017
+                   4  2007-06-13 11:39:48  cp       7543      22315
+   # mount -t nilfs2 -r -o cp=3 /dev/sda2 /nilfs-cp
+   # df -t nilfs2
+   Filesystem           1K-blocks      Used Available Use% Mounted on
+   /dev/sda2              4374524    319484   3842048   8% /nilfs
+   /dev/sda2              4374524    319484   3842048   8% /nilfs-cp
+   # mount -t nilfs2
+   /dev/sda2 on /nilfs type nilfs2 (rw)
+   /dev/sda2 on /nilfs-cp type nilfs2 (ro,cp=2)
+
+6. Snapshot operations
+
+lscp - list checkpoints
+lscp [-rsh] [device]
+    -r  list in reverse order
+    -s  list snapshots only
+    -h  display help message and exit
+    ----
+    List checkpoints and snapshots of specified NILFS v2 file system.
+
+   # lscp
+                 CNO        DATE     TIME  MODE  NBLKINC       ICNT
+                   1  2007-06-13 11:38:27  cp         11          3
+                   2  2007-06-13 11:39:16  ss     102769      22017
+                   3  2007-06-13 11:39:29  cp          9      22017
+                   4  2007-06-13 11:39:48  cp       7543      22315
+		        checkpoint/snapshot^       ^number of blocks
+  checkpoint number^  ^creation time              number of inodes^     
+
+mkcp - make a checkpoint
+mkcp [-sh] [device]
+    -s  create a snapshot
+    -h  display help message and exit
+    ----
+    Flush in-core buffer data to disk, then make a checkpoint
+    that holds current state of the file system.  You can make a snapshot
+    with -s option.
+
+chcp - change checkpoint mode
+chcp [-h] ss/cp [device] checkpoint_number...
+     -h  display help message and exit
+     ss  make snapshot
+     cp  revert snapshot to checkpoint
+    ----
+    Change checkpoint mode, checkpoints to snapshots and vise versa.
+    Multiple checkpoint numbers are accepted.
+
+rmcp - remove checkpoints
+rmcp [-fih] [device] checkpoint_number...
+    -f  force 
+    -i  interactive
+    ----
+    Remove checkpoints forever, never be back.
+
+Good luck!
+
+-- The NILFS Development Team, NTT Laboratories
+
+Copyright (C) 2007 Nippon Telegraph and Telephone Corporation.
+
+README,v 1.16 2008-02-06 04:17:32 ryusuke Exp
