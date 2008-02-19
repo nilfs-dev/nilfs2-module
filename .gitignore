@@ -1,0 +1,38 @@
+#
+# NOTE! Don't add files that are generated in specific
+# subdirectories here. Add them in the ".gitignore" file
+# in that subdirectory instead.
+#
+# Normal rules
+#
+.*
+*.log
+*~
+*.o
+*.a
+*.s
+*.ko
+*.so
+*.so.dbg
+*.mod.c
+*.lst
+*.orig
+*.rej
+
+tags
+TAGS
+!.gitignore
+Module.symvers
+
+# CVS
+CVS
+
+# stgit generated dirs
+patches-*
+
+# quilt's files
+patches
+series
+
+# cscope files
+cscope.*
