@@ -38,8 +38,10 @@
 /* disk inode specific functions */
 extern int nilfs_inode_alloc(struct inode *, ino_t *, struct buffer_head **);
 extern int nilfs_inode_free(struct inode *, ino_t, struct buffer_head **);
-extern struct nilfs_inode *nilfs_ifile_map_inode(struct inode *, ino_t, struct buffer_head *);
-extern void nilfs_ifile_unmap_inode(struct inode *, ino_t, struct buffer_head *);
+extern struct nilfs_inode *nilfs_ifile_map_inode(struct inode *, ino_t, 
+						 struct buffer_head *);
+extern void nilfs_ifile_unmap_inode(struct inode *, ino_t,
+				    struct buffer_head *);
 
 int nilfs_ifile_create_inode(struct inode *, ino_t *, struct buffer_head **);
 int nilfs_ifile_delete_inode(struct inode *, ino_t);

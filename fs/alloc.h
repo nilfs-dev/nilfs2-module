@@ -1,5 +1,5 @@
 /*
- * alloc.h - NILFS persistent object (dat entry/disk inode) allocator/deallocator
+ * alloc.h - persistent object (dat entry/disk inode) allocator/deallocator
  *
  * Copyright (C) 2006, 2007 Nippon Telegraph and Telephone Corporation.
  *
@@ -52,7 +52,8 @@ inline static int nilfs_persistent_entries_per_group(struct inode *inode)
 
 inline static int nilfs_persistent_group_descs_per_block(struct inode *inode)
 {
-	return (1UL << inode->i_blkbits) / sizeof(struct nilfs_persistent_group_desc);
+	return (1UL << inode->i_blkbits) /
+		sizeof(struct nilfs_persistent_group_desc);
 }
 
 inline static int
@@ -107,46 +108,54 @@ struct nilfs_persistent_req {
 #define pr_nslot nr.pr_nslot
 
 inline static void
-nilfs_persistent_put_group_bitmap_block(const struct inode *inode, struct buffer_head *bitmap_bh)
+nilfs_persistent_put_group_bitmap_block(const struct inode *inode,
+					struct buffer_head *bitmap_bh)
 {
 	brelse(bitmap_bh);
 }
 
 
 inline static void
-nilfs_persistent_put_entry_block(const struct inode *inode, struct buffer_head *bh)
+nilfs_persistent_put_entry_block(const struct inode *inode,
+				 struct buffer_head *bh)
 {
 	brelse(bh);
 }
 
-extern int
-nilfs_persistent_prepare_alloc_entry(struct inode *, struct nilfs_persistent_req *,
-				     nilfs_bgno_t *, int *);
-extern void
-nilfs_persistent_abort_alloc_entry(struct inode *, struct nilfs_persistent_req *,
-				   nilfs_bgno_t, int);
-extern void
-nilfs_persistent_commit_alloc_entry(struct inode *, struct nilfs_persistent_req *);
-extern int
-nilfs_persistent_prepare_free_entry(struct inode *, struct nilfs_persistent_req *, nilfs_bgno_t);
-extern void
-nilfs_persistent_abort_free_entry(struct inode *, struct nilfs_persistent_req *);
+extern int nilfs_persistent_prepare_alloc_entry(struct inode *,
+						struct nilfs_persistent_req *,
+						nilfs_bgno_t *, int *);
+extern void nilfs_persistent_abort_alloc_entry(struct inode *,
+					       struct nilfs_persistent_req *,
+					       nilfs_bgno_t, int);
+extern void nilfs_persistent_commit_alloc_entry(struct inode *,
+						struct nilfs_persistent_req *);
+extern int nilfs_persistent_prepare_free_entry(struct inode *,
+					       struct nilfs_persistent_req *,
+					       nilfs_bgno_t);
+extern void nilfs_persistent_abort_free_entry(struct inode *,
+					      struct nilfs_persistent_req *);
 extern char *
-nilfs_persistent_get_group_bitmap_buffer(struct inode *, const struct buffer_head *);
+nilfs_persistent_get_group_bitmap_buffer(struct inode *,
+					 const struct buffer_head *);
 
 extern struct nilfs_persistent_group_desc *
-nilfs_persistent_get_group_desc(struct inode *, nilfs_bgno_t, const struct buffer_head *);
+nilfs_persistent_get_group_desc(struct inode *, nilfs_bgno_t,
+				const struct buffer_head *);
 extern void
-nilfs_persistent_put_group_bitmap_buffer(struct inode *, const struct buffer_head *);
+nilfs_persistent_put_group_bitmap_buffer(struct inode *,
+					 const struct buffer_head *);
 
 inline static void
-nilfs_persistent_put_group_desc(struct inode *inode, const struct buffer_head *desc_bh)
+nilfs_persistent_put_group_desc(struct inode *inode,
+				const struct buffer_head *desc_bh)
 {
 	kunmap(desc_bh->b_page);
 }
 
 inline static void
-nilfs_persistent_put_group_desc_block(const struct inode *inode, struct buffer_head *desc_bh)
+nilfs_persistent_put_group_desc_block(const struct inode *inode,
+				      struct buffer_head *desc_bh)
 {
 	brelse(desc_bh);
 }
