@@ -944,7 +944,3 @@ void nilfs_btnode_cache_clear(struct nilfs_btnode_cache *btnc)
 	nilfs_pages_enable_shrinker();
 	goto repeat;
 }
-
-/* Local Variables:		*/
-/* eval: (c-set-style "linux")	*/
-/* End:				*/

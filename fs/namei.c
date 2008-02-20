@@ -434,7 +434,3 @@ struct inode_operations nilfs_special_inode_operations = {
 	.setattr	= nilfs_setattr,
 	.permission     = nilfs_permission,
 };
-
-/* Local Variables:		*/
-/* eval: (c-set-style "linux")	*/
-/* End:				*/

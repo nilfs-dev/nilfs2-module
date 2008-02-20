@@ -162,7 +162,3 @@ nilfs_persistent_put_group_desc_block(const struct inode *inode,
 
 
 #endif	/* _NILFS_ALLOC_H */
-
-/* Local Variables:		*/
-/* eval: (c-set-style "linux")	*/
-/* End:				*/

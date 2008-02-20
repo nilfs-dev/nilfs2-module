@@ -367,7 +367,3 @@ int nilfs_ifile_get_inode_block(struct inode *ifile, ino_t ino,
 	}
 	return err;
 }
-
-/* Local Variables:		*/
-/* eval: (c-set-style "linux")	*/
-/* End:				*/

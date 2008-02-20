@@ -1181,7 +1181,3 @@ ssize_t nilfs_dat_get_vinfo(struct inode *dat,
 
 	return nvi;
 }
-
-/* Local Variables:		*/
-/* eval: (c-set-style "linux")	*/
-/* End:				*/

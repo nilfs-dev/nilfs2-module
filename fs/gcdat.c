@@ -233,7 +233,3 @@ void nilfs_clear_gcdat_inode(struct the_nilfs *nilfs)
 	NILFS_CHECK_PAGE_CACHE(gcdat->i_mapping, -1);
 	nilfs_btnode_cache_clear(&gii->i_btnode_cache);
 }
-
-/* Local Variables:		*/
-/* eval: (c-set-style "linux")	*/
-/* End:				*/

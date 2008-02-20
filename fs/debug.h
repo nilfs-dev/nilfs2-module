@@ -219,7 +219,3 @@ extern void nilfs_print_bmap_direct_pointers(struct inode *,
 #define nilfs_release_inode_page  NULL
 
 #endif /* _NILFS_DEBUG_H */
-
-/* Local Variables:		*/
-/* eval: (c-set-style "linux")	*/
-/* End:				*/

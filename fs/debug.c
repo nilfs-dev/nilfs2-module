@@ -854,8 +854,3 @@ void nilfs_print_bmap_direct_pointers(struct inode *inode,
 		printk(KERN_DEBUG "  i_bmap[%d]=%llu\n",
 		       i, (unsigned long long)le64_to_cpu(*direct_ptr));
 }
-
-
-/* Local Variables:		*/
-/* eval: (c-set-style "linux")	*/
-/* End:				*/

@@ -829,7 +829,3 @@ int nilfs_load_inode_block_nolock(struct nilfs_sb_info *sbi,
 	get_bh(*pbh);
 	return 0;
 }
-
-/* Local Variables:		*/
-/* eval: (c-set-style "linux")	*/
-/* End:				*/

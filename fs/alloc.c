@@ -292,7 +292,3 @@ void nilfs_persistent_abort_free_entry(struct inode *inode,
 	req->pr_bitmap_bh = NULL;
 	req->pr_desc_bh = NULL;
 }
-
-/* Local Variables:		*/
-/* eval: (c-set-style "linux")	*/
-/* End:				*/

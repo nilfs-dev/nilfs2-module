@@ -1053,8 +1053,3 @@ int nilfs_search_super_root(struct the_nilfs *nilfs, struct nilfs_sb_info *sbi,
 	nilfs_dispose_segment_list(&segments);
 	return ((ret < 0) ? ret : nilfs_warn_segment_error(ret));
 }
-
-
-/* Local Variables:		*/
-/* eval: (c-set-style "linux")	*/
-/* End:				*/

@@ -541,7 +541,3 @@ int nilfs_segbuf_wait(struct nilfs_segment_buffer *segbuf,
 	}
 	return err;
 }
-
-/* Local Variables:		*/
-/* eval: (c-set-style "linux")	*/
-/* End:				*/

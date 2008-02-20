@@ -70,7 +70,3 @@ ssize_t nilfs_sufile_get_suinfo(struct inode *, nilfs_segnum_t,
 
 
 #endif	/* _NILFS_SUFILE_H */
-
-/* Local Variables:		*/
-/* eval: (c-set-style "linux")	*/
-/* End:				*/

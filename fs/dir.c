@@ -767,7 +767,3 @@ struct file_operations nilfs_dir_operations = {
 	.fsync		= nilfs_sync_file,
 
 };
-
-/* Local Variables:		*/
-/* eval: (c-set-style "linux")	*/
-/* End:				*/

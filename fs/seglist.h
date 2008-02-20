@@ -87,7 +87,3 @@ static inline void nilfs_free_segment_entry(struct nilfs_segment_entry *ent)
 }
 
 #endif /* _NILFS_SEGLIST_H */
-
-/* Local Variables:		*/
-/* eval: (c-set-style "linux")	*/
-/* End:				*/

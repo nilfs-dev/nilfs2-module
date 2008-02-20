@@ -1118,7 +1118,3 @@ int nilfs_cpfile_get_snapshots(struct inode *cpfile,
 	up_write(&NILFS_MDT(cpfile)->mi_sem);
 	return ret;
 }
-
-/* Local Variables:		*/
-/* eval: (c-set-style "linux")	*/
-/* End:				*/

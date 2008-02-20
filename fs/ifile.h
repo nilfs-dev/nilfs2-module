@@ -52,7 +52,3 @@ int nilfs_ifile_get_inode_block(struct inode *, ino_t, struct buffer_head **);
 	(1UL << (BITS_PER_LONG - ((blkbits) + 3 /* log2(8) */)))
 
 #endif	/* _NILFS_IFILE_H */
-
-/* Local Variables:		*/
-/* eval: (c-set-style "linux")	*/
-/* End:				*/

@@ -3582,7 +3582,3 @@ void nilfs_detach_segment_constructor(struct nilfs_sb_info *sbi)
 	nilfs_dispose_list(sbi, &garbage_list, 1);
 	nilfs_detach_writer(nilfs, sbi);
 }
-
-/* Local Variables:		*/
-/* eval: (c-set-style "linux")	*/
-/* End:				*/

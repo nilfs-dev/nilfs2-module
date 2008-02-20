@@ -67,7 +67,3 @@ __nilfs_find_get_pages_tag(struct address_space *mapping, pgoff_t *index,
 	return ret;
 }
 #endif
-
-/* Local Variables:		*/
-/* eval: (c-set-style "linux")	*/
-/* End:				*/

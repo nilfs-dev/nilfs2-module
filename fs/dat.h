@@ -95,7 +95,3 @@ int nilfs_dat_move(struct inode *, nilfs_sector_t, sector_t);
 ssize_t nilfs_dat_get_vinfo(struct inode *, struct nilfs_vinfo *, size_t);
 
 #endif	/* _NILFS_DAT_H */
-
-/* Local Variables:		*/
-/* eval: (c-set-style "linux")	*/
-/* End:				*/

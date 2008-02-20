@@ -573,7 +573,3 @@ static inline void list_replace_init(struct list_head *old,
 #endif
 
 #endif /* NILFS_KERN_FEATURE_H */
-
-/* Local Variables:		*/
-/* eval: (c-set-style "linux")	*/
-/* End:				*/

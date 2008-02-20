@@ -150,7 +150,3 @@ nilfs_btnode_clear_dirty_pages(struct nilfs_btnode_cache *btnc)
 }
 
 #endif	/* _NILFS_BTNODE_H */
-
-/* Local Variables:		*/
-/* eval: (c-set-style "linux")	*/
-/* End:				*/

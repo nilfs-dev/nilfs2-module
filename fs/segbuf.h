@@ -231,7 +231,3 @@ int nilfs_segbuf_wait(struct nilfs_segment_buffer *,
 		      struct nilfs_write_info *);
 
 #endif /* _NILFS_SEGBUF_H */
-
-/* Local Variables:		*/
-/* eval: (c-set-style "linux")	*/
-/* End:				*/

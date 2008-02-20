@@ -274,7 +274,3 @@ inline static void nilfs_bmap_clear_dirty(struct nilfs_bmap *bmap)
 #define nilfs_bmap_large_delete_and_convert	NULL
 
 #endif	/* _NILFS_BMAP_H */
-
-/* Local Variables:		*/
-/* eval: (c-set-style "linux")	*/
-/* End:				*/

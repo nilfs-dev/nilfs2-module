@@ -184,7 +184,3 @@ nilfs_mdt_write_inode_direct(struct inode *inode, struct buffer_head *bh,
 }
 
 #endif /* _NILFS_MDT_H */
-
-/* Local Variables:		*/
-/* eval: (c-set-style "linux")	*/
-/* End:				*/

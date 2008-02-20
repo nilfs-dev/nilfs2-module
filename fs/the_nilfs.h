@@ -291,7 +291,3 @@ static inline nilfs_cno_t nilfs_last_cno(struct the_nilfs *nilfs)
 }
 
 #endif /* _THE_NILFS_H */
-
-/* Local Variables:		*/
-/* eval: (c-set-style "linux")	*/
-/* End:				*/

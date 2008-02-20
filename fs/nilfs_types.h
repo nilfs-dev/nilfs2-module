@@ -43,7 +43,3 @@ typedef sector_t nilfs_bgno_t;	/* block group number */
 typedef sector_t nilfs_gdno_t;	/* block group descriptor number */
 
 #endif	/* _NILFS_TYPES_H */
-
-/* Local Variables:		*/
-/* eval: (c-set-style "linux")	*/
-/* End:				*/

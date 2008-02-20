@@ -536,7 +536,3 @@ int nilfs_checkpoint_is_mounted(struct the_nilfs *nilfs, nilfs_cno_t cno,
 	up_read(&nilfs->ns_sem);
 	return ret;
 }
-
-/* Local Variables:		*/
-/* eval: (c-set-style "linux")	*/
-/* End:				*/

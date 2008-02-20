@@ -176,7 +176,3 @@ static inline int nilfs_page_buffers_busy(struct page *page)
 
 
 #endif /* _NILFS_PAGE_H */
-
-/* Local Variables:		*/
-/* eval: (c-set-style "linux")	*/
-/* End:				*/

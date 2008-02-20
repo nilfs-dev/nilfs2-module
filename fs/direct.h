@@ -87,7 +87,3 @@ int nilfs_direct_delete_and_convert(struct nilfs_bmap *, nilfs_bmap_key_t,
 
 
 #endif	/* _NILFS_DIRECT_H */
-
-/* Local Variables:		*/
-/* eval: (c-set-style "linux")	*/
-/* End:				*/

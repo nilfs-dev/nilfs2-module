@@ -917,7 +917,3 @@ void nilfs_bmap_commit_gcdat(struct nilfs_bmap *gcbmap, struct nilfs_bmap *bmap)
 	init_rwsem(&bmap->b_sem);
 	bmap->b_inode = &NILFS_BMAP_I(bmap)->vfs_inode;
 }
-
-/* Local Variables:		*/
-/* eval: (c-set-style "linux")	*/
-/* End:				*/

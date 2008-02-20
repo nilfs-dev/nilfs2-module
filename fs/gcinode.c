@@ -307,7 +307,3 @@ void nilfs_remove_all_gcinode(struct the_nilfs *nilfs)
 	}
 	spin_unlock(&nilfs->ns_gc_inode_lock);
 }
-
-/* Local Variables:		*/
-/* eval: (c-set-style "linux")	*/
-/* End:				*/

@@ -2512,7 +2512,3 @@ void nilfs_btree_init_gc(struct nilfs_bmap *bmap)
 	bmap->b_high = NILFS_BMAP_LARGE_HIGH;
 	bmap->b_ops = &nilfs_btree_ops_gc;
 }
-
-/* Local Variables:		*/
-/* eval: (c-set-style "linux")	*/
-/* End:				*/

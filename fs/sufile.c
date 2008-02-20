@@ -760,7 +760,3 @@ ssize_t nilfs_sufile_get_suinfo(struct inode *sufile, nilfs_segnum_t segnum,
 	up_read(&NILFS_MDT(sufile)->mi_sem);
 	return ret;
 }
-
-/* Local Variables:		*/
-/* eval: (c-set-style "linux")	*/
-/* End:				*/

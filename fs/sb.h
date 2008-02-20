@@ -96,7 +96,3 @@ static inline struct nilfs_sb_info *NILFS_SB(struct super_block *sb)
 
 
 #endif /* _NILFS_SB */
-
-/* Local Variables:		*/
-/* eval: (c-set-style "linux")	*/
-/* End:				*/

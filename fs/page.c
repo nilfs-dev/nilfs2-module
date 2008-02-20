@@ -627,7 +627,3 @@ int __nilfs_clear_page_dirty(struct page *page)
 	return TestClearPageDirty(page);
 }
 #endif
-
-/* Local Variables:		*/
-/* eval: (c-set-style "linux")	*/
-/* End:				*/

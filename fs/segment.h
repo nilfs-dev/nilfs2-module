@@ -314,7 +314,3 @@ static inline int nilfs_test_transaction_flag(unsigned int flag)
 }
 
 #endif /* _NILFS_SEGMENT_H */
-
-/* Local Variables:		*/
-/* eval: (c-set-style "linux")	*/
-/* End:				*/

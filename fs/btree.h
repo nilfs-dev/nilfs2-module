@@ -148,7 +148,3 @@ int nilfs_btree_convert_and_insert(struct nilfs_bmap *,
 void nilfs_btree_init_gc(struct nilfs_bmap *);
 
 #endif	/* _NILFS_BTREE_H */
-
-/* Local Variables:		*/
-/* eval: (c-set-style "linux")	*/
-/* End:				*/

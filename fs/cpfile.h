@@ -54,7 +54,3 @@ ssize_t nilfs_cpfile_get_cpinfo(struct inode *, nilfs_cno_t, int,
 
 
 #endif	/* _NILFS_CPFILE_H */
-
-/* Local Variables:		*/
-/* eval: (c-set-style "linux")	*/
-/* End:				*/

@@ -470,7 +470,3 @@ int nilfs_direct_init(struct nilfs_bmap *bmap,
 
 	return 0;
 }
-
-/* Local Variables:		*/
-/* eval: (c-set-style "linux")	*/
-/* End:				*/

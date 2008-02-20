@@ -401,7 +401,3 @@ extern struct file_system_type nilfs_fs_type;
 
 
 #endif	/* _NILFS_H */
-
-/* Local Variables:		*/
-/* eval: (c-set-style "linux")	*/
-/* End:				*/

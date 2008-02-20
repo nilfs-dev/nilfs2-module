@@ -748,7 +748,3 @@ void nilfs_mdt_clear(struct inode *inode)
 	NILFS_CHECK_PAGE_CACHE(inode->i_mapping, -1);
 	mdt_debug(2, "done (ino=%lu)\n", inode->i_ino);
 }
-
-/* Local Variables:		*/
-/* eval: (c-set-style "linux")	*/
-/* End:				*/
