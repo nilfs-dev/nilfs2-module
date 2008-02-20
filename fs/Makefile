@@ -23,7 +23,7 @@ list-$(CONFIG_NILFS) += nilfs2
 obj-$(CONFIG_NILFS) += nilfs2.o
 
 nilfs2-objs := inode.o file.o dir.o super.o namei.o page.o mdt.o \
-	symlink.o btnode.o bmap.o btree.o direct.o dat.o \
+	btnode.o bmap.o btree.o direct.o dat.o \
 	recovery.o the_nilfs.o segbuf.o segment.o cpfile.o sufile.o \
 	ifile.o alloc.o gcinode.o ioctl.o gcdat.o kern_feature.o
 

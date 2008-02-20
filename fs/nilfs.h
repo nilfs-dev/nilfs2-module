@@ -382,8 +382,6 @@ extern struct address_space_operations nilfs_aops;
 /* namei.c */
 extern struct inode_operations nilfs_dir_inode_operations;
 extern struct inode_operations nilfs_special_inode_operations;
-
-/* symlink.c */
 extern struct inode_operations nilfs_symlink_inode_operations;
 
 /*
