@@ -314,7 +314,7 @@ int nilfs_bmap_terminate(struct nilfs_bmap *bmap)
 	down_write(&bmap->b_sem);
 	if ((ret = nilfs_bmap_do_truncate(bmap, 0)) < 0)
 		goto out;
-	//nilfs_bmap_do_clear(bmap);
+	/* nilfs_bmap_do_clear(bmap); */
 
  out:
 	up_write(&bmap->b_sem);
@@ -544,7 +544,7 @@ nilfs_bmap_ptr_t nilfs_bmap_find_target_in_group(const struct nilfs_bmap *bmap)
 		(bmap->b_inode->i_ino % NILFS_BMAP_GROUP_DIV) *
 		(entries_per_group / NILFS_BMAP_GROUP_DIV);
 	/* XXX: for user-land test */
-	//return 0;
+	/* return 0; */
 }
 
 static int nilfs_bmap_prepare_alloc_v(struct nilfs_bmap *bmap,

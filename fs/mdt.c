@@ -70,7 +70,7 @@ nilfs_mdt_insert_new_block(struct inode *inode, nilfs_blkoff_t block,
 
 	/* Caller exclude read accesses using page lock */
 
-//	set_buffer_new(bh);
+	/* set_buffer_new(bh); */
 	bh->b_blocknr = 0;
 
 	ret = nilfs_bmap_insert(

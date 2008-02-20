@@ -974,7 +974,7 @@ long nilfs_compat_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
 {
 	struct inode *inode;
 
-	//inode = filp->f_path.dentry->d_inode;
+	/* inode = filp->f_path.dentry->d_inode; */
 	inode = filp->f_dentry->d_inode;
 
 	switch (cmd) {

@@ -74,13 +74,10 @@ nilfs_inode_prepare_alloc_ino(struct inode *ifile, struct nilfs_persistent_req *
 	group = req->pr_ino / bsize;
 	target = req->pr_ino % bsize;
 
-	// printk(KERN_DEBUG "nilfs_inode_prepare_alloc_ino a: group %lu target %d\n", group, target);
-
 	ret = nilfs_persistent_prepare_alloc_entry(ifile, req, &group, &target);
 	if (ret < 0)
 		return ret;
 	req->pr_ino = bsize * group + target;
-	// printk(KERN_DEBUG "nilfs_inode_prepare_alloc_ino b: group %lu ino %lu\n", group, bsize * group + target);
 
 	return 0;
 }

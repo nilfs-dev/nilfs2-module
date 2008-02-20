@@ -1937,7 +1937,7 @@ static int nilfs_btree_propagate(const struct nilfs_bmap *bmap,
 
 	if ((ret = nilfs_btree_do_lookup(btree, path, key, NULL,
 					 level + 1)) < 0) {
-		//BUG_ON(ret == -ENOENT);
+		/* BUG_ON(ret == -ENOENT); */
 		if (ret == -ENOENT) {
 			printk("%s: key = %llu, level == %d\n",
 			       __FUNCTION__, (unsigned long long)key, level);

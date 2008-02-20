@@ -32,7 +32,6 @@
 #include <linux/buffer_head.h>
 #include <linux/spinlock.h>
 #include <linux/blkdev.h>
-//#include <linux/crc32c.h>
 #include <linux/crc32.h>
 #include "nilfs_fs.h"
 #include "the_nilfs.h"
@@ -203,7 +202,6 @@ static inline int nilfs_init_acl(struct inode *inode, struct inode *dir)
 /*
  * Macro of checksum calculation
  */
-//#define nilfs_crc32(seed, data, length)  crc32c_le(seed, data, length)
 #define nilfs_crc32(seed, data, length)  crc32_le(seed, data, length)
 
 

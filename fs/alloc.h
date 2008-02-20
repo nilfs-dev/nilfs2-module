@@ -42,8 +42,6 @@ struct nilfs_persistent_group_desc {
 
 #define nilfs_persistent_set_bit_atomic		ext2_set_bit_atomic
 #define nilfs_persistent_clear_bit_atomic	ext2_clear_bit_atomic
-//#define nilfs_persistent_set_bit_atomic(lock, nr, addr)	ext2_set_bit(nr, addr)
-//#define nilfs_persistent_clear_bit_atomic(lock, nr, addr)	ext2_clear_bit(nr, addr)
 #define nilfs_persistent_test_bit		ext2_test_bit
 #define nilfs_persistent_find_next_zero_bit	ext2_find_next_zero_bit
 

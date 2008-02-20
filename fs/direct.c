@@ -58,7 +58,7 @@ static int nilfs_direct_lookup(const struct nilfs_bmap *bmap,
 
 	direct = (struct nilfs_direct *)bmap;
 	if ((key > NILFS_DIRECT_KEY_MAX) ||
-	    (level != 1) ||	// XXX: use macro for level 1
+	    (level != 1) ||	/* XXX: use macro for level 1 */
 	    ((ptr = nilfs_direct_get_ptr(direct, key)) ==
 	     NILFS_BMAP_INVALID_PTR))
 		return -ENOENT;
