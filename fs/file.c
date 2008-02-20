@@ -46,7 +46,7 @@ int nilfs_sync_file(struct file *file, struct dentry *dentry, int datasync)
 			    inode->i_ino);
 		return 0;
 	}
-	inode_debug(3, "calling nilfs_construct_segment (ino=%lu, datasync=%d)\n",
+	inode_debug(3, "constructing segment (ino=%lu, datasync=%d)\n",
 		    inode->i_ino, datasync);
 	if (datasync)
 		err = nilfs_construct_dsync_segment(inode->i_sb, inode);
@@ -58,10 +58,11 @@ int nilfs_sync_file(struct file *file, struct dentry *dentry, int datasync)
 
 static ssize_t
 #if NEED_READV_WRITEV
-nilfs_file_aio_write(struct kiocb *iocb, const char __user *buf, size_t count, loff_t pos)
-#else
-nilfs_file_aio_write(struct kiocb *iocb, const struct iovec *iov, unsigned long nr_segs,
+nilfs_file_aio_write(struct kiocb *iocb, const char __user *buf, size_t count,
 		     loff_t pos)
+#else
+nilfs_file_aio_write(struct kiocb *iocb, const struct iovec *iov,
+		     unsigned long nr_segs, loff_t pos)
 #endif
 {
 	struct file *file = iocb->ki_filp;
@@ -79,7 +80,7 @@ nilfs_file_aio_write(struct kiocb *iocb, const struct iovec *iov, unsigned long 
 	if ((file->f_flags & O_SYNC) || IS_SYNC(inode)) {
 		int err;
 
-		inode_debug(3, "calling nilfs_construct_dsync_segment (ino=%lu)\n",
+		inode_debug(3, "constructing data sync segment (ino=%lu)\n",
 			    inode->i_ino);
 		err = nilfs_construct_dsync_segment(inode->i_sb, inode);
 		if (unlikely(err))
@@ -110,7 +111,8 @@ struct vm_operations_struct nilfs_file_vm_ops = {
 };
 #else
 static struct page *
-nilfs_filemap_nopage(struct vm_area_struct *vma, unsigned long address, int *type)
+nilfs_filemap_nopage(struct vm_area_struct *vma, unsigned long address,
+		     int *type)
 {
 	struct page *page = filemap_nopage(vma, address, type);
 

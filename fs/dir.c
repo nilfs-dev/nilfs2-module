@@ -216,11 +216,11 @@ Enamelen:
 Espan:
 	error = "directory entry across blocks";
 bad_entry:
-	nilfs_error (sb, "nilfs_check_page", "bad entry in directory #%lu: %s - "
-		"offset=%lu, inode=%lu, rec_len=%d, name_len=%d",
-		dir->i_ino, error, (page->index<<PAGE_CACHE_SHIFT)+offs,
-		(unsigned long) le64_to_cpu(p->inode),
-		rec_len, p->name_len);
+	nilfs_error(sb, "nilfs_check_page", "bad entry in directory #%lu: %s - "
+		    "offset=%lu, inode=%lu, rec_len=%d, name_len=%d",
+		    dir->i_ino, error, (page->index<<PAGE_CACHE_SHIFT)+offs,
+		    (unsigned long) le64_to_cpu(p->inode),
+		    rec_len, p->name_len);
 	goto fail;
 Eend:
 	p = (nilfs_dirent *)(kaddr + offs);

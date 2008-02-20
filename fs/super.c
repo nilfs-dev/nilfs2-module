@@ -117,7 +117,8 @@ nilfs_error(struct super_block *sb, const char *function,
 	}
 
 	if (nilfs_test_opt(sbi, ERRORS_PANIC))
-		panic("NILFS (device %s): panic forced after error\n", sb->s_id);
+		panic("NILFS (device %s): panic forced after error\n",
+		      sb->s_id);
 }
 
 void nilfs_warning(struct super_block *sb, const char *function,
@@ -154,7 +155,8 @@ void nilfs_destroy_inode(struct inode *inode)
 }
 
 #if NEED_OLD_INIT_ONCE_ARGS
-static void init_once(void *obj, struct kmem_cache *cachep, unsigned long flags)
+static void init_once(void *obj, struct kmem_cache *cachep,
+		      unsigned long flags)
 #else
 static void init_once(struct kmem_cache *cachep, void *obj)
 #endif
@@ -424,18 +426,20 @@ int nilfs_attach_checkpoint(struct nilfs_sb_info *sbi, nilfs_cno_t cno)
 	up_write(&nilfs->ns_sem);
 
 	BUG_ON(sbi->s_ifile);
-	sbi->s_ifile = nilfs_mdt_new_with_blockgroup(nilfs, sbi->s_super, 
-						     NILFS_IFILE_INO, NILFS_IFILE_GFP,
-						     nilfs->ns_inode_size,
-						     NILFS_IFILE_GROUPS_COUNT(nilfs->ns_blocksize_bits));
+	sbi->s_ifile = nilfs_mdt_new_with_blockgroup(
+		nilfs, sbi->s_super, NILFS_IFILE_INO, NILFS_IFILE_GFP,
+		nilfs->ns_inode_size,
+		NILFS_IFILE_GROUPS_COUNT(nilfs->ns_blocksize_bits));
 	if (!sbi->s_ifile)
 		return -ENOMEM;
 
-	err = nilfs_cpfile_get_checkpoint(nilfs->ns_cpfile, cno, 0, &raw_cp, &bh_cp);
+	err = nilfs_cpfile_get_checkpoint(nilfs->ns_cpfile, cno, 0, &raw_cp,
+					  &bh_cp);
 	if (unlikely(err)) {
 		if (err == -ENOENT || err == -EINVAL) {
 			printk(KERN_ERR
-			       "NILFS: Invalid checkpoint (checkpoint number=%llu)\n",
+			       "NILFS: Invalid checkpoint "
+			       "(checkpoint number=%llu)\n",
 			       (unsigned long long)cno);
 			err = -EINVAL;
 		}
@@ -447,14 +451,16 @@ int nilfs_attach_checkpoint(struct nilfs_sb_info *sbi, nilfs_cno_t cno)
 	atomic_set(&sbi->s_inodes_count, le64_to_cpu(raw_cp->cp_inodes_count));
 	atomic_set(&sbi->s_blocks_count, le64_to_cpu(raw_cp->cp_blocks_count));
 
-	nilfs_debug(2, "attached ifile (checkpoint number=%llu)\n", (unsigned long long)cno);
+	nilfs_debug(2, "attached ifile (checkpoint number=%llu)\n",
+		    (unsigned long long)cno);
 	nilfs_cpfile_put_checkpoint(nilfs->ns_cpfile, cno, bh_cp);
 	return 0;
 
  failed_bh:
 	nilfs_cpfile_put_checkpoint(nilfs->ns_cpfile, cno, bh_cp);
  failed:
-	nilfs_debug(1, "failed to attach ifile (checkpoint number=%llu, err=%d)\n",
+	nilfs_debug(1, "failed to attach ifile "
+		    "(checkpoint number=%llu, err=%d)\n",
 		    (unsigned long long)cno, err);
 	nilfs_mdt_destroy(sbi->s_ifile);
 	sbi->s_ifile = NULL;
@@ -651,7 +657,8 @@ static int parse_options(char *options, struct super_block *sb)
 			nilfs_set_opt(sbi, SNAPSHOT);
 			break;
 		default:
-			printk(KERN_ERR "NILFS: Unrecognized mount option \"%s\"\n", p);
+			printk(KERN_ERR
+			       "NILFS: Unrecognized mount option \"%s\"\n", p);
 			return 0;
 		}
 	}
@@ -659,7 +666,8 @@ static int parse_options(char *options, struct super_block *sb)
 }
 
 static inline void
-nilfs_set_default_options(struct nilfs_sb_info *sbi, struct nilfs_super_block *sbp)
+nilfs_set_default_options(struct nilfs_sb_info *sbi,
+			  struct nilfs_super_block *sbp)
 {
 	sbi->s_mount_opt =
 		NILFS_MOUNT_ERRORS_CONT | NILFS_MOUNT_BARRIER;
@@ -676,15 +684,17 @@ static int nilfs_setup_super(struct nilfs_sb_info *sbi)
 	if (!(nilfs->ns_mount_state & NILFS_VALID_FS)) {
 		printk(KERN_WARNING "NILFS warning: mounting unchecked fs\n");
 	} else if(nilfs->ns_mount_state & NILFS_ERROR_FS) {
-		printk(KERN_WARNING "NILFS warning: mounting fs with errors\n");
+		printk(KERN_WARNING
+		       "NILFS warning: mounting fs with errors\n");
 #if 0
 	} else if(max_mnt_count >= 0 && mnt_count >= max_mnt_count) {
-		printk(KERN_WARNING "NILFS warning: maximal mount count reached\n");
+		printk(KERN_WARNING
+		       "NILFS warning: maximal mount count reached\n");
 #endif
 	}
-	if (!max_mnt_count) {
+	if (!max_mnt_count)
 		sbp->s_max_mnt_count = cpu_to_le16(NILFS_DFL_MAX_MNT_COUNT);
-	}
+
 	sbp->s_mnt_count = cpu_to_le16(mnt_count + 1);
 	sbp->s_state = cpu_to_le16(le16_to_cpu(sbp->s_state) & ~NILFS_VALID_FS);
 	sbp->s_mtime = cpu_to_le64(get_seconds());
@@ -855,10 +865,12 @@ nilfs_fill_super(struct super_block *sb, void *data, int silent,
 
 	if (sb->s_flags & MS_RDONLY) {
 		if (nilfs_test_opt(sbi, SNAPSHOT)) {
-			if (!nilfs_cpfile_is_snapshot(nilfs->ns_cpfile, sbi->s_snapshot_cno)) {
+			if (!nilfs_cpfile_is_snapshot(nilfs->ns_cpfile,
+						      sbi->s_snapshot_cno)) {
 				printk(KERN_ERR
-				       "NILFS: The specified checkpoint is not a snapshot"
-				       " (checkpoint number=%llu).\n", 
+				       "NILFS: The specified checkpoint is "
+				       "not a snapshot "
+				       "(checkpoint number=%llu).\n", 
 				       (unsigned long long)sbi->s_snapshot_cno);
 				err = -EINVAL;
 				goto failed_sbi;
@@ -1012,7 +1024,8 @@ static int nilfs_remount(struct super_block *sb, int *flags, char *data)
 		}
 		if (sbi->s_snapshot_cno != nilfs_last_cno(nilfs)) {
 			printk(KERN_WARNING "NILFS (device %s): couldn't "
-			       "remount because the current RO-mount is not the latest one.\n",
+			       "remount because the current RO-mount is not "
+			       "the latest one.\n",
 			       sb->s_id);
 			err = -EINVAL;
 			goto rw_remount_failed;
@@ -1050,7 +1063,7 @@ struct nilfs_super_data {
 };
 
 /**
- * nilfs_identify - pre-read options to get mount type (ro/rw), a checkpoint number, and so on.
+ * nilfs_identify - pre-read mount options needed to identify mount instance
  * @data: mount options
  * @sd: nilfs_super_data
  */
@@ -1075,7 +1088,8 @@ static int nilfs_identify(char *data, struct nilfs_super_data *sd)
 				}
 			}
 			if (ret)
-				printk(KERN_ERR "NILFS: invalid mount option: %s\n", p);
+				printk(KERN_ERR
+				       "NILFS: invalid mount option: %s\n", p);
 		}
 		if (!options)
 			break;
@@ -1171,7 +1185,8 @@ nilfs_get_sb(struct file_system_type *fs_type, int flags,
 	 */
 	nilfs_lock_bdev(sd.bdev);
 #ifdef CONFIGURE_RW_MOUNT_AND_RO_MOUNT_MUTUALLY_EXCLUSIVE
-	if (!sd.cno && (err = test_exclusive_mount(fs_type, sd.bdev, flags ^ MS_RDONLY))) {
+	if (!sd.cno &&
+	    (err = test_exclusive_mount(fs_type, sd.bdev, flags ^ MS_RDONLY))) {
 		err = (err < 0) ? : -EBUSY;
 		goto failed_unlock;
 	}
@@ -1208,7 +1223,8 @@ nilfs_get_sb(struct file_system_type *fs_type, int flags,
 			/* trying to get the latest checkpoint.  */
 			sd.cno = nilfs_last_cno(nilfs);
 
-		s2 = sget(fs_type, nilfs_test_bdev_super2, nilfs_set_bdev_super, &sd);
+		s2 = sget(fs_type, nilfs_test_bdev_super2,
+			  nilfs_set_bdev_super, &sd);
 		deactivate_super(s);
                 /*
 		 * Although deactivate_super() invokes close_bdev_excl() at
@@ -1272,8 +1288,8 @@ nilfs_get_sb(struct file_system_type *fs_type, int flags,
  error_s:
 	nilfs_unlock_bdev(sd.bdev);
         /*
-	 * This unlocking is delayed until the_nilfs is attached to 
-	 * nilfs_sb_info. This ensures that the_nilfs is identical for 
+	 * This unlocking is delayed until the_nilfs is attached to
+	 * nilfs_sb_info. This ensures that the_nilfs is identical for
 	 * the same device in the list of fs_supers.
 	 */
 	if (nilfs)
@@ -1303,8 +1319,8 @@ nilfs_get_sb(struct file_system_type *fs_type, int flags,
 	deactivate_super(s);
 	/*
 	 * deactivate_super() invokes close_bdev_excl().
-	 * We must finish all clean-up processing before this call;
-	 * put_nilfs() and unlocking of bd_mount_sem depend on the block device.
+	 * We must finish all post-cleaning before this call;
+	 * put_nilfs() and unlocking bd_mount_sem need the block device.
 	 */
 #if NEED_SIMPLE_SET_MNT
 	return err;

@@ -131,7 +131,8 @@ nilfs_dat_entry_blkoff(const struct inode *dat, nilfs_sector_t vblocknr)
 {
 	return nilfs_dat_bitmap_blkoff(dat, nilfs_dat_group(dat, vblocknr)) +
 		1 +
-		nilfs_dat_entry_block(dat, nilfs_dat_group_offset(dat, vblocknr));
+		nilfs_dat_entry_block(dat,
+				      nilfs_dat_group_offset(dat, vblocknr));
 }
 
 inline static unsigned long
@@ -347,7 +348,8 @@ nilfs_dat_group_find_available_vblocknr(struct inode *dat,
 		/* wrap around */
 		if (curr >= size)
 			curr = 0;
-		while (*((unsigned long *)bitmap + curr / BITS_PER_LONG) != ~0UL) {
+		while (*((unsigned long *)bitmap + curr / BITS_PER_LONG)
+		       != ~0UL) {
 			end = curr + BITS_PER_LONG;
 			if (end > size)
 				end = size;
@@ -375,7 +377,7 @@ static int nilfs_dat_prepare_alloc_vblocknr(struct inode *dat,
 	unsigned long  group_offset;
 	unsigned long n, entries_per_group, groups_per_desc_block;
 	unsigned long i, j;
-	int result, ret;
+	int res, ret;
 
 	ngroups = NILFS_MDT(dat)->mi_groups_count;
 	maxgroup = ngroups - 1;
@@ -405,10 +407,14 @@ static int nilfs_dat_prepare_alloc_vblocknr(struct inode *dat,
 				bitmap_kaddr = kmap(bitmap_bh->b_page);
 				bitmap = nilfs_dat_block_get_bitmap(
 					dat, bitmap_bh, bitmap_kaddr);
-				if ((result = nilfs_dat_group_find_available_vblocknr(dat, group, group_offset, bitmap, entries_per_group)) >= 0) {
+				res = nilfs_dat_group_find_available_vblocknr(
+					dat, group, group_offset, bitmap,
+					entries_per_group);
+				if (res >= 0) {
 					nilfs_dat_group_desc_sub_entries(
 						dat, group, desc, 1);
-					req->dr_vblocknr = entries_per_group * group + result;
+					req->dr_vblocknr =
+						entries_per_group * group + res;
 					kunmap(desc_bh->b_page);
 					kunmap(bitmap_bh->b_page);
 
@@ -459,9 +465,11 @@ static void nilfs_dat_abort_alloc_vblocknr(struct inode *dat,
 	group = nilfs_dat_group(dat, req->dr_vblocknr);
 	group_offset = nilfs_dat_group_offset(dat, req->dr_vblocknr);
 	desc_kaddr = kmap(req->dr_desc_bh->b_page);
-	desc = nilfs_dat_block_get_group_desc(dat, group, req->dr_desc_bh, desc_kaddr);
+	desc = nilfs_dat_block_get_group_desc(dat, group, req->dr_desc_bh,
+					      desc_kaddr);
 	bitmap_kaddr = kmap(req->dr_bitmap_bh->b_page);
-	bitmap = nilfs_dat_block_get_bitmap(dat, req->dr_bitmap_bh, bitmap_kaddr);
+	bitmap = nilfs_dat_block_get_bitmap(dat, req->dr_bitmap_bh,
+					    bitmap_kaddr);
 
 	if (!nilfs_dat_clear_bit_atomic(nilfs_mdt_bgl_lock(dat, group),
 					group_offset, bitmap)) {
@@ -732,7 +740,8 @@ void nilfs_dat_commit_start(struct inode *dat,
 		       __FUNCTION__, (unsigned long long)req->dr_vblocknr, 
 		       (unsigned long long)nilfs_dat_entry_get_start(dat, entry),
 		       (unsigned long long)nilfs_dat_entry_get_end(dat, entry),
-		       (unsigned long long)nilfs_dat_entry_get_blocknr(dat, entry));
+		       (unsigned long long)nilfs_dat_entry_get_blocknr(dat,
+								       entry));
 		BUG();
 	}
 	nilfs_dat_entry_set_blocknr(dat, entry, blocknr);
@@ -978,14 +987,16 @@ int nilfs_dat_freev(struct inode *dat, nilfs_sector_t *vblocknrs,
 		bitmap = nilfs_dat_block_get_bitmap(
 			dat, bitmap_bh, bitmap_kaddr);
 		for (j = i, n = 0;
-		     (j < nitems) && nilfs_dat_group_is_in(dat, group, vblocknrs[j]);
+		     (j < nitems) && nilfs_dat_group_is_in(dat, group,
+							   vblocknrs[j]);
 		     j++, n++) {
 			group_offset = nilfs_dat_group_offset(
 				dat, vblocknrs[j]);
 			if (!nilfs_dat_clear_bit_atomic(
 				    nilfs_mdt_bgl_lock(dat, group),
 				    group_offset, bitmap)) {
-				printk("%s: virtual block number %llu already freed\n",
+				printk("%s: virtual block number %llu already "
+				       "freed\n",
 				       __FUNCTION__,
 				       (unsigned long long)vblocknrs[j]);
 				BUG();
@@ -1154,7 +1165,9 @@ ssize_t nilfs_dat_get_vinfo(struct inode *dat,
 
 	entries_per_block = nilfs_dat_entries_per_block(dat);
 	for (i = 0; i < nvi; i += n) {
-		if ((ret = nilfs_dat_get_entry_block(dat, vinfo[i].vi_vblocknr, 0, &entry_bh)) < 0)
+		ret = nilfs_dat_get_entry_block(dat, vinfo[i].vi_vblocknr, 0,
+						&entry_bh);
+		if (ret < 0)
 			return ret;
 		kaddr = kmap_atomic(entry_bh->b_page, KM_USER0);
 		/* last virtual block number in this block */
@@ -1163,7 +1176,8 @@ ssize_t nilfs_dat_get_vinfo(struct inode *dat,
 		first *= entries_per_block;
 		last = first + entries_per_block - 1;
 		for (j = i, n = 0;
-		     (j < nvi) && (vinfo[j].vi_vblocknr >= first) && (vinfo[j].vi_vblocknr <= last);
+		     (j < nvi) && (vinfo[j].vi_vblocknr >= first) &&
+			     (vinfo[j].vi_vblocknr <= last);
 		     j++, n++) {
 			entry = nilfs_dat_block_get_entry(
 				dat, vinfo[j].vi_vblocknr, entry_bh, kaddr);

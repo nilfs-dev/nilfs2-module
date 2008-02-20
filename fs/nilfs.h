@@ -105,9 +105,9 @@ enum {
 	NILFS_I_NEW = 0,		/* Inode is newly created */
 	NILFS_I_DIRTY,			/* The file is dirty */
 	NILFS_I_QUEUED,			/* inode is in dirty_files list */
-	NILFS_I_BUSY,			/* inode is grabbed by a segment constructor */
-	NILFS_I_COLLECTED,		/* All dirty blocks are collected
-					   by the segment constructor */
+	NILFS_I_BUSY,			/* inode is grabbed by a segment
+					   constructor */
+	NILFS_I_COLLECTED,		/* All dirty blocks are collected */
 	NILFS_I_UPDATED,		/* The file has been written back */
 	NILFS_I_INODE_DIRTY,		/* write_inode is requested */
 	NILFS_I_BMAP,			/* has bmap and btnode_cache */
@@ -119,7 +119,10 @@ enum {
  * Macros to check inode numbers
  */
 #define NILFS_SYS_INO_BITS   \
-  (unsigned int)(1 << NILFS_ROOT_INO | 1 << NILFS_DAT_INO | 1 << NILFS_CPFILE_INO | 1 << NILFS_SUFILE_INO | 1 << NILFS_IFILE_INO | 1 << NILFS_ATIME_INO | 1 << NILFS_SKETCH_INO)
+  (unsigned int)(1 << NILFS_ROOT_INO | 1 << NILFS_DAT_INO |		\
+		1 << NILFS_CPFILE_INO | 1 << NILFS_SUFILE_INO |		\
+		1 << NILFS_IFILE_INO | 1 << NILFS_ATIME_INO |		\
+		1 << NILFS_SKETCH_INO)
 		 
 
 #define NILFS_VALID_INODE(sb, ino) \
@@ -138,7 +141,8 @@ enum {
 
 BUFFER_FNS(Prepare_Dirty, prepare_dirty)	/* prepare-dirty flag */
 TAS_BUFFER_FNS(Prepare_Dirty, prepare_dirty)	/* prepare-dirty flag */
-BUFFER_FNS(NILFS_Freeze, nilfs_freeze)		/* needed to freeze during writeback */
+BUFFER_FNS(NILFS_Freeze, nilfs_freeze)		/* must freeze during
+						   writeback */
 BUFFER_FNS(NILFS_Allocated, nilfs_allocated)	/* nilfs private buffers */
 BUFFER_FNS(NILFS_Node, nilfs_node)		/* nilfs node buffers */
 BUFFER_FNS(NILFS_Volatile, nilfs_volatile)
@@ -207,11 +211,13 @@ static inline int nilfs_init_acl(struct inode *inode, struct inode *dir)
 extern int nilfs_add_link (struct dentry *, struct inode *);
 extern ino_t nilfs_inode_by_name(struct inode *, struct dentry *);
 extern int nilfs_make_empty(struct inode *, struct inode *);
-extern struct nilfs_dir_entry * nilfs_find_entry (struct inode *,struct dentry *, struct page **);
+extern struct nilfs_dir_entry *
+nilfs_find_entry(struct inode *, struct dentry *, struct page **);
 extern int nilfs_delete_entry (struct nilfs_dir_entry *, struct page *);
 extern int nilfs_empty_dir (struct inode *);
 extern struct nilfs_dir_entry * nilfs_dotdot (struct inode *, struct page **);
-extern void nilfs_set_link(struct inode *, struct nilfs_dir_entry *, struct page *, struct inode *);
+extern void nilfs_set_link(struct inode *, struct nilfs_dir_entry *,
+			   struct page *, struct inode *);
 
 /* file.c */
 #define nilfs_release_file   NULL
@@ -238,7 +244,9 @@ extern void nilfs_update_inode(struct inode *, struct buffer_head *);
 extern void nilfs_truncate(struct inode *);
 extern void nilfs_delete_inode(struct inode *);
 extern int nilfs_setattr(struct dentry *, struct iattr *);
-extern int nilfs_load_inode_block_nolock(struct nilfs_sb_info *, struct inode *, struct buffer_head **);
+extern int
+nilfs_load_inode_block_nolock(struct nilfs_sb_info *, struct inode *,
+			      struct buffer_head **);
 
 /* super.c */
 extern struct inode *nilfs_alloc_inode(struct super_block *);
@@ -247,9 +255,12 @@ extern void nilfs_error (struct super_block *, const char *, const char *, ...)
 	__attribute__ ((format (printf, 3, 4)));
 extern void nilfs_warning(struct super_block *, const char *, const char *, ...)
        __attribute__ ((format (printf, 3, 4)));			      
-extern struct nilfs_super_block *nilfs_load_super_block(struct super_block *, struct buffer_head **);
-extern struct nilfs_super_block *nilfs_reload_super_block(struct super_block *, struct buffer_head **, int);
-extern int nilfs_store_magic_and_option(struct super_block *, struct nilfs_super_block *, char *);
+extern struct nilfs_super_block *
+nilfs_load_super_block(struct super_block *, struct buffer_head **);
+extern struct nilfs_super_block *
+nilfs_reload_super_block(struct super_block *, struct buffer_head **, int);
+extern int nilfs_store_magic_and_option(struct super_block *,
+					struct nilfs_super_block *, char *);
 extern void nilfs_update_last_segment(struct nilfs_sb_info *, int);
 extern int nilfs_sync_super(struct nilfs_sb_info *);
 extern int nilfs_commit_super(struct nilfs_sb_info *, int);

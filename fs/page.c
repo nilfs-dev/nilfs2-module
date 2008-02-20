@@ -85,7 +85,8 @@ nilfs_get_page_block(struct page *page, nilfs_blkoff_t block, pgoff_t index,
 	if (!page_has_buffers(page)) {
 		struct buffer_head *head;
 
-		page_debug(3, "page has no buffer heads. allocating.. (page=%p)\n", page);
+		page_debug(3, "page has no buffer heads. allocating.. "
+			   "(page=%p)\n", page);
 		head = alloc_page_buffers(page, 1 << blkbits, 1);
 		if (!head)
 			return NULL;
@@ -292,7 +293,8 @@ int nilfs_pages_shrink(int nr, GFP_T gfp_mask)
 							   &nfa);
 			up_write(&nilfs_pages.shrink_sem);
 			/*
-			 * XXX: must move pages from active to inactive for right PFRA.
+			 * XXX: must move pages from the active lru to the
+			 * inactive lru for right PFRA.
 			 */
 			/* nilfs_pages_refill_inactive(nr + ns); */
 			nilfs_pages_read_counters(nr_pages);

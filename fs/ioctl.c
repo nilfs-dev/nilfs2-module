@@ -369,7 +369,9 @@ static int nilfs_ioctl_move_inode_block(struct inode *inode,
 			     vdesc->vd_blocknr,
 			     vdesc->vd_vblocknr)) < 0) {
 			if ((ret == -ENOENT) || (ret == -EEXIST)) {
-				printk("%s: ino = %llu, cno = %llu, offset = %llu, blocknr = %llu, vblocknr = %llu\n",
+				printk("%s: ino = %llu, cno = %llu, "
+				       "offset = %llu, blocknr = %llu, "
+				       "vblocknr = %llu\n",
 				       __FUNCTION__,
 				       (unsigned long long)vdesc->vd_ino,
 				       (unsigned long long)vdesc->vd_cno,
@@ -386,7 +388,8 @@ static int nilfs_ioctl_move_inode_block(struct inode *inode,
 			     vdesc->vd_blocknr,
 			     vdesc->vd_vblocknr)) < 0) {
 			if (ret == -EEXIST) {
-				printk("%s: ino = %llu, cno = %llu, blocknr = %llu, vblocknr = %llu\n",
+				printk("%s: ino = %llu, cno = %llu, "
+				       "blocknr = %llu, vblocknr = %llu\n",
 				       __FUNCTION__,
 				       (unsigned long long)vdesc->vd_ino,
 				       (unsigned long long)vdesc->vd_cno,
@@ -419,7 +422,8 @@ nilfs_ioctl_do_move_blocks(struct the_nilfs *nilfs, int index, int flags,
 		if ((inode = nilfs_gc_iget(nilfs, ino, cno)) == NULL)
 			return -ENOMEM;
 		for (j = i, n = 0;
-		     (j < nmembs) && (vdescs[j].vd_ino == ino) && (vdescs[j].vd_cno == cno);
+		     (j < nmembs) && (vdescs[j].vd_ino == ino) &&
+			     (vdescs[j].vd_cno == cno);
 		     j++, n++) {
 			if ((ret = nilfs_ioctl_move_inode_block(
 				     inode, &vdescs[j])) < 0)
@@ -440,8 +444,9 @@ inline static int nilfs_ioctl_move_blocks(struct the_nilfs *nilfs,
 }
 
 static ssize_t
-nilfs_ioctl_do_delete_checkpoints(struct the_nilfs *nilfs, int index, int flags,
-				  void *buf, size_t size, size_t nmembs)
+nilfs_ioctl_do_delete_checkpoints(struct the_nilfs *nilfs, int index,
+				  int flags, void *buf, size_t size,
+				  size_t nmembs)
 {
 	struct inode *cpfile;
 	struct nilfs_period *periods;

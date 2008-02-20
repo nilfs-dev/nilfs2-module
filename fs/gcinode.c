@@ -139,7 +139,8 @@ failed:
  *
  * Note: pages should be removed by nilfs_btnode_delete_all().
  */
-int nilfs_gccache_add_node(struct inode *inode, sector_t pbn, nilfs_sector_t vbn)
+int nilfs_gccache_add_node(struct inode *inode, sector_t pbn,
+			   nilfs_sector_t vbn)
 {
 	struct nilfs_btnode_cache *bc = &NILFS_I(inode)->i_btnode_cache;
 	struct buffer_head *bh;
@@ -174,7 +175,8 @@ int nilfs_init_gcinode(struct the_nilfs *nilfs)
 	INIT_LIST_HEAD(&nilfs->ns_gc_inodes);
 
 	nilfs->ns_gc_inodes_h =
-		kmalloc(sizeof(struct hlist_head) * NILFS_GCINODE_HASH_SIZE, GFP_NOFS);
+		kmalloc(sizeof(struct hlist_head) * NILFS_GCINODE_HASH_SIZE,
+			GFP_NOFS);
 	if (nilfs->ns_gc_inodes_h == NULL) {
 		return -ENOMEM;
 	}
@@ -225,7 +227,8 @@ static struct inode *alloc_gcinode(struct the_nilfs *nilfs, ino_t ino,
 
 static inline unsigned long ihash(ino_t ino, nilfs_cno_t cno)
 {
-	return hash_long((unsigned long)((ino << 2) + cno), NILFS_GCINODE_HASH_BITS);
+	return hash_long((unsigned long)((ino << 2) + cno),
+			 NILFS_GCINODE_HASH_BITS);
 }
 
 /*
@@ -237,7 +240,8 @@ static inline unsigned long ihash(ino_t ino, nilfs_cno_t cno)
  * Return Value: On success, inode pointer
  * On error, NULL
  */
-struct inode *nilfs_gc_iget(struct the_nilfs *nilfs, ino_t ino, nilfs_cno_t cno)
+struct inode *nilfs_gc_iget(struct the_nilfs *nilfs, ino_t ino,
+			    nilfs_cno_t cno)
 {
 	struct hlist_head *head;
 	struct hlist_node *node;

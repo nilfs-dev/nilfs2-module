@@ -353,7 +353,8 @@ collect_blocks_from_segsum(struct nilfs_sb_info *sbi, sector_t sum_blocknr,
 	if (unlikely(!bh))
 		goto out;
 
-	offset = le16_to_cpu(((struct nilfs_segment_summary *)bh->b_data)->ss_bytes);
+	offset = le16_to_cpu(
+		((struct nilfs_segment_summary *)bh->b_data)->ss_bytes);
 	for (;;) {
 		unsigned long nblocks, ndatablk, nnodeblk;
 		struct nilfs_finfo *finfo;

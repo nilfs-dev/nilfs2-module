@@ -44,8 +44,7 @@
 #include "nilfs.h"
 
 
-static inline int 
-nilfs_add_nondir(struct dentry *dentry, struct inode *inode)
+static inline int nilfs_add_nondir(struct dentry *dentry, struct inode *inode)
 {
 	int err = nilfs_add_link(dentry, inode);
 	if (!err) {
@@ -94,8 +93,8 @@ nilfs_lookup(struct inode * dir, struct dentry *dentry, struct nameidata *nd)
  * If the create succeeds, we fill in the inode information
  * with d_instantiate(). 
  */
-static int 
-nilfs_create(struct inode * dir, struct dentry * dentry, int mode, struct nameidata *nd)
+static int nilfs_create(struct inode * dir, struct dentry * dentry, int mode,
+			struct nameidata *nd)
 {
 	struct inode *inode;
 	struct nilfs_transaction_info ti;
@@ -141,9 +140,8 @@ nilfs_mknod(struct inode * dir, struct dentry *dentry, int mode, dev_t rdev)
 	return (err ? : err2);
 }
 
-static int 
-nilfs_symlink(struct inode * dir, struct dentry * dentry,
-	const char * symname)
+static int nilfs_symlink(struct inode *dir, struct dentry *dentry,
+			 const char *symname)
 {
 	struct nilfs_transaction_info ti;
 	struct super_block *sb = dir->i_sb;
@@ -170,7 +168,8 @@ nilfs_symlink(struct inode * dir, struct dentry * dentry,
 	if (err)
 		goto out_fail;
 
-	/* mark_inode_dirty(inode); */ /* done at nilfs_new_inode() and page_symlink() */
+	/* mark_inode_dirty(inode); */
+	/* nilfs_new_inode() and page_symlink() do this */
 
 	err = nilfs_add_nondir(dentry, inode);
 out:
@@ -183,8 +182,8 @@ out_fail:
 	goto out;
 }
 
-static int 
-nilfs_link(struct dentry * old_dentry, struct inode * dir, struct dentry *dentry)
+static int nilfs_link(struct dentry *old_dentry, struct inode *dir,
+		      struct dentry *dentry)
 {
 	struct inode *inode = old_dentry->d_inode;
 	struct nilfs_transaction_info ti;
@@ -206,8 +205,7 @@ nilfs_link(struct dentry * old_dentry, struct inode * dir, struct dentry *dentry
 	return (err ? : err2);
 }
 
-static int 
-nilfs_mkdir(struct inode * dir, struct dentry * dentry, int mode)
+static int nilfs_mkdir(struct inode *dir, struct dentry *dentry, int mode)
 {
 	struct inode * inode;
 	struct nilfs_transaction_info ti;
@@ -255,8 +253,7 @@ out_dir:
 	goto out;
 }
 
-static int
-nilfs_unlink(struct inode * dir, struct dentry *dentry)
+static int nilfs_unlink(struct inode *dir, struct dentry *dentry)
 {
 	struct inode * inode;
 	struct nilfs_dir_entry * de;
@@ -296,8 +293,7 @@ out:
 	return (err ? : err2);
 }
 
-static int
-nilfs_rmdir(struct inode * dir, struct dentry *dentry)
+static int nilfs_rmdir(struct inode *dir, struct dentry *dentry)
 {
 	struct inode * inode = dentry->d_inode;
 	struct nilfs_transaction_info ti;
@@ -320,9 +316,8 @@ nilfs_rmdir(struct inode * dir, struct dentry *dentry)
 	return (err ? : err2);
 }
 
-static int
-nilfs_rename(struct inode * old_dir, struct dentry * old_dentry,
-	struct inode * new_dir,	struct dentry * new_dentry )
+static int nilfs_rename(struct inode *old_dir, struct dentry *old_dentry,
+			struct inode *new_dir,	struct dentry *new_dentry)
 {
 	struct inode * old_inode = old_dentry->d_inode;
 	struct inode * new_inode = new_dentry->d_inode;

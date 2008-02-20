@@ -196,7 +196,7 @@ int nilfs_sufile_alloc(struct inode *sufile, nilfs_segnum_t *segnump)
 				kaddr = kmap_atomic(header_bh->b_page, KM_USER0);
 				header = nilfs_sufile_block_get_header(
 					sufile, header_bh, kaddr);
-				header->sh_ncleansegs =	cpu_to_le64(le64_to_cpu(header->sh_ncleansegs) - 1);
+				header->sh_ncleansegs = cpu_to_le64(le64_to_cpu(header->sh_ncleansegs) - 1);
 				header->sh_ndirtysegs =	cpu_to_le64(le64_to_cpu(header->sh_ndirtysegs) + 1);
 				header->sh_last_alloc = cpu_to_le64(segnum);
 				kunmap_atomic(kaddr, KM_USER0);
@@ -430,8 +430,8 @@ int nilfs_sufile_get_segment_usage(struct inode *sufile,
 	BUG_ON(segnum >= nilfs_sufile_get_nsegments(sufile));
 
 	down_write(&NILFS_MDT(sufile)->mi_sem);
-
-	if ((ret = nilfs_sufile_get_segment_usage_block(sufile, segnum, 1, &bh)) < 0)
+	ret = nilfs_sufile_get_segment_usage_block(sufile, segnum, 1, &bh);
+	if (ret < 0)
 		goto out_sem;
 	kaddr = kmap(bh->b_page);
 	su = nilfs_sufile_block_get_segment_usage(sufile, segnum, bh, kaddr);
@@ -599,7 +599,8 @@ int nilfs_sufile_set_error(struct inode *sufile, nilfs_segnum_t segnum)
 
 	if ((ret = nilfs_sufile_get_header_block(sufile, &header_bh)) < 0)
 		goto out_sem;
-	if ((ret = nilfs_sufile_get_segment_usage_block(sufile, segnum, 0, &su_bh)) < 0)
+	ret = nilfs_sufile_get_segment_usage_block(sufile, segnum, 0, &su_bh);
+	if (ret < 0)
 		goto out_header;
 
 	kaddr = kmap_atomic(su_bh->b_page, KM_USER0);

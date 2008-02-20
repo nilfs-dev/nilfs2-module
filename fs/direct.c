@@ -30,7 +30,8 @@
 inline static nilfs_bmap_dptr_t *
 nilfs_direct_dptrs(const struct nilfs_direct *direct)
 {
-	return (nilfs_bmap_dptr_t *)((struct nilfs_direct_node *)direct->d_bmap.b_u.u_data + 1);
+	return (nilfs_bmap_dptr_t *)
+		((struct nilfs_direct_node *)direct->d_bmap.b_u.u_data + 1);
 }
 
 inline static nilfs_bmap_ptr_t

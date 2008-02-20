@@ -155,8 +155,9 @@ static int nilfs_cpfile_get_block(struct inode *cpfile,
 			return ret;
 		/* first block must be allocated by mkfs.nilfs */
 		BUG_ON(blkoff == 0);
-		if ((ret = nilfs_mdt_create_block(cpfile, blkoff, &bh,
-						  nilfs_cpfile_block_init)) < 0)
+		ret = nilfs_mdt_create_block(cpfile, blkoff, &bh,
+					     nilfs_cpfile_block_init);
+		if (ret < 0)
 			return ret;
 	}
 
@@ -282,8 +283,8 @@ int nilfs_cpfile_get_checkpoint(struct inode *cpfile,
 
 	if ((ret = nilfs_cpfile_get_header_block(cpfile, &header_bh)) < 0)
 		goto out_sem;
-
-	if ((ret = nilfs_cpfile_get_checkpoint_block(cpfile, cno, create, &cp_bh)) < 0)
+	ret = nilfs_cpfile_get_checkpoint_block(cpfile, cno, create, &cp_bh);
+	if (ret < 0)
 		goto out_header;
 	kaddr = kmap(cp_bh->b_page);
 	cp = nilfs_cpfile_block_get_checkpoint(cpfile, cno, cp_bh, kaddr);
@@ -297,11 +298,13 @@ int nilfs_cpfile_get_checkpoint(struct inode *cpfile,
 		/* a newly-created checkpoint */
 		nilfs_checkpoint_clear_invalid(cp);
 		if (!nilfs_cpfile_is_in_first(cpfile, cno))
-			nilfs_cpfile_block_add_valid_checkpoints(cpfile, cp_bh, kaddr, 1);
+			nilfs_cpfile_block_add_valid_checkpoints(cpfile, cp_bh,
+								 kaddr, 1);
 		nilfs_mdt_mark_buffer_dirty(cp_bh);
 
 		kaddr = kmap_atomic(header_bh->b_page, KM_USER0);
-		header = nilfs_cpfile_block_get_header(cpfile, header_bh, kaddr);
+		header = nilfs_cpfile_block_get_header(cpfile, header_bh,
+						       kaddr);
 		nilfs_cpfile_header_add_checkpoints(cpfile, header, 1);
 		kunmap_atomic(kaddr, KM_USER0);
 		nilfs_mdt_mark_buffer_dirty(header_bh);
@@ -422,8 +425,9 @@ int nilfs_cpfile_delete_checkpoints(struct inode *cpfile,
 				/* make hole */
 				kunmap_atomic(kaddr, KM_USER0);
 				brelse(cp_bh);
-				if ((ret = nilfs_cpfile_delete_checkpoint_block(
-					     cpfile, cno)) < 0) {
+				ret = nilfs_cpfile_delete_checkpoint_block(
+					cpfile, cno);
+				if (ret < 0) {
 					printk("%s: cannot delete block\n",
 					       __FUNCTION__);
 					goto out_sem;
@@ -438,7 +442,8 @@ int nilfs_cpfile_delete_checkpoints(struct inode *cpfile,
 
 	if (tnicps > 0) {
 		kaddr = kmap_atomic(header_bh->b_page, KM_USER0);
-		header = nilfs_cpfile_block_get_header(cpfile, header_bh, kaddr);
+		header = nilfs_cpfile_block_get_header(cpfile, header_bh,
+						       kaddr);
 		nilfs_cpfile_header_sub_checkpoints(cpfile, header, tnicps);
 		nilfs_mdt_mark_buffer_dirty(header_bh);
 		nilfs_mdt_mark_dirty(cpfile);
@@ -482,8 +487,10 @@ int nilfs_cpfile_get_checkpoints(struct inode *cpfile,
 
 	ret = 0;
 	for (n = 0; (cno < nilfs_mdt_cno(cpfile)) && (n < *size); cno += ncps) {
-		ncps = nilfs_cpfile_checkpoints_in_block(cpfile, cno, nilfs_mdt_cno(cpfile));
-		if ((ret = nilfs_cpfile_get_checkpoint_block(cpfile, cno, 0, &bh)) < 0) {
+		ncps = nilfs_cpfile_checkpoints_in_block(
+			cpfile, cno, nilfs_mdt_cno(cpfile));
+		ret = nilfs_cpfile_get_checkpoint_block(cpfile, cno, 0, &bh);
+		if (ret < 0) {
 			if (ret != -ENOENT)
 				goto out;
 			/* skip hole */
@@ -590,7 +597,8 @@ nilfs_cpfile_do_get_ssinfo(struct inode *cpfile, nilfs_cno_t cno,
 	} else
 		curr = cno;
 	curr_blkoff = nilfs_cpfile_get_blkoff(cpfile, curr);
-	if ((ret = nilfs_cpfile_get_checkpoint_block(cpfile, curr, 0, &bh)) < 0)
+	ret = nilfs_cpfile_get_checkpoint_block(cpfile, curr, 0, &bh);
+	if (ret < 0)
 		goto out;
 	kaddr = kmap_atomic(bh->b_page, KM_USER0);
 	for (n = 0; n < nci; n++) {
@@ -1082,7 +1090,8 @@ int nilfs_cpfile_get_snapshots(struct inode *cpfile,
 	} else
 		curr = *cno;
 	curr_blkoff = nilfs_cpfile_get_blkoff(cpfile, curr);
-	if ((ret = nilfs_cpfile_get_checkpoint_block(cpfile, curr, 0, &bh)) < 0)
+	ret = nilfs_cpfile_get_checkpoint_block(cpfile, curr, 0, &bh);
+	if (ret < 0)
 		goto out_sem;
 	kaddr = kmap_atomic(bh->b_page, KM_USER0);
 	for (n = 0; n < *size; n++) {
@@ -1098,7 +1107,9 @@ int nilfs_cpfile_get_snapshots(struct inode *cpfile,
 		if (curr_blkoff != next_blkoff) {
 			kunmap_atomic(kaddr, KM_USER0);
 			brelse(bh);
-			if ((ret = nilfs_cpfile_get_checkpoint_block(cpfile, next, 0, &bh)) < 0)
+			ret = nilfs_cpfile_get_checkpoint_block(cpfile, next,
+								0, &bh);
+			if (ret < 0)
 				goto out_sem;
 			kaddr = kmap_atomic(bh->b_page, KM_USER0);
 		}
