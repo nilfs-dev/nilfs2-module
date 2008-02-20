@@ -19,8 +19,6 @@
  * along with NILFS; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  *
- * dir.c,v 1.9 2008-01-28 07:13:12 ryusuke Exp
- *
  * Modified for NILFS by Amagai Yoshiji <amagai@osrg.net>
  */
 /*

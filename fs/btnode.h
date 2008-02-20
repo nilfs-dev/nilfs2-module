@@ -19,8 +19,6 @@
  * along with NILFS; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  *
- * btnode.h,v 1.65 2007-12-03 01:15:15 ryusuke Exp
- *
  * Written by Seiji Kihara <kihara@osrg.net>
  */
 

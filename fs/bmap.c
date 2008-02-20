@@ -19,8 +19,6 @@
  * along with NILFS; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  *
- * bmap.c,v 1.33 2007-11-22 09:35:06 koji Exp
- *
  * Written by Koji Sato <koji@osrg.net>.
  */
 

@@ -19,8 +19,6 @@
  * along with NILFS; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  *
- * dat.c,v 1.37 2008-01-07 04:17:18 amagai Exp
- *
  * Written by Koji Sato <koji@osrg.net>.
  */
 

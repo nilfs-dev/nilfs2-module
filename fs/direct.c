@@ -19,8 +19,6 @@
  * along with NILFS; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  *
- * direct.c,v 1.23 2007-11-02 02:59:03 koji Exp
- *
  * Written by Koji Sato <koji@osrg.net>.
  */
 

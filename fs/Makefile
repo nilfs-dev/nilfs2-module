@@ -3,8 +3,6 @@
 #
 # Copyright (C) 2005-2007 Nippon Telegraph and Telephone Corporation.
 #
-# Makefile,v 1.36 2008-02-06 13:50:47 ryusuke Exp
-#
 
 ifndef CONFIG_NILFS
   EXTERNAL_BUILD=y

@@ -19,8 +19,6 @@
  * along with NILFS; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  *
- * symlink.c,v 1.2 2007-04-20 13:15:55 ryusuke Exp
- *
  * Written by Ryusuke Konishi <ryusuke@osrg.net>
  */
 

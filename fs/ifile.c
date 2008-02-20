@@ -19,8 +19,6 @@
  * along with NILFS; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  *
- * ifile.c,v 1.31 2007-07-23 11:25:58 ryusuke Exp
- *
  * Written by Amagai Yoshiji <amagai@osrg.net>,
  *            Ryusuke Konishi <ryusuke@osrg.net>
  */

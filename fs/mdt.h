@@ -19,8 +19,6 @@
  * along with NILFS; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  *
- * mdt.h,v 1.42 2008-02-17 15:49:56 ryusuke Exp
- *
  * Written by Ryusuke Konishi <ryusuke@osrg.net>
  */
 

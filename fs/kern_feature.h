@@ -20,8 +20,6 @@
  * along with NILFS; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  *
- * kern_feature.h,v 1.49 2008-02-12 08:38:22 ryusuke Exp
- *
  * Written by Seiji Kihara <kihara@osrg.net>
  * Maintained by Ryusuke Konishi <ryusuke@osrg.net>
  */

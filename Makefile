@@ -1,8 +1,6 @@
 #
 # Makefile - for NILFS (top)
 #
-# Makefile,v 1.6 2007-06-13 05:54:51 amagai Exp
-#
 # Written by Seiji Kihara <kihara@osrg.net>
 #
 

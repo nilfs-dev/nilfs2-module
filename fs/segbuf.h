@@ -19,8 +19,6 @@
  * along with NILFS; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  *
- * segbuf.h,v 1.13 2007-12-12 04:19:17 ryusuke Exp
- *
  * Written by Ryusuke Konishi <ryusuke@osrg.net>
  *
  */

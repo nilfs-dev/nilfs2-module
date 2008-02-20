@@ -19,8 +19,6 @@
  * along with NILFS; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  *
- * btree.h,v 1.10 2007-11-02 05:11:08 ryusuke Exp
- *
  * Written by Koji Sato <koji@osrg.net>.
  */
 

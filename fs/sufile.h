@@ -19,8 +19,6 @@
  * along with NILFS; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  *
- * sufile.h,v 1.21 2008-02-04 08:12:26 koji Exp
- *
  * Written by Koji Sato <koji@osrg.net>.
  */
 

@@ -19,8 +19,6 @@
  * along with NILFS; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  *
- * sb.h,v 1.45 2007-06-12 07:16:19 ryusuke Exp
- *
  * Written by Ryusuke Konishi <ryusuke@osrg.net>
  *
  */

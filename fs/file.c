@@ -19,8 +19,6 @@
  * along with NILFS; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  *
- * file.c,v 1.10 2007-10-25 04:58:02 koji Exp
- *
  * Written by Amagai Yoshiji <amagai@osrg.net>,
  *            Ryusuke Konishi <ryusuke@osrg.net>
  */

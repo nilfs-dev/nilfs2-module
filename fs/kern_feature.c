@@ -20,8 +20,6 @@
  * along with NILFS; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  *
- * kern_feature.c,v 1.1 2008-02-06 13:50:47 ryusuke Exp
- *
  * Modified by Ryusuke Konishi <ryusuke@osrg.net>
  */
 #include <linux/pagemap.h>

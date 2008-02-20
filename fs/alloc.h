@@ -19,8 +19,6 @@
  * along with NILFS; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  *
- * alloc.h,v 1.14 2007-06-11 07:40:15 koji Exp
- *
  * Written by Amagai Yoshiji <amagai@osrg.net>
  */
 

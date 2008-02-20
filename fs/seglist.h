@@ -20,8 +20,6 @@
  * along with NILFS; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  *
- * seglist.h,v 1.4 2007-12-10 10:38:33 ryusuke Exp
- *
  * Written by Ryusuke Konishi <ryusuke@osrg.net>
  *
  */
