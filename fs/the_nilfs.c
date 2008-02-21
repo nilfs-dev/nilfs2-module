@@ -125,6 +125,7 @@ static int nilfs_load_super_root(struct the_nilfs *nilfs,
 	struct buffer_head *bh_sr;
 	struct nilfs_super_root *raw_sr;
 	unsigned dat_entry_size, segment_usage_size, checkpoint_size;
+	unsigned inode_size;
 	int err;
 
 	nilfs_debug(2, "called (sr_block=%llu)\n",
@@ -166,19 +167,21 @@ static int nilfs_load_super_root(struct the_nilfs *nilfs,
 
 	nilfs_mdt_set_entry_size(nilfs->ns_cpfile, checkpoint_size);
 	nilfs_mdt_set_entry_size(nilfs->ns_sufile, segment_usage_size);
+	
+	inode_size = nilfs->ns_inode_size;
 
 	err = nilfs_mdt_read_inode_direct(
-		nilfs->ns_dat, bh_sr, NILFS_SR_DAT_OFFSET(nilfs));
+		nilfs->ns_dat, bh_sr, NILFS_SR_DAT_OFFSET(inode_size));
 	if (unlikely(err))
 		goto failed_su;
 
 	err = nilfs_mdt_read_inode_direct(
-		nilfs->ns_cpfile, bh_sr, NILFS_SR_CPFILE_OFFSET(nilfs));
+		nilfs->ns_cpfile, bh_sr, NILFS_SR_CPFILE_OFFSET(inode_size));
 	if (unlikely(err))
 		goto failed_su;
 
 	err = nilfs_mdt_read_inode_direct(
-		nilfs->ns_sufile, bh_sr, NILFS_SR_SUFILE_OFFSET(nilfs));
+		nilfs->ns_sufile, bh_sr, NILFS_SR_SUFILE_OFFSET(inode_size));
 	if (unlikely(err))
 		goto failed_su;
 

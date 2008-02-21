@@ -1295,6 +1295,7 @@ static void nilfs_segctor_fill_in_super_root(struct nilfs_sc_info *sci,
 	struct buffer_head *bh_sr = sci->sc_super_root;
 	struct nilfs_super_root *raw_sr =
 		(struct nilfs_super_root *)bh_sr->b_data;
+	unsigned isz = nilfs->ns_inode_size;
 
 	raw_sr->sr_bytes = cpu_to_le16(NILFS_SR_BYTES);
 	raw_sr->sr_nongc_ctime
@@ -1303,11 +1304,11 @@ static void nilfs_segctor_fill_in_super_root(struct nilfs_sc_info *sci,
 	raw_sr->sr_flags = 0;
 
 	nilfs_mdt_write_inode_direct(
-		nilfs_dat_inode(nilfs), bh_sr, NILFS_SR_DAT_OFFSET(nilfs));
+		nilfs_dat_inode(nilfs), bh_sr, NILFS_SR_DAT_OFFSET(isz));
 	nilfs_mdt_write_inode_direct(
-		nilfs->ns_cpfile, bh_sr, NILFS_SR_CPFILE_OFFSET(nilfs));
+		nilfs->ns_cpfile, bh_sr, NILFS_SR_CPFILE_OFFSET(isz));
 	nilfs_mdt_write_inode_direct(
-		nilfs->ns_sufile, bh_sr, NILFS_SR_SUFILE_OFFSET(nilfs));
+		nilfs->ns_sufile, bh_sr, NILFS_SR_SUFILE_OFFSET(isz));
 }
 
 static void nilfs_redirty_inodes(struct list_head *head)
