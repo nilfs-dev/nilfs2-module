@@ -137,8 +137,7 @@ static inline void nilfs_mdt_destroy(struct inode *inode)
 	struct nilfs_mdt_info *mdi = NILFS_MDT(inode);
 
 	mdt_debug(2, "called (ino=%lu)\n", inode->i_ino);
-	if (mdi->mi_bgl)
-		kfree(mdi->mi_bgl);
+	kfree(mdi->mi_bgl); /* kfree(NULL) is safe */
 	kfree(mdi);
 	nilfs_destroy_inode(inode);
 	mdt_debug(2, "done\n");
