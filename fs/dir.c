@@ -49,8 +49,6 @@
 #include <linux/smp_lock.h>
 #include "page.h"
 
-typedef struct nilfs_dir_entry nilfs_dirent;
-
 /*
  * nilfs uses block-sized chunks. Arguably, sector-sized ones would be
  * more robust, but we have what we have
@@ -160,7 +158,7 @@ static void nilfs_check_page(struct page *page)
 	char *kaddr = page_address(page);
 	unsigned offs, rec_len;
 	unsigned limit = PAGE_CACHE_SIZE;
-	nilfs_dirent *p;
+	struct nilfs_dir_entry *p;
 	char *error;
 
 	if ((dir->i_size >> PAGE_CACHE_SHIFT) == page->index) {
@@ -171,7 +169,7 @@ static void nilfs_check_page(struct page *page)
 			goto out;
 	}
 	for (offs = 0; offs <= limit - NILFS_DIR_REC_LEN(1); offs += rec_len) {
-		p = (nilfs_dirent *)(kaddr + offs);
+		p = (struct nilfs_dir_entry *)(kaddr + offs);
 		rec_len = le16_to_cpu(p->rec_len);
 
 		if (rec_len < NILFS_DIR_REC_LEN(1))
@@ -216,7 +214,7 @@ bad_entry:
 		    rec_len, p->name_len);
 	goto fail;
 Eend:
-	p = (nilfs_dirent *)(kaddr + offs);
+	p = (struct nilfs_dir_entry *)(kaddr + offs);
 	nilfs_error(sb, "nilfs_check_page",
 		    "entry in directory #%lu spans the page boundary"
 		    "offset=%lu, inode=%lu",
@@ -267,9 +265,9 @@ nilfs_match(int len, const char * const name, struct nilfs_dir_entry *de)
 /*
  * p is at least 6 bytes before the end of page
  */
-static nilfs_dirent *nilfs_next_entry(nilfs_dirent *p)
+static struct nilfs_dir_entry *nilfs_next_entry(struct nilfs_dir_entry *p)
 {
-	return (nilfs_dirent *)((char*)p + le16_to_cpu(p->rec_len));
+	return (struct nilfs_dir_entry *)((char *)p + le16_to_cpu(p->rec_len));
 }
 
 static unsigned char
@@ -296,7 +294,7 @@ nilfs_type_by_mode[S_IFMT >> S_SHIFT] = {
 	[S_IFLNK >> S_SHIFT]	= NILFS_FT_SYMLINK,
 };
 
-static void nilfs_set_de_type(nilfs_dirent *de, struct inode *inode)
+static void nilfs_set_de_type(struct nilfs_dir_entry *de, struct inode *inode)
 {
 	mode_t mode = inode->i_mode;
 
@@ -322,7 +320,7 @@ static int nilfs_readdir(struct file *filp, void *dirent, filldir_t filldir)
 
 	for ( ; n < npages; n++, offset = 0) {
 		char *kaddr, *limit;
-		nilfs_dirent *de;
+		struct nilfs_dir_entry *de;
 		struct page *page = nilfs_get_page(inode, n);
 
 		if (IS_ERR(page)) {
@@ -334,7 +332,7 @@ static int nilfs_readdir(struct file *filp, void *dirent, filldir_t filldir)
 			goto done;
 		}
 		kaddr = page_address(page);
-		de = (nilfs_dirent *)(kaddr+offset);
+		de = (struct nilfs_dir_entry *)(kaddr + offset);
 		limit = kaddr + nilfs_last_byte(inode, n) - NILFS_DIR_REC_LEN(1);
 		for ( ; (char*)de <= limit; de = nilfs_next_entry(de)) {
 			if (de->rec_len == 0) {
@@ -390,7 +388,7 @@ nilfs_find_entry(struct inode *dir, struct dentry *dentry,
 	unsigned long npages = dir_pages(dir);
 	struct page *page = NULL;
 	struct nilfs_inode_info *ei = NILFS_I(dir);
-	nilfs_dirent *de;
+	struct nilfs_dir_entry *de;
 
 	if (npages == 0)
 		goto out;
@@ -407,7 +405,7 @@ nilfs_find_entry(struct inode *dir, struct dentry *dentry,
 		page = nilfs_get_page(dir, n);
 		if (!IS_ERR(page)) {
 			kaddr = page_address(page);
-			de = (nilfs_dirent *) kaddr;
+			de = (struct nilfs_dir_entry *)kaddr;
 			kaddr += nilfs_last_byte(dir, n) - reclen;
 			while ((char *) de <= kaddr) {
 				if (de->rec_len == 0) {
@@ -445,10 +443,11 @@ found:
 struct nilfs_dir_entry *nilfs_dotdot(struct inode *dir, struct page **p)
 {
 	struct page *page = nilfs_get_page(dir, 0);
-	nilfs_dirent *de = NULL;
+	struct nilfs_dir_entry *de = NULL;
 
 	if (!IS_ERR(page)) {
-		de = nilfs_next_entry((nilfs_dirent *) page_address(page));
+		de = nilfs_next_entry(
+			(struct nilfs_dir_entry *)page_address(page));
 		*p = page;
 	}
 	return de;
@@ -502,7 +501,7 @@ int nilfs_add_link(struct dentry *dentry, struct inode *inode)
 	unsigned reclen = NILFS_DIR_REC_LEN(namelen);
 	unsigned short rec_len, name_len;
 	struct page *page = NULL;
-	nilfs_dirent *de;
+	struct nilfs_dir_entry *de;
 	unsigned long npages = dir_pages(dir);
 	unsigned long n;
 	char *kaddr;
@@ -524,7 +523,7 @@ int nilfs_add_link(struct dentry *dentry, struct inode *inode)
 		lock_page(page);
 		kaddr = page_address(page);
 		dir_end = kaddr + nilfs_last_byte(dir, n);
-		de = (nilfs_dirent *)kaddr;
+		de = (struct nilfs_dir_entry *)kaddr;
 		kaddr += PAGE_CACHE_SIZE - reclen;
 		while ((char *)de <= kaddr) {
 			if ((char *)de == dir_end) {
@@ -550,7 +549,7 @@ int nilfs_add_link(struct dentry *dentry, struct inode *inode)
 				goto got_it;
 			if (rec_len >= name_len + reclen)
 				goto got_it;
-			de = (nilfs_dirent *) ((char *) de + rec_len);
+			de = (struct nilfs_dir_entry *)((char *)de + rec_len);
 		}
 		unlock_page(page);
 		nilfs_put_page(page);
@@ -565,7 +564,9 @@ got_it:
 	if (err)
 		goto out_unlock;
 	if (de->inode) {
-		nilfs_dirent *de1 = (nilfs_dirent *) ((char *) de + name_len);
+		struct nilfs_dir_entry *de1;
+
+		de1 = (struct nilfs_dir_entry *)((char *)de + name_len);
 		de1->rec_len = cpu_to_le16(rec_len - name_len);
 		de->rec_len = cpu_to_le16(name_len);
 		de = de1;
@@ -597,10 +598,10 @@ int nilfs_delete_entry(struct nilfs_dir_entry *dir, struct page *page)
 	struct address_space *mapping = page->mapping;
 	struct inode *inode = mapping->host;
 	char *kaddr = page_address(page);
-	unsigned from = ((char*)dir - kaddr) & ~(nilfs_chunk_size(inode)-1);
-	unsigned to = ((char*)dir - kaddr) + le16_to_cpu(dir->rec_len);
-	nilfs_dirent *pde = NULL;
-	nilfs_dirent *de = (nilfs_dirent *) (kaddr + from);
+	unsigned from = ((char *)dir - kaddr) & ~(nilfs_chunk_size(inode) - 1);
+	unsigned to = ((char *)dir - kaddr) + le16_to_cpu(dir->rec_len);
+	struct nilfs_dir_entry *pde = NULL;
+	struct nilfs_dir_entry *de = (struct nilfs_dir_entry *)(kaddr + from);
 	int err;
 
 	while ((char*)de < (char*)dir) {
@@ -682,14 +683,14 @@ int nilfs_empty_dir(struct inode *inode)
 
 	for (i = 0; i < npages; i++) {
 		char *kaddr;
-		nilfs_dirent *de;
-		page = nilfs_get_page(inode, i);
+		struct nilfs_dir_entry *de;
 
+		page = nilfs_get_page(inode, i);
 		if (IS_ERR(page))
 			continue;
 
 		kaddr = page_address(page);
-		de = (nilfs_dirent *)kaddr;
+		de = (struct nilfs_dir_entry *)kaddr;
 		kaddr += nilfs_last_byte(inode, i) - NILFS_DIR_REC_LEN(1);
 
 		while ((char *)de <= kaddr) {
