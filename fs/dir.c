@@ -115,10 +115,7 @@ static int nilfs_commit_chunk(struct page *page,
 	unsigned len = to - from;
 	unsigned nr_dirty, copied;
 	int err;
-/*
- *	validate_entry()
- *	dir->i_version++;
- */
+
 	nr_dirty = nilfs_page_count_clean_buffers(page, from, to);
 	copied = block_write_end(NULL, mapping, pos, len, len, page, NULL);
 	if (pos + copied > dir->i_size) {
@@ -146,10 +143,7 @@ static int nilfs_commit_chunk(struct page *page,
 {
 	struct inode *dir = mapping->host;
 	int err = 0;
-/*
- *	validate_entry()
- *	dir->i_version++;
- */
+
 	err = page->mapping->a_ops->commit_write(NULL, page, from, to);
 	if (!err && IS_DIRSYNC(dir))
 		nilfs_set_transaction_flag(NILFS_TI_SYNC);
@@ -278,19 +272,6 @@ static nilfs_dirent *nilfs_next_entry(nilfs_dirent *p)
 	return (nilfs_dirent *)((char*)p + le16_to_cpu(p->rec_len));
 }
 
-static unsigned
-nilfs_validate_entry(char *base, unsigned offset, unsigned mask)
-{
-	nilfs_dirent *de = (nilfs_dirent*)(base + offset);
-	nilfs_dirent *p = (nilfs_dirent*)(base + (offset&mask));
-	while ((char*)p < (char*)de) {
-		if (p->rec_len == 0)
-			break;
-		p = nilfs_next_entry(p);
-	}
-	return (char *)p - base;
-}
-
 static unsigned char
 nilfs_filetype_table[NILFS_FT_MAX] = {
 	[NILFS_FT_UNKNOWN]	= DT_UNKNOWN,
@@ -332,9 +313,6 @@ static int nilfs_readdir(struct file *filp, void *dirent, filldir_t filldir)
 	unsigned long npages = dir_pages(inode);
 /*	unsigned chunk_mask = ~(nilfs_chunk_size(inode)-1); */
 	unsigned char *types = NULL;
-/*
- *	int need_revalidate = (filp->f_version != inode->i_version);
- */
 	int ret;
 
 	if (pos > inode->i_size - NILFS_DIR_REC_LEN(1))
@@ -356,12 +334,6 @@ static int nilfs_readdir(struct file *filp, void *dirent, filldir_t filldir)
 			goto done;
 		}
 		kaddr = page_address(page);
-/*
- *		if (need_revalidate) {
- *			offset = nilfs_validate_entry(kaddr, offset, chunk_mask);
- *			need_revalidate = 0;
- *		}
- */
 		de = (nilfs_dirent *)(kaddr+offset);
 		limit = kaddr + nilfs_last_byte(inode, n) - NILFS_DIR_REC_LEN(1);
 		for ( ; (char*)de <= limit; de = nilfs_next_entry(de)) {
@@ -396,7 +368,6 @@ static int nilfs_readdir(struct file *filp, void *dirent, filldir_t filldir)
 success:
 	ret = 0;
 done:
-/*	filp->f_version = inode->i_version; */
 	return ret;
 }
 
