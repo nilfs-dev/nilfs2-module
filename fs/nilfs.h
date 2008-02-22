@@ -207,14 +207,14 @@ static inline int nilfs_init_acl(struct inode *inode, struct inode *dir)
 
 
 /* dir.c */
-extern int nilfs_add_link (struct dentry *, struct inode *);
+extern int nilfs_add_link(struct dentry *, struct inode *);
 extern ino_t nilfs_inode_by_name(struct inode *, struct dentry *);
 extern int nilfs_make_empty(struct inode *, struct inode *);
 extern struct nilfs_dir_entry *
 nilfs_find_entry(struct inode *, struct dentry *, struct page **);
-extern int nilfs_delete_entry (struct nilfs_dir_entry *, struct page *);
-extern int nilfs_empty_dir (struct inode *);
-extern struct nilfs_dir_entry * nilfs_dotdot (struct inode *, struct page **);
+extern int nilfs_delete_entry(struct nilfs_dir_entry *, struct page *);
+extern int nilfs_empty_dir(struct inode *);
+extern struct nilfs_dir_entry * nilfs_dotdot(struct inode *, struct page **);
 extern void nilfs_set_link(struct inode *, struct nilfs_dir_entry *,
 			   struct page *, struct inode *);
 
@@ -250,7 +250,7 @@ nilfs_load_inode_block_nolock(struct nilfs_sb_info *, struct inode *,
 /* super.c */
 extern struct inode *nilfs_alloc_inode(struct super_block *);
 extern void nilfs_destroy_inode(struct inode *);
-extern void nilfs_error (struct super_block *, const char *, const char *, ...)
+extern void nilfs_error(struct super_block *, const char *, const char *, ...)
 	__attribute__ ((format (printf, 3, 4)));
 extern void nilfs_warning(struct super_block *, const char *, const char *, ...)
        __attribute__ ((format (printf, 3, 4)));

@@ -200,8 +200,8 @@ out:
 
 Ebadsize:
 	nilfs_error(sb, "nilfs_check_page",
-		"size of directory #%lu is not a multiple of chunk size",
-		dir->i_ino
+		    "size of directory #%lu is not a multiple of chunk size",
+		    dir->i_ino
 	);
 	goto fail;
 Eshort:
@@ -224,11 +224,11 @@ bad_entry:
 	goto fail;
 Eend:
 	p = (nilfs_dirent *)(kaddr + offs);
-	nilfs_error (sb, "nilfs_check_page",
-		"entry in directory #%lu spans the page boundary"
-		"offset=%lu, inode=%lu",
-		dir->i_ino, (page->index<<PAGE_CACHE_SHIFT)+offs,
-		(unsigned long) le64_to_cpu(p->inode));
+	nilfs_error(sb, "nilfs_check_page",
+		    "entry in directory #%lu spans the page boundary"
+		    "offset=%lu, inode=%lu",
+		    dir->i_ino, (page->index<<PAGE_CACHE_SHIFT)+offs,
+		    (unsigned long) le64_to_cpu(p->inode));
 fail:
 	SetPageChecked(page);
 	SetPageError(page);
@@ -262,7 +262,7 @@ fail:
  * len <= NILFS_NAME_LEN and de != NULL are guaranteed by caller.
  */
 static inline int
-nilfs_match (int len, const char * const name, struct nilfs_dir_entry *de)
+nilfs_match(int len, const char * const name, struct nilfs_dir_entry *de)
 {
 	if (len != de->name_len)
 		return 0;
@@ -447,7 +447,7 @@ nilfs_find_entry(struct inode *dir, struct dentry *dentry,
 					nilfs_put_page(page);
 					goto out;
 				}
-				if (nilfs_match (namelen, name, de))
+				if (nilfs_match(namelen, name, de))
 					goto found;
 				de = nilfs_next_entry(de);
 			}
@@ -573,7 +573,7 @@ int nilfs_add_link(struct dentry *dentry, struct inode *inode)
 				goto out_unlock;
 			}
 			err = -EEXIST;
-			if (nilfs_match (namelen, name, de))
+			if (nilfs_match(namelen, name, de))
 				goto out_unlock;
 			name_len = NILFS_DIR_REC_LEN(de->name_len);
 			rec_len = le16_to_cpu(de->rec_len);
@@ -688,14 +688,14 @@ int nilfs_make_empty(struct inode *inode, struct inode *parent)
 	de->rec_len = cpu_to_le16(NILFS_DIR_REC_LEN(1));
 	memcpy(de->name, ".\0\0", 4);
 	de->inode = cpu_to_le64(inode->i_ino);
-	nilfs_set_de_type (de, inode);
+	nilfs_set_de_type(de, inode);
 
 	de = (struct nilfs_dir_entry *)(kaddr + NILFS_DIR_REC_LEN(1));
 	de->name_len = 2;
 	de->rec_len = cpu_to_le16(chunk_size - NILFS_DIR_REC_LEN(1));
 	de->inode = cpu_to_le64(parent->i_ino);
 	memcpy(de->name, "..\0", 4);
-	nilfs_set_de_type (de, inode);
+	nilfs_set_de_type(de, inode);
 	kunmap_atomic(kaddr, KM_USER0);
 	err = nilfs_commit_chunk(page, mapping, 0, chunk_size);
 fail:

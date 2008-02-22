@@ -178,7 +178,7 @@ out:
 
 out_fail:
 	inode_dec_link_count(inode);
-	iput (inode);
+	iput(inode);
 	goto out;
 }
 
@@ -266,7 +266,7 @@ static int nilfs_unlink(struct inode *dir, struct dentry *dentry)
 		return err;
 
 	err = -ENOENT;
-	de = nilfs_find_entry (dir, dentry, &page);
+	de = nilfs_find_entry(dir, dentry, &page);
 	if (!de)
 		goto out;
 
@@ -281,7 +281,7 @@ static int nilfs_unlink(struct inode *dir, struct dentry *dentry)
 			      inode->i_ino, inode->i_nlink);
 		inode->i_nlink = 1;
 	}
-	err = nilfs_delete_entry (de, page);
+	err = nilfs_delete_entry(de, page);
 	if (err)
 		goto out;
 
@@ -333,7 +333,7 @@ static int nilfs_rename(struct inode *old_dir, struct dentry *old_dentry,
 		return err;
 
 	err = -ENOENT;
-	old_de = nilfs_find_entry (old_dir, old_dentry, &old_page);
+	old_de = nilfs_find_entry(old_dir, old_dentry, &old_page);
 	if (!old_de)
 		goto out;
 
@@ -349,11 +349,11 @@ static int nilfs_rename(struct inode *old_dir, struct dentry *old_dentry,
 		struct nilfs_dir_entry *new_de;
 
 		err = -ENOTEMPTY;
-		if (dir_de && !nilfs_empty_dir (new_inode))
+		if (dir_de && !nilfs_empty_dir(new_inode))
 			goto out_dir;
 
 		err = -ENOENT;
-		new_de = nilfs_find_entry (new_dir, new_dentry, &new_page);
+		new_de = nilfs_find_entry(new_dir, new_dentry, &new_page);
 		if (!new_de)
 			goto out_dir;
 		inode_inc_link_count(old_inode);
@@ -385,7 +385,7 @@ static int nilfs_rename(struct inode *old_dir, struct dentry *old_dentry,
 	 */
 	old_inode->i_ctime = CURRENT_TIME;
 
-	nilfs_delete_entry (old_de, old_page);
+	nilfs_delete_entry(old_de, old_page);
 	inode_dec_link_count(old_inode);
 
 	if (dir_de) {
