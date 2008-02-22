@@ -110,7 +110,7 @@ static int nilfs_read_debug_option(char *page, char **start, off_t off,
 
 	spin_lock(&debug_info_lock);
 
-	for (flag = 0; flag < NILFS_VERBOSE_LIMIT; flag ++) {
+	for (flag = 0; flag < NILFS_VERBOSE_LIMIT; flag++) {
 		const char *vopt, *p;
 		int level = min(MAX_VLEVEL,
 				(int)nilfs_debug_info.verbose[flag]);
@@ -178,7 +178,7 @@ static int nilfs_parse_debug_option(char *data)
 			goto bad_option;
 
 		token = match_token(++p, opt_tokens, args);
-		switch(token) {
+		switch (token) {
 		case Opt_verbose:  level = 1; break;
 		case Opt_verbose2: level = 2; break;
 		case Opt_verbose3: level = 3; break;
@@ -744,7 +744,7 @@ nilfs_sync_page(struct page *page)
 #define __ESC(f)   return (f)
 int
 #else
-#define __ESC(f)   do { (f); return; } while(1)
+#define __ESC(f)   do { (f); return; } while (1)
 void
 #endif /* NEED_INVALIDATEPAGE_RETVAL */
 nilfs_invalidatepage(struct page *page, unsigned long offset)

@@ -519,11 +519,13 @@ extern unsigned __nilfs_find_get_pages_tag(struct address_space *, pgoff_t *,
 #endif
 
 #if NEED_MOUNT_SEMAPHORE
-#define nilfs_lock_bdev(bdev)  do { down(&(bdev)->bd_mount_sem); } while(0)
-#define nilfs_unlock_bdev(bdev)  do { up(&(bdev)->bd_mount_sem); } while(0)
+#define nilfs_lock_bdev(bdev)  do { down(&(bdev)->bd_mount_sem); } while (0)
+#define nilfs_unlock_bdev(bdev)  do { up(&(bdev)->bd_mount_sem); } while (0)
 #else
-#define nilfs_lock_bdev(bdev)  do { mutex_lock(&(bdev)->bd_mount_mutex); } while(0)
-#define nilfs_unlock_bdev(bdev)  do { mutex_unlock(&(bdev)->bd_mount_mutex); } while(0)
+#define nilfs_lock_bdev(bdev)  \
+	do { mutex_lock(&(bdev)->bd_mount_mutex); } while (0)
+#define nilfs_unlock_bdev(bdev)  \
+	do { mutex_unlock(&(bdev)->bd_mount_mutex); } while (0)
 #endif
 
 #if NEED_RWLOCK_FOR_PAGECACHE_LOCK

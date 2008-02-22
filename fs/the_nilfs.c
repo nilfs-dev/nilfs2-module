@@ -295,7 +295,7 @@ static loff_t nilfs_max_size(unsigned int bits)
 	loff_t res;
 	int max_bits = bits + min((loff_t)nilfs_btree_max_bits(),
 				  nilfs_max_file_blkbits());
-	if (max_bits > sizeof(loff_t) * 8 /* CHAR_BITS */ )
+	if (max_bits > sizeof(loff_t) * 8 /* CHAR_BITS */)
 		res = ~((loff_t) 0);
 	else
 		res = ((loff_t)1 << max_bits);

@@ -141,7 +141,7 @@ struct inode *nilfs_alloc_inode(struct super_block *sb)
 	struct nilfs_inode_info *ii;
 
 	ii = kmem_cache_alloc(nilfs_inode_cachep, GFP_NOFS);
-	if(!ii)
+	if (!ii)
 		return NULL;
 	ii->i_bh = NULL;
 	ii->i_state = 0;
@@ -163,7 +163,7 @@ static void init_once(struct kmem_cache *cachep, void *obj)
 {
 	struct nilfs_inode_info *ii = (struct nilfs_inode_info *)obj;
 #if NEED_SLAB_CTOR_CONSTRUCTOR
-	if((flags & (SLAB_CTOR_VERIFY | SLAB_CTOR_CONSTRUCTOR)) ==
+	if ((flags & (SLAB_CTOR_VERIFY | SLAB_CTOR_CONSTRUCTOR)) ==
 	   SLAB_CTOR_CONSTRUCTOR) {
 #endif
 		INIT_LIST_HEAD(&ii->i_dirty);
@@ -204,11 +204,11 @@ static void nilfs_clear_inode(struct inode *inode)
 
 	inode_debug(3, "called (ino=%lu)\n", inode->i_ino);
 #ifdef CONFIG_NILFS_POSIX_ACL
-	if(ii->i_acl && ii->i_acl != NILFS_ACL_NOT_CACHED) {
+	if (ii->i_acl && ii->i_acl != NILFS_ACL_NOT_CACHED) {
 		posix_acl_release(ii->i_acl);
 		ii->i_acl = NILFS_ACL_NOT_CACHED;
 	}
-	if(ii->i_default_acl && ii->i_default_acl != NILFS_ACL_NOT_CACHED) {
+	if (ii->i_default_acl && ii->i_default_acl != NILFS_ACL_NOT_CACHED) {
 		posix_acl_release(ii->i_default_acl);
 		ii->i_default_acl = NILFS_ACL_NOT_CACHED;
 	}
@@ -219,7 +219,7 @@ static void nilfs_clear_inode(struct inode *inode)
 	nilfs_transaction_begin(inode->i_sb, &ti, 0);
 
 	spin_lock(&sbi->s_inode_lock);
-	if(!list_empty(&ii->i_dirty)) {
+	if (!list_empty(&ii->i_dirty)) {
 		inode_debug(2, "canceling inode (ino=%lu) from a list\n",
 			    inode->i_ino);
 		list_del_init(&ii->i_dirty);
@@ -343,7 +343,7 @@ static void nilfs_put_super(struct super_block *sb)
 	nilfs_debug(2, "Deactivating segment constructor\n");
 	nilfs_detach_segment_constructor(sbi);
 
-	if(!(sb->s_flags & MS_RDONLY)) {
+	if (!(sb->s_flags & MS_RDONLY)) {
 		down_write(&nilfs->ns_sem);
 		nilfs_debug(1, "Closing on-disk superblock\n");
 		nilfs->ns_sbp->s_state = cpu_to_le16(nilfs->ns_mount_state);
@@ -394,7 +394,7 @@ static void nilfs_write_super(struct super_block *sb)
 	struct the_nilfs *nilfs = sbi->s_nilfs;
 
 	down_write(&nilfs->ns_sem);
-	if(!(sb->s_flags & MS_RDONLY))
+	if (!(sb->s_flags & MS_RDONLY))
 		nilfs_commit_super(sbi, 1);
 	sb->s_dirt = 0;
 	up_write(&nilfs->ns_sem);
@@ -615,13 +615,13 @@ static int parse_options(char *options, struct super_block *sb)
 	if (!options)
 		return 1;
 
-	while((p = strsep(&options, ",")) != NULL) {
+	while ((p = strsep(&options, ",")) != NULL) {
 		int token;
 		if (!*p)
 			continue;
 
 		token = match_token(p, tokens, args);
-		switch(token) {
+		switch (token) {
 		case Opt_barrier:
 			if (match_bool(&args[0], &option))
 				return 0;
@@ -684,11 +684,11 @@ static int nilfs_setup_super(struct nilfs_sb_info *sbi)
 	/* nilfs->sem must be locked by the caller. */
 	if (!(nilfs->ns_mount_state & NILFS_VALID_FS)) {
 		printk(KERN_WARNING "NILFS warning: mounting unchecked fs\n");
-	} else if(nilfs->ns_mount_state & NILFS_ERROR_FS) {
+	} else if (nilfs->ns_mount_state & NILFS_ERROR_FS) {
 		printk(KERN_WARNING
 		       "NILFS warning: mounting fs with errors\n");
 #if 0
-	} else if(max_mnt_count >= 0 && mnt_count >= max_mnt_count) {
+	} else if (max_mnt_count >= 0 && mnt_count >= max_mnt_count) {
 		printk(KERN_WARNING
 		       "NILFS warning: maximal mount count reached\n");
 #endif
@@ -724,7 +724,7 @@ nilfs_load_super_block(struct super_block *sb, struct buffer_head **pbh)
 	offset = NILFS_SB_OFFSET_BYTES % blocksize;
 
 	*pbh = sb_bread(sb, sb_index);
-	if(!*pbh) {
+	if (!*pbh) {
 		printk("NILFS: unable to read superblock\n");
 		return NULL;
 	}
@@ -971,7 +971,7 @@ static int nilfs_remount(struct super_block *sb, int *flags, char *data)
 	old_opts.mount_opt = sbi->s_mount_opt;
 	old_opts.snapshot_cno = sbi->s_snapshot_cno;
 
-	if(!parse_options(data, sb)) {
+	if (!parse_options(data, sb)) {
 		err = -EINVAL;
 		goto restore_opts;
 	}
@@ -986,7 +986,7 @@ static int nilfs_remount(struct super_block *sb, int *flags, char *data)
 		goto restore_opts;
 	}
 
-	if((*flags & MS_RDONLY) == (sb->s_flags & MS_RDONLY))
+	if ((*flags & MS_RDONLY) == (sb->s_flags & MS_RDONLY))
 		goto out;
 	if (*flags & MS_RDONLY) {
 		/* Shutting down the segment constructor */
@@ -1081,11 +1081,14 @@ static int nilfs_identify(char *data, struct nilfs_super_data *sd)
 			if (token == Opt_snapshot) {
 				if (!(sd->flags & MS_RDONLY))
 					ret++;
-				else if (!(ret = match_int(&args[0], &option))){
-					if (option > 0)
-						sd->cno = option;
-					else
-						ret++;
+				else {
+					ret = match_int(&args[0], &option);
+					if (!ret) {
+						if (option > 0)
+							sd->cno = option;
+						else
+							ret++;
+					}
 				}
 			}
 			if (ret)

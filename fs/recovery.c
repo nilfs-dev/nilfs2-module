@@ -240,7 +240,7 @@ load_segment_summary(struct nilfs_sb_info *sbi, sector_t pseg_start,
 		       "checking segment (pseg_start=%llu, full_check=%d)\n",
 		       (unsigned long long)pseg_start, full_check);
 	bh_sum = sb_bread(sbi->s_super, pseg_start);
-	if(!bh_sum)
+	if (!bh_sum)
 		goto out;
 
 	sum = (struct nilfs_segment_summary *)bh_sum->b_data;
@@ -919,7 +919,7 @@ int nilfs_search_super_root(struct the_nilfs *nilfs, struct nilfs_sb_info *sbi,
 		       (unsigned long long)segnum,
 		       (unsigned long long)seg_seq);
 
-	for(;;) {
+	for (;;) {
 		/* Load segment summary */
 		ret = load_segment_summary(sbi, pseg_start, seg_seq, &ssi, 1);
 		if (ret) {

@@ -41,7 +41,7 @@ static void nilfs_segbuf_init_once(struct kmem_cache *cachep, void *obj)
 {
 	struct nilfs_segment_buffer *segbuf = obj;
 #if NEED_SLAB_CTOR_CONSTRUCTOR
-	if((flags & (SLAB_CTOR_VERIFY | SLAB_CTOR_CONSTRUCTOR)) ==
+	if ((flags & (SLAB_CTOR_VERIFY | SLAB_CTOR_CONSTRUCTOR)) ==
 	   SLAB_CTOR_CONSTRUCTOR) {
 #endif
 		memset(segbuf, 0, sizeof(*segbuf));
@@ -151,7 +151,7 @@ int nilfs_segbuf_extend_payload(struct nilfs_segment_buffer *segbuf,
 
 	bh = sb_getblk(segbuf->sb_super,
 		       segbuf->sb_pseg_start + segbuf->sb_sum.nblocks);
-	if(unlikely(!bh))
+	if (unlikely(!bh))
 		return -ENOMEM;
 
 	nilfs_segbuf_add_payload_buffer(segbuf, bh);

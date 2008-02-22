@@ -92,21 +92,21 @@ enum {
 #define SC_STAGE_INIT(stage)  \
 	do { \
 	     (stage)->main = (stage)->sub = 0; \
-	 } while(0)
+	 } while (0)
 #define SC_STAGE_CLEAR_HISTORY(stage)  \
 	do { \
 	     (stage)->started = (stage)->done = 0; \
-	} while(0)
+	} while (0)
 #define SC_STAGE_NEXT(stage)  \
 	do { \
 	     (stage)->done |= (1 << (stage)->main++); \
 	     (stage)->started |= (1 << (stage)->main); \
-	} while(0)
+	} while (0)
 #define SC_STAGE_SKIP_TO(stage, s)  \
 	do { \
 	     (stage)->done |= (1 << (stage)->main); \
 	     (stage)->started |= (1 << ((stage)->main = (s))); \
-	} while(0)
+	} while (0)
 
 #define SC_STAGE_STARTED(stage, s) ((stage)->started & (1 << (s)))
 #define SC_STAGE_DONE(stage, s)    ((stage)->done & (1 << (s)))

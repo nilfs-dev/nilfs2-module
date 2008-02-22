@@ -35,20 +35,20 @@
 		if ((l) <= (int)nilfs_debug_info.verbose[0])  \
 			printk(KERN_DEBUG "NILFS %s: " f,  \
 			       __FUNCTION__, ## a);  \
-	} while(0)
+	} while (0)
 
 #define nilfs_debug_verbose(v, l, c, f, a...)  \
 	do {  \
 		if ((l) <= (int)nilfs_debug_info.verbose[v])  \
 			printk(KERN_DEBUG "NILFS(" c ") %s: " f, \
 			       __FUNCTION__, ## a);              \
-	} while(0)
+	} while (0)
 
 #define nilfs_dump_stack(v, l)  \
 	do {  \
 		if ((l) <= (int)nilfs_debug_info.verbose[v])  \
 			dump_stack();   \
-	} while(0)
+	} while (0)
 
 #define seg_debug(l, f, a...)  \
 	nilfs_debug_verbose(NILFS_VERBOSE_SEGMENT, l, "segment", f, ## a)
@@ -160,7 +160,7 @@ extern int nilfs_init_proc_entries(void);
 extern void nilfs_remove_proc_entries(void);
 extern void nilfs_init_counters(void);
 extern void nilfs_fill_debug_info(int);
-#define nilfs_init_debug_info()  do { nilfs_fill_debug_info(1); } while(0)
+#define nilfs_init_debug_info()  do { nilfs_fill_debug_info(1); } while (0)
 
 typedef int (*nilfs_print_binfo_proc_t)(char *, int, union nilfs_binfo *);
 
@@ -198,17 +198,17 @@ extern void nilfs_print_bmap_direct_pointers(struct inode *,
 
 #else /* CONFIG_NILFS_DEBUG */
 #define nilfs_init_proc_entries()  (0)
-#define nilfs_remove_proc_entries()  do {} while(0)
-#define nilfs_init_counters()  do {} while(0)
-#define nilfs_init_debug_info()  do {} while(0)
-#define nilfs_print_seginfo(segbuf)  do {} while(0)
-#define nilfs_print_finfo(blocknr, ino, nblocks, ndatablk)  do {} while(0)
-#define nilfs_print_binfo(blocknr, binfo, proc)  do {} while(0)
-#define nilfs_print_segment_list(name, head, sufile)  do {} while(0)
+#define nilfs_remove_proc_entries()  do {} while (0)
+#define nilfs_init_counters()  do {} while (0)
+#define nilfs_init_debug_info()  do {} while (0)
+#define nilfs_print_seginfo(segbuf)  do {} while (0)
+#define nilfs_print_finfo(blocknr, ino, nblocks, ndatablk)  do {} while (0)
+#define nilfs_print_binfo(blocknr, binfo, proc)  do {} while (0)
+#define nilfs_print_segment_list(name, head, sufile)  do {} while (0)
 #define nilfs_releasepage	NULL
 #define nilfs_sync_page		NULL
 #define nilfs_invalidatepage	block_invalidatepage
-#define nilfs_print_bmap_direct_pointers(inode, p)  do {} while(0)
+#define nilfs_print_bmap_direct_pointers(inode, p)  do {} while (0)
 
 #define NILFS_CHECK_PAGE_CACHE(mapping, tag)  do {} while (0)
 #define NILFS_CHECK_BTNODE_CACHE(btnc, tag)  do {} while (0)
