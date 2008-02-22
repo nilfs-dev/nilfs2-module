@@ -169,7 +169,7 @@ static void nilfs_check_page(struct page *page)
 	unsigned limit = PAGE_CACHE_SIZE;
 	nilfs_dirent *p;
 	char *error;
-	
+
 	if ((dir->i_size >> PAGE_CACHE_SHIFT) == page->index) {
 		limit = dir->i_size & ~PAGE_CACHE_MASK;
 		if (limit & (chunk_size - 1))
@@ -280,7 +280,7 @@ nilfs_dirent *nilfs_next_entry(nilfs_dirent *p)
 	return (nilfs_dirent *)((char*)p + le16_to_cpu(p->rec_len));
 }
 
-static inline unsigned 
+static inline unsigned
 nilfs_validate_entry(char *base, unsigned offset, unsigned mask)
 {
 	nilfs_dirent *de = (nilfs_dirent*)(base + offset);
@@ -490,7 +490,7 @@ ino_t nilfs_inode_by_name(struct inode * dir, struct dentry *dentry)
 	ino_t res = 0;
 	struct nilfs_dir_entry * de;
 	struct page *page;
-	
+
 	de = nilfs_find_entry(dir, dentry, &page);
 	if (de) {
 		res = le64_to_cpu(de->inode);

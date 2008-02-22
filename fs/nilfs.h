@@ -123,7 +123,6 @@ enum {
 		1 << NILFS_CPFILE_INO | 1 << NILFS_SUFILE_INO |		\
 		1 << NILFS_IFILE_INO | 1 << NILFS_ATIME_INO |		\
 		1 << NILFS_SKETCH_INO)
-		 
 
 #define NILFS_VALID_INODE(sb, ino) \
   ((ino) >= NILFS_FIRST_INO(sb) || (NILFS_SYS_INO_BITS & (1 << (ino))))
@@ -254,7 +253,7 @@ extern void nilfs_destroy_inode(struct inode *);
 extern void nilfs_error (struct super_block *, const char *, const char *, ...)
 	__attribute__ ((format (printf, 3, 4)));
 extern void nilfs_warning(struct super_block *, const char *, const char *, ...)
-       __attribute__ ((format (printf, 3, 4)));			      
+       __attribute__ ((format (printf, 3, 4)));
 extern struct nilfs_super_block *
 nilfs_load_super_block(struct super_block *, struct buffer_head **);
 extern struct nilfs_super_block *

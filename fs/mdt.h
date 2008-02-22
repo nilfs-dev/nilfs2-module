@@ -173,7 +173,7 @@ nilfs_mdt_read_inode_direct(struct inode *inode, struct buffer_head *bh,
 		inode, (struct nilfs_inode *)(bh->b_data + n));
 }
 
-static inline void 
+static inline void
 nilfs_mdt_write_inode_direct(struct inode *inode, struct buffer_head *bh,
 			     unsigned n)
 {

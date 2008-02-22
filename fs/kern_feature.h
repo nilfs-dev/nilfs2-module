@@ -161,7 +161,7 @@
 	(LINUX_VERSION_CODE < KERNEL_VERSION(2,6,22))
 #endif
 /*
- * SLAB_CTOR_CONSTRUCTOR and SLAB_CTOR_VERIFY were removed 
+ * SLAB_CTOR_CONSTRUCTOR and SLAB_CTOR_VERIFY were removed
  * at linux-2.6.22.
  */
 #ifndef NEED_SLAB_CTOR_CONSTRUCTOR
@@ -335,7 +335,7 @@
 	(LINUX_VERSION_CODE < KERNEL_VERSION(2,6,17))
 #endif
 /*
- * A measure against a buffer overrun problem around sysfs write 
+ * A measure against a buffer overrun problem around sysfs write
  * for linux-2.6.16 and older versions.
  */
 #ifndef NEED_SYSFS_TERMINATOR_CHECK

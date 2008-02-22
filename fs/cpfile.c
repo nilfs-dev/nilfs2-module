@@ -319,7 +319,7 @@ int nilfs_cpfile_get_checkpoint(struct inode *cpfile,
 
  out_header:
 	brelse(header_bh);
-	
+
  out_sem:
 	up_write(&NILFS_MDT(cpfile)->mi_sem);
 	return ret;
@@ -797,7 +797,7 @@ static int nilfs_cpfile_set_snapshot(struct inode *cpfile, nilfs_cno_t cno)
 	nilfs_mdt_mark_buffer_dirty(cp_bh);
 	nilfs_mdt_mark_buffer_dirty(header_bh);
 	nilfs_mdt_mark_dirty(cpfile);
-	
+
 	brelse(prev_bh);
 
  out_curr:

@@ -65,7 +65,6 @@ nilfs_persistent_blocks_per_groups(struct inode *inode)
 inline static nilfs_blkoff_t
 nilfs_persistent_group_desc_blkoff(struct inode *inode, nilfs_bgno_t group)
 {
-	
 	sector_div(group, nilfs_persistent_group_descs_per_block(inode));
 	return group * (nilfs_persistent_group_descs_per_block(inode) *
 		 (nilfs_persistent_entries_per_group(inode) /
@@ -76,13 +75,13 @@ inline static nilfs_blkoff_t
 nilfs_persistent_group_bitmap_blkoff(struct inode *inode, nilfs_bgno_t group)
 {
 	nilfs_bgno_t g = group;
-	
+
 	return nilfs_persistent_group_desc_blkoff(inode, group) + 1 +
 		sector_div(g, nilfs_persistent_group_descs_per_block(inode)) *
 		(nilfs_persistent_entries_per_group(inode) /
 		 NILFS_MDT(inode)->mi_entries_per_block + 1);
 }
-							  
+
 /**
  * nilfs_persistent_req - request and reply
  * @nr: vblocknr or inode number

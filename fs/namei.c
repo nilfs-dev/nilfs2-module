@@ -65,7 +65,7 @@ nilfs_lookup(struct inode * dir, struct dentry *dentry, struct nameidata *nd)
 {
 	struct inode * inode;
 	ino_t ino;
-	
+
 	if (dentry->d_name.len > NILFS_NAME_LEN)
 		return ERR_PTR(-ENAMETOOLONG);
 
@@ -91,7 +91,7 @@ nilfs_lookup(struct inode * dir, struct dentry *dentry, struct nameidata *nd)
  * is so far negative - it has no inode.
  *
  * If the create succeeds, we fill in the inode information
- * with d_instantiate(). 
+ * with d_instantiate().
  */
 static int nilfs_create(struct inode * dir, struct dentry * dentry, int mode,
 			struct nameidata *nd)
@@ -116,7 +116,7 @@ static int nilfs_create(struct inode * dir, struct dentry * dentry, int mode,
 	return (err ? : err2);
 }
 
-static int 
+static int
 nilfs_mknod(struct inode * dir, struct dentry *dentry, int mode, dev_t rdev)
 {
 	struct inode * inode;

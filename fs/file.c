@@ -30,11 +30,11 @@
 
 int nilfs_sync_file(struct file *file, struct dentry *dentry, int datasync)
 {
-	/* 
+	/*
 	 * Called from fsync() system call
 	 * This is the only entry point that can catch write and synch
 	 * timing for both data blocks and intermediate blocks.
-	 * 
+	 *
 	 * This function should be implemented when the writeback function
 	 * will be implemented.
 	 */
@@ -99,7 +99,7 @@ nilfs_page_mkwrite(struct vm_area_struct *vma, struct page *page)
 	wait_on_page_writeback(page);
 	return 0;
 }
-				   
+
 struct vm_operations_struct nilfs_file_vm_ops = {
 #if HAVE_VMOPS_FAULT
 	.fault		= filemap_fault,

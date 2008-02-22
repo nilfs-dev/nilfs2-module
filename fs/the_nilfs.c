@@ -167,7 +167,7 @@ static int nilfs_load_super_root(struct the_nilfs *nilfs,
 
 	nilfs_mdt_set_entry_size(nilfs->ns_cpfile, checkpoint_size);
 	nilfs_mdt_set_entry_size(nilfs->ns_sufile, segment_usage_size);
-	
+
 	inode_size = nilfs->ns_inode_size;
 
 	err = nilfs_mdt_read_inode_direct(
@@ -223,7 +223,7 @@ static inline void nilfs_clear_recovery_info(struct nilfs_recovery_info *ri)
  * @nilfs: the_nilfs structure to be released
  * @sbi: nilfs_sb_info used to recover past segment
  *
- * load_nilfs() searches and load the latest super root, 
+ * load_nilfs() searches and load the latest super root,
  * attaches the last segment, and does recovery if needed.
  * The caller must call this exclusively for simultaneous mounts.
  */
@@ -240,7 +240,7 @@ int load_nilfs(struct the_nilfs *nilfs, struct nilfs_sb_info *sbi)
 	down_write(&nilfs->ns_sem);
 	valid_fs = (nilfs->ns_mount_state & NILFS_VALID_FS);
 	up_write(&nilfs->ns_sem);
-		
+
 	if (!valid_fs && (s_flags & MS_RDONLY)) {
 		printk(KERN_INFO "NILFS: INFO: recovery "
 		       "required for readonly filesystem.\n");
@@ -346,7 +346,7 @@ nilfs_store_disk_layout(struct the_nilfs *nilfs, struct super_block *sb,
  *
  * init_nilfs() performs common initialization per block device (e.g.
  * reading the super block, getting disk layout information, initializing
- * shared fields in the_nilfs). It takes on some portion of the jobs 
+ * shared fields in the_nilfs). It takes on some portion of the jobs
  * typically done by a fill_super() routine. This division arises from
  * the nature that multiple NILFS instances may be simultaneously
  * mounted on a device.
@@ -401,7 +401,7 @@ int init_nilfs(struct the_nilfs *nilfs, struct nilfs_sb_info *sbi, char *data)
 		sbp = nilfs_reload_super_block(sb, &sbh, blocksize);
 		if (!sbp) {
 			err = -EINVAL;
-			goto out; 
+			goto out;
                         /* not failed_sbh; sbh is released automatically
 			   when reloading fails. */
 		}

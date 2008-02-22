@@ -163,7 +163,7 @@ inline static int
 nilfs_inode_prepare_free_ino(struct inode *ifile,
 			     struct nilfs_persistent_req *req)
 {
-	nilfs_bgno_t group = 
+	nilfs_bgno_t group =
 		req->pr_ino / nilfs_persistent_entries_per_group(ifile);
 
 	return nilfs_persistent_prepare_free_entry(ifile, req, group);

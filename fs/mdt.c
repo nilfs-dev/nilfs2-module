@@ -160,7 +160,7 @@ nilfs_mdt_put_page_block(struct inode *inode, struct buffer_head *bh)
  *
  * Return Value: On success, it returns 0.  On error, the following negative
  * error code is returned.
- * 
+ *
  * %-ENOMEM - Insufficient memory available.
  *
  * %-EIO - I/O error
@@ -171,7 +171,7 @@ nilfs_mdt_put_page_block(struct inode *inode, struct buffer_head *bh)
  *
  * %-EROFS - Read only filesystem.
  */
-int nilfs_mdt_create_block(struct inode *inode, nilfs_blkoff_t block, 
+int nilfs_mdt_create_block(struct inode *inode, nilfs_blkoff_t block,
 			   struct buffer_head **out_bh,
 			   nilfs_mdt_init_block_t *init_block)
 {
@@ -305,7 +305,7 @@ nilfs_mdt_submit_block(struct inode *inode, nilfs_blkoff_t blkoff,
  *
  * Return Value: On success, it returns 0. On error, the following negative
  * error code is returned.
- * 
+ *
  * %-ENOMEM - Insufficient memory available.
  *
  * %-EIO - I/O error
@@ -422,7 +422,7 @@ int nilfs_mdt_get_block(struct inode *inode, nilfs_blkoff_t block, int create,
  *
  * Return Value: On success, zero is returned.
  * On error, one of the following negative error code is returned.
- * 
+ *
  * %-ENOMEM - Insufficient memory available.
  *
  * %-EIO - I/O error
@@ -452,7 +452,7 @@ int nilfs_mdt_delete_block(struct inode *inode, nilfs_blkoff_t block)
  *
  * Return Value: On success, zero is returned.
  * On error, one of the following negative error code is returned.
- * 
+ *
  * %-ENOMEM - Insufficient memory available.
  *
  * %-EIO - I/O error
@@ -701,7 +701,7 @@ struct inode *nilfs_mdt_new(struct the_nilfs *nilfs, struct super_block *sb,
 
 struct inode *
 nilfs_mdt_new_with_blockgroup(struct the_nilfs *nilfs, struct super_block *sb,
-			      ino_t ino, gfp_t gfp_mask, unsigned entry_size, 
+			      ino_t ino, gfp_t gfp_mask, unsigned entry_size,
 			      unsigned long groups_count)
 {
 	struct inode *inode = nilfs_mdt_new(nilfs, sb, ino, gfp_mask);

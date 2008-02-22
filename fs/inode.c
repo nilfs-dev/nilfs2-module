@@ -45,7 +45,7 @@
  * block. It is done by VFS.
  * Bulk read for direct-io is not supported yet. (should be supported)
  */
-int nilfs_get_block(struct inode *inode, sector_t blkoff, 
+int nilfs_get_block(struct inode *inode, sector_t blkoff,
 		    struct buffer_head *bh_result, int create)
 {
 	struct nilfs_inode_info *ii = NILFS_I(inode);
@@ -75,10 +75,10 @@ int nilfs_get_block(struct inode *inode, sector_t blkoff,
 		ret = nilfs_transaction_begin(inode->i_sb, &ti, 1);
 		if (unlikely(ret))
 			goto out;
-		ret = nilfs_bmap_insert(ii->i_bmap, (unsigned long)blkoff, 
+		ret = nilfs_bmap_insert(ii->i_bmap, (unsigned long)blkoff,
 					(unsigned long)bh_result);
 		nilfs_transaction_end(inode->i_sb, !ret);
-		/* How can we recover dirtied btree, if inserted block is 
+		/* How can we recover dirtied btree, if inserted block is
 		   abandoned without being dirtied ?? */
 		if (unlikely(ret != 0)) {
 			if (ret == -EEXIST) {
@@ -106,7 +106,7 @@ int nilfs_get_block(struct inode *inode, sector_t blkoff,
 		map_bh(bh_result, inode->i_sb, 0); /* dbn must be changed
 						      to proper value */
 	} else if (ret == -ENOENT) {
-                /* not found is not error (e.g. hole); must return without 
+                /* not found is not error (e.g. hole); must return without
                    the mapped state flag. */
 		;
 	} else {
@@ -361,7 +361,7 @@ struct inode *nilfs_new_inode(struct inode *dir, int mode)
 
 	mapping_set_gfp_mask(inode->i_mapping,
 			     mapping_gfp_mask(inode->i_mapping) & ~__GFP_FS);
-	
+
 	ii = NILFS_I(inode);
 	ii->i_state = 1 << NILFS_I_NEW;
 
@@ -383,7 +383,7 @@ struct inode *nilfs_new_inode(struct inode *dir, int mode)
 	inode->i_mode = mode;
 	inode->i_ino = ino;
 #if NEED_INODE_BLKSIZE
-	inode->i_blksize = PAGE_SIZE;	/* This is the optimal IO size 
+	inode->i_blksize = PAGE_SIZE;	/* This is the optimal IO size
 					   (for stat), not fs block size */
 #endif
 	inode->i_mtime = inode->i_atime = inode->i_ctime = CURRENT_TIME;
@@ -572,7 +572,7 @@ static inline int __nilfs_read_inode(struct super_block *sb, unsigned long ino,
 
 	raw_inode = nilfs_ifile_map_inode(sbi->s_ifile, ino, bh);
 
-	if (unlikely(raw_inode->i_flags & 
+	if (unlikely(raw_inode->i_flags &
 		     cpu_to_le32(NILFS_INODE_NEW | NILFS_INODE_UNUSED))) {
 		nilfs_warning(sb, __FUNCTION__,
 			      "read request for unused inode: %lu", ino);
@@ -728,7 +728,7 @@ void nilfs_truncate(struct inode *inode)
 	inode->i_mtime = inode->i_ctime = CURRENT_TIME;
 	if (IS_SYNC(inode))
 		nilfs_set_transaction_flag(NILFS_TI_SYNC);
-		
+
 	nilfs_commit_dirty_file(inode, 0);
         /* May construct a logical segment and may fail in sync mode.
 	   But truncate has no return value. */

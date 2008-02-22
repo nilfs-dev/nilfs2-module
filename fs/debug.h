@@ -88,7 +88,7 @@
  */
 #ifdef CONFIG_NILFS_DEBUG
 extern void nilfs_bh_debug(const char *, int, struct buffer_head *,
-			   const char *, ...) 
+			   const char *, ...)
 	__attribute__ ((format (printf, 4, 5)));
 extern void nilfs_page_debug(const char *, int, struct page *,
 			     const char *, ...)

@@ -46,7 +46,7 @@
 #include "seglist.h"
 
 
-/* 
+/*
  * Segment constructor
  */
 #define SC_N_PAGEVEC	16   /* Size of locally allocated page vector */
@@ -156,8 +156,8 @@ static void nilfs_dispose_list(struct nilfs_sb_info *, struct list_head *,
 #define nilfs_cnt32_lt(a,b)   nilfs_cnt32_gt(b,a)
 #define nilfs_cnt32_le(a,b)   nilfs_cnt32_ge(b,a)
 
-/* 
- * Transaction 
+/*
+ * Transaction
  *
  * We don't need the exclusion control among same task, because
  * all file operations are serialized through inode->i_mutex(i_sem) including
@@ -169,11 +169,11 @@ static struct kmem_cache *nilfs_transaction_cachep;
  * nilfs_init_transaction_cache - create a cache for nilfs_transaction_info
  *
  * nilfs_init_transaction_cache() creates a slab cache for the struct
- * nilfs_transaction_info. 
+ * nilfs_transaction_info.
  *
  * Return Value: On success, it returns 0. On error, one of the following
  * negative error code is returned.
- * 
+ *
  * %-ENOMEM - Insufficient memory available.
  */
 int nilfs_init_transaction_cache(void)
@@ -187,7 +187,6 @@ int nilfs_init_transaction_cache(void)
 #else
 				  NULL);
 #endif
-  
 	return ((nilfs_transaction_cachep == NULL) ? -ENOMEM : 0);
 }
 
@@ -260,7 +259,7 @@ static int nilfs_prepare_segment_lock(struct nilfs_transaction_info *ti)
  * When @vacancy_check flag is set, this function will check the amount of
  * free space, and will wait for the GC to reclaim disk space if low capacity.
  *
- * Return Value: On success, 0 is returned. On error, one of the following 
+ * Return Value: On success, 0 is returned. On error, one of the following
  * negative error code is returned.
  *
  * %-ENOMEM - Insufficient memory available.
@@ -307,7 +306,7 @@ int nilfs_transaction_begin(struct super_block *sb,
  * @sb: super block
  * @commit: commit flag (0 for no change)
  *
- * nilfs_transaction_end() releases the read semaphore which is 
+ * nilfs_transaction_end() releases the read semaphore which is
  * acquired by nilfs_transaction_begin(). Its releasing is only done
  * in outermost call of this function. If the nilfs_transaction_info
  * was allocated dynamically, it is given back to a slab cache.
@@ -406,7 +405,7 @@ int nilfs_set_file_dirty(struct nilfs_sb_info *sbi, struct inode *inode,
 		/* Because this routine may race with nilfs_dispose_list(),
 		   we have to check NILFS_I_QUEUED here, too. */
 		if (list_empty(&ii->i_dirty) && igrab(inode) == NULL) {
-			/* This will happen when somebody is freeing 
+			/* This will happen when somebody is freeing
 			   this inode. */
 			nilfs_warning(sbi->s_super, __FUNCTION__,
 				      "cannot get inode (ino=%lu)\n",
@@ -433,7 +432,7 @@ int nilfs_set_file_dirty(struct nilfs_sb_info *sbi, struct inode *inode,
  * Return Value: On success, 0 is returned. On error, one of the following
  * negative error code is returned.
  *
- * %-EINVAL - cannot grab the inode (This may happen when somebody is 
+ * %-EINVAL - cannot grab the inode (This may happen when somebody is
  * freeing the inode) or specified inode has an invalid inode number.
  *
  * %-EIO - I/O error
@@ -919,7 +918,7 @@ static int nilfs_segctor_scan_dirty_data_buffers(struct nilfs_sc_info *sci,
 	unsigned int i, n, ndirties;
 	pgoff_t index = 0;
 	int err = 0, can_copy = !S_ISDIR(inode->i_mode);
-	
+
 	seg_debug(3, "called (ino=%lu)\n", inode->i_ino);
  repeat:
 	n = find_get_pages_tag(mapping, &index, PAGECACHE_TAG_DIRTY,
@@ -952,7 +951,7 @@ static int nilfs_segctor_scan_dirty_data_buffers(struct nilfs_sc_info *sci,
 					if (!ndirties || err != -E2BIG)
 						goto skip_page;
 					break;
-					/* each blocks in a mmapped 
+					/* each blocks in a mmapped
 					   page should be copied */
 				}
 				ndirties++;
@@ -962,7 +961,7 @@ static int nilfs_segctor_scan_dirty_data_buffers(struct nilfs_sc_info *sci,
 
 		if (can_copy) {
 			/* Decide whether to copy buffer or not.
-			   This must be done after a writeback flag 
+			   This must be done after a writeback flag
 			   is set on the page */
 			if (page_mapped(page)) {
 				nilfs_set_page_to_be_frozen(page);
@@ -992,7 +991,7 @@ static int nilfs_segctor_scan_dirty_node_buffers(struct nilfs_sc_info *sci,
 	pgoff_t index = 0;
 	LIST_HEAD(node_buffers);
 	int err = 0;
-	
+
 	seg_debug(3, "called (ino=%lu)\n", inode->i_ino);
 
  repeat:
@@ -1172,7 +1171,7 @@ static int nilfs_segctor_create_checkpoint(struct nilfs_sc_info *sci)
 					  &raw_cp, &bh_cp);
 	if (likely(!err)) {
 		/* The following code is duplicated with cpfile.  But, it is
-		   needed to collect the checkpoint even if it was not newly 
+		   needed to collect the checkpoint even if it was not newly
 		   created */
 		nilfs_mdt_mark_buffer_dirty(bh_cp);
 		nilfs_mdt_mark_dirty(nilfs->ns_cpfile);
@@ -1413,7 +1412,7 @@ static int nilfs_segctor_scan_file(struct nilfs_sc_info *sci,
 		sci, inode, sc_ops->collect_bmap);
 	if (unlikely(err))
 		goto break_or_fail;
-		
+
 	nilfs_segctor_end_finfo(sci, inode);
 	sci->sc_stage.sub = SC_SUB_DATA;
 
@@ -1464,7 +1463,7 @@ static int nilfs_segctor_collect_blocks(struct nilfs_sc_info *sci, int mode)
 					sci, &ii->vfs_inode,
 					&nilfs_sc_file_ops);
 				if (unlikely(err)) {
-					sci->sc_stage.gc_inode_ptr = 
+					sci->sc_stage.gc_inode_ptr =
 						list_entry(ii->i_dirty.prev,
 							   struct nilfs_inode_info,
 							   i_dirty);
@@ -1486,7 +1485,7 @@ static int nilfs_segctor_collect_blocks(struct nilfs_sc_info *sci, int mode)
 			err = nilfs_segctor_scan_file(sci, &ii->vfs_inode,
 						      &nilfs_sc_file_ops);
 			if (unlikely(err)) {
-				sci->sc_stage.dirty_file_ptr = 
+				sci->sc_stage.dirty_file_ptr =
 					list_entry(ii->i_dirty.prev,
 						   struct nilfs_inode_info,
 						   i_dirty);
@@ -3280,7 +3279,7 @@ static int nilfs_segctor_thread(void *arg)
  loop:
 	for (;;) {
 		int mode;
-  
+
 		if (sci->sc_state & NILFS_SEGCTOR_QUIT)
 			goto end_thread;
 
@@ -3496,7 +3495,7 @@ static void nilfs_segctor_destroy(struct nilfs_sc_info *sci)
 		BUG();
 	}
 	if (!list_empty(&sci->sc_dirty_files)) {
-		nilfs_warning(sbi->s_super, __FUNCTION__, 
+		nilfs_warning(sbi->s_super, __FUNCTION__,
 			      "dirty file(s) after the final construction\n");
 		nilfs_dispose_list(sbi, &sci->sc_dirty_files, 1);
 	}
@@ -3566,12 +3565,12 @@ void nilfs_detach_segment_constructor(struct nilfs_sb_info *sbi)
 		nilfs_segctor_destroy(NILFS_SC(sbi));
 		sbi->s_sc_info = NULL;
 	}
-	
+
 	/* Force to free the list of dirty files */
 	spin_lock(&sbi->s_inode_lock);
 	if (!list_empty(&sbi->s_dirty_files)) {
 		list_splice_init(&sbi->s_dirty_files, &garbage_list);
-		nilfs_warning(sbi->s_super, __FUNCTION__, 
+		nilfs_warning(sbi->s_super, __FUNCTION__,
 			      "Non empty dirty list after the last "
 			      "segment construction\n");
 	}

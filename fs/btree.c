@@ -340,7 +340,6 @@ static void nilfs_btree_node_insert(struct nilfs_btree *btree,
 				    nilfs_bmap_ptr_t ptr,
 				    int index)
 {
-	
 	nilfs_bmap_dkey_t *dkeys;
 	nilfs_bmap_dptr_t *dptrs;
 	int nchildren;
@@ -456,7 +455,7 @@ nilfs_btree_get_sib_node(const struct nilfs_btree *btree,
 {
 	return (struct nilfs_btree_node *)path[level].bp_sib_bh->b_data;
 }
-	
+
 inline static int nilfs_btree_height(const struct nilfs_btree *btree)
 {
 	return nilfs_btree_node_get_level(btree, nilfs_btree_get_root(btree)) + 1;
@@ -1405,7 +1404,7 @@ static int nilfs_btree_prepare_delete(struct nilfs_btree *btree,
 	    ((ret = (*btree->bt_bmap.b_pops->bpop_prepare_end_ptr)(
 		      &btree->bt_bmap, &path[level].bp_oldreq)) < 0))
 		goto err_out_child_node;
-							  
+
 	/* child of the root node is deleted */
 	path[level].bp_op = nilfs_btree_do_delete;
 	stats->bs_nblocks++;
@@ -2009,7 +2008,7 @@ nilfs_btree_lookup_dirty_buffers_tag(struct nilfs_btree *btree,
 	int i, n;
 
 	index = 0;
-	n = nilfs_btnode_gang_lookup_tag_nolock(btcache, pages, index, 
+	n = nilfs_btnode_gang_lookup_tag_nolock(btcache, pages, index,
 						NILFS_BTREE_GANG_LOOKUP_SIZE,
 						tag);
 	while (n > 0) {

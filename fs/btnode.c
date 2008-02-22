@@ -227,7 +227,7 @@ out_free:
 
 /* page must be locked by caller */
 int __nilfs_btnode_get(struct nilfs_btnode_cache *btnc,
-		       nilfs_sector_t blocknr, sector_t pblocknr, 
+		       nilfs_sector_t blocknr, sector_t pblocknr,
 		       struct buffer_head **result, int newblk)
 {
 	struct page *page = NULL;
@@ -324,7 +324,7 @@ static void __nilfs_btnode_set_page_dirty(struct nilfs_btnode_cache *btnc,
  * @bh: buffer head
  * @tag: dirty state to be set
  *
- * The caller must check state of buffer head @bh previously.  Although 
+ * The caller must check state of buffer head @bh previously.  Although
  * the page dirty state is automatically upgraded from pdirty to dirty,
  * the transition from buffer-pdirty to buffer-dirty is *not* supported.
  *
@@ -575,7 +575,7 @@ int nilfs_btnode_prepare_change_key(struct nilfs_btnode_cache *btnc,
 	if (inode->i_blkbits == PAGE_CACHE_SHIFT) {
 #if HAVE_EXPORTED_RADIX_TREE_PRELOAD
 		/*
-		 * We cannot call radix_tree_preload for the kernels older 
+		 * We cannot call radix_tree_preload for the kernels older
 		 * than 2.6.23, because it is not exported for modules.
 		 */
 		err = radix_tree_preload(GFP_NOFS & ~__GFP_HIGHMEM);
@@ -609,7 +609,7 @@ int nilfs_btnode_prepare_change_key(struct nilfs_btnode_cache *btnc,
 			ctxt->newbh = NULL;
 		else if (err == -EEXIST) {
 			struct page *page;
-		       
+
 			if (unlikely(inode->i_ino != NILFS_DAT_INO)) {
 				btnode_debug(1,
 					     "insert failed, ino %lu key %lld\n",
@@ -771,7 +771,7 @@ void nilfs_btnode_do_clear_dirty_pages(struct nilfs_btnode_cache *btnc,
 
 	for (i = 0; i < n; i++) {
 		/* The pdirty-tag and dirty-tag are designed exclusive.
-		   So, the following process will not be called twice 
+		   So, the following process will not be called twice
 		   for a same btnode page */
 		page = pages[i];
 		lock_page(page);
@@ -821,7 +821,7 @@ repeat:
 		struct page *page = pages[i], *dpage;
 
 		/* The pdirty-tag and dirty-tag are designed exclusive.
-		   So, the following process will not be called twice 
+		   So, the following process will not be called twice
 		   for a same btnode page */
 		lock_page(page);
 		/* do not search original dat cache */

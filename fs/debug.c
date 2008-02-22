@@ -109,7 +109,7 @@ static int nilfs_read_debug_option(char *page, char **start, off_t off,
 	int flag;
 
 	spin_lock(&debug_info_lock);
-	
+
 	for (flag = 0; flag < NILFS_VERBOSE_LIMIT; flag ++) {
 		const char *vopt, *p;
 		int level = min(MAX_VLEVEL,
@@ -120,8 +120,9 @@ static int nilfs_read_debug_option(char *page, char **start, off_t off,
 			BUG_ON(vopt == NULL);
 
 			p = find_token(flag, class_tokens);
-			if (!p) break;
-				
+			if (!p)
+				break;
+
 			if (len > 0)
 				page[len++] = ' ';
 			len += sprintf(page + len, "-%s %s", vopt, p);
@@ -650,14 +651,12 @@ int nilfs_init_proc_entries(void)
 	nilfs_proc_root = proc_mkdir("nilfs2", proc_root_fs);
 	if (!nilfs_proc_root) {
 		printk(KERN_WARNING "NILFS: cannot create proc root\n");
-		return 0; /* We don't abort when failed to make 
-			     proc entries */
+		return 0; /* We don't abort when failed to make proc entries */
 	}
 	nilfs_proc_root->owner = THIS_MODULE;
 
 	/* /proc entries */
-	entry = create_proc_entry("debug_option", 
-				  S_IFREG | S_IRUGO | S_IWUSR, 
+	entry = create_proc_entry("debug_option", S_IFREG | S_IRUGO | S_IWUSR,
 				  nilfs_proc_root);
 	if (entry) {
 		entry->read_proc = nilfs_read_debug_option;
@@ -704,7 +703,7 @@ int nilfs_releasepage(struct page *page, gfp_t gfp_mask)
 	}
 	/*
 	 * Note that non-busy buffer heads may be discarded though the
-	 * try_to_free_buffers() call.  This may happen when the page is not 
+	 * try_to_free_buffers() call.  This may happen when the page is not
 	 * dirty, not in writeback, not locked, and belongs to a mapping.
 	 * Before changing the state of buffer heads to busy, the page lock
 	 * must be held to protect them.

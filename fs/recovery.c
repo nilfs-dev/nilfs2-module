@@ -367,7 +367,7 @@ collect_blocks_from_segsum(struct nilfs_sb_info *sbi, sector_t sum_blocknr,
 		nblocks = le32_to_cpu(finfo->fi_nblocks);
 		ndatablk = le32_to_cpu(finfo->fi_ndatablk);
 		nnodeblk = nblocks - ndatablk;
-		
+
 		while (ndatablk-- > 0) {
 			struct nilfs_recovery_block *rb;
 			struct nilfs_binfo_v *binfo;
@@ -456,7 +456,7 @@ static int nilfs_prepare_segment_for_recovery(struct the_nilfs *nilfs,
 			goto failed;
 		list_add_tail(&ent->list, head);
 	}
-	
+
 	/*
 	 * Collecting segments written after the latest super root.
 	 * These are marked volatile active, and won't be reallocated in
@@ -578,7 +578,7 @@ static int recover_dsync_blocks(struct nilfs_sb_info *sbi,
 		index = rb->blkoff >> (PAGE_CACHE_SHIFT - inode->i_blkbits);
 		nth = (rb->blkoff - (index << (PAGE_CACHE_SHIFT -
 					       inode->i_blkbits)));
-		
+
 		page = find_or_create_page(inode->i_mapping, index, GFP_NOFS);
 		if (!page) {
 			recovery_debug(2, "find_or_create_page() failed\n");
@@ -685,7 +685,7 @@ static int nilfs_do_roll_forward(struct the_nilfs *nilfs,
 		}
 		if (unlikely(NILFS_SEG_HAS_SR(&ssi)))
 			goto confused;
-		    
+
 		/* Found a valid partial segment; do recovery actions */
 		nextnum = nilfs_get_segnum_of_block(nilfs, ssi.next);
 		empty_seg = 0;
@@ -1041,7 +1041,7 @@ int nilfs_search_super_root(struct the_nilfs *nilfs, struct nilfs_sb_info *sbi,
 	nilfs->ns_last_cno = ri->ri_cno;
 
 	recovery_debug(1, "found super root: segnum=%llu, seq=%llu, "
-		       "pseg_start=%llu, pseg_offset=%lu\n", 
+		       "pseg_start=%llu, pseg_offset=%lu\n",
 		       (unsigned long long)nilfs->ns_segnum,
 		       (unsigned long long)nilfs->ns_last_seq,
 		       (unsigned long long)nilfs->ns_last_pseg,

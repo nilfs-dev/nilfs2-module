@@ -84,7 +84,7 @@ static inline struct nilfs_sb_info *NILFS_SB(struct super_block *sb)
 #define NILFS_INODE_SIZE(s)        (NILFS_SB(s)->s_nilfs->ns_inode_size)
 #define NILFS_FIRST_INO(s)         (NILFS_SB(s)->s_nilfs->ns_first_ino)
 
-/* 
+/*
  * Bit operations for the mount option
  */
 #define nilfs_clear_opt(sbi, opt)  \

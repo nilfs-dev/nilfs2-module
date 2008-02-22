@@ -349,7 +349,7 @@ static int nilfs_submit_seg_bio(struct nilfs_write_info *wi, int mode)
 	return err;
 }
 
-/** 
+/**
  * nilfs_alloc_seg_bio - allocate a bio for writing segment.
  * @sb: super block
  * @start: beginning disk block number of this BIO.

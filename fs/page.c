@@ -175,7 +175,7 @@ static int nilfs_try_to_release_page(struct page *page)
 		return nilfs_btnode_invalidate_page(page, 0);
 	return nilfs_page_buffers_busy(page);
 }
-	
+
 static int nilfs_pages_free_lru(int active, int nr, int *nf)
 {
 	struct list_head *lru_list;

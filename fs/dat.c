@@ -172,7 +172,7 @@ nilfs_dat_group_desc_add_entries(struct inode *dat,
 
 	return nfrees;
 }
-	
+
 inline static unsigned long
 nilfs_dat_group_desc_sub_entries(struct inode *dat,
 				 nilfs_bgno_t group,
@@ -737,7 +737,7 @@ void nilfs_dat_commit_start(struct inode *dat,
 	if ((nilfs_dat_entry_get_blocknr(dat, entry) != 0) ||
 	    (nilfs_dat_entry_get_end(dat, entry) != NILFS_CNO_MAX)) {
 		printk("%s: vbn = %llu, start = %llu, end = %llu, pbn = %llu\n",
-		       __FUNCTION__, (unsigned long long)req->dr_vblocknr, 
+		       __FUNCTION__, (unsigned long long)req->dr_vblocknr,
 		       (unsigned long long)nilfs_dat_entry_get_start(dat, entry),
 		       (unsigned long long)nilfs_dat_entry_get_end(dat, entry),
 		       (unsigned long long)nilfs_dat_entry_get_blocknr(dat,
@@ -921,7 +921,7 @@ int nilfs_dat_alloc(struct inode *dat, nilfs_sector_t *vblocknr)
 {
 	struct nilfs_dat_req req;
 	int ret;
-	
+
 	req.dr_vblocknr = *vblocknr;
 	if ((ret = nilfs_dat_prepare_alloc(dat, &req)) < 0)
 		return ret;

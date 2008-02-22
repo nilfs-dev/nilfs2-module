@@ -151,7 +151,6 @@ int nilfs_persistent_prepare_alloc_entry(struct inode *inode,
 	nilfs_bgno_t group;
 	unsigned long ngroups;
 	char *start;
-	
 	int pos, target, ret, bsize;
 	unsigned long i;
 

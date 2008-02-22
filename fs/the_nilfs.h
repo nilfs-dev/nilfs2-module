@@ -94,7 +94,7 @@ struct the_nilfs {
 	struct semaphore	ns_writer_sem;
 	atomic_t		ns_writer_sem_count;
 
-        /* 
+        /*
 	 * used for
 	 * - loading the latest checkpoint exclusively.
 	 * - allocating a new full segment.
@@ -247,7 +247,6 @@ nilfs_get_segment_range(struct the_nilfs *nilfs, nilfs_segnum_t segnum,
 
 static inline sector_t
 nilfs_get_segment_start_blocknr(struct the_nilfs *nilfs, nilfs_segnum_t segnum)
-			
 {
 	return (segnum == 0) ? nilfs->ns_first_data_block :
 		(sector_t)nilfs->ns_blocks_per_segment * segnum;

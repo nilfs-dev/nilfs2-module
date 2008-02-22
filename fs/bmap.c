@@ -115,7 +115,7 @@ static int nilfs_bmap_do_insert(struct nilfs_bmap *bmap,
 
 	return (*bmap->b_ops->bop_insert)(bmap, key, ptr);
 }
-		
+
 /**
  * nilfs_bmap_insert - insert a new key-record pair into a bmap
  * @bmap: bmap

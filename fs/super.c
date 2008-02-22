@@ -73,7 +73,7 @@ static int test_exclusive_mount(struct file_system_type *fs_type,
 /**
  * nilfs_error() - report failure condition on a filesystem
  *
- * nilfs_error() sets an ERROR_FS flag on the superblock as well as 
+ * nilfs_error() sets an ERROR_FS flag on the superblock as well as
  * reporting an error message.  It should be called when NILFS detects
  * incoherences or defects of meta data on disk.  As for sustainable
  * errors such as a single-shot I/O error, nilfs_warning() or the printk()
@@ -100,7 +100,7 @@ nilfs_error(struct super_block *sb, const char *function,
 
 		if (!nilfs_test_opt(sbi, ERRORS_CONT)) {
 			nilfs_detach_segment_constructor(sbi);
-		} 
+		}
 		down_write(&nilfs->ns_sem);
 		if (!(nilfs->ns_mount_state & NILFS_ERROR_FS)) {
 			nilfs->ns_mount_state |= NILFS_ERROR_FS;
@@ -113,7 +113,7 @@ nilfs_error(struct super_block *sb, const char *function,
 		if (nilfs_test_opt(sbi, ERRORS_RO)) {
 			printk(KERN_CRIT "Remounting filesystem read-only\n");
 			sb->s_flags |= MS_RDONLY;
-		} 
+		}
 	}
 
 	if (nilfs_test_opt(sbi, ERRORS_PANIC))
@@ -188,7 +188,6 @@ static int nilfs_init_inode_cache(void)
 #else
 					       init_once);
 #endif
-  
 	return ((nilfs_inode_cachep == NULL) ? -ENOMEM : 0);
 }
 
@@ -371,17 +370,17 @@ static void nilfs_put_super(struct super_block *sb)
  * nilfs_write_super() gets a fs-dependent lock, writes super block(s), and
  * clears s_dirt.  This function is called in the section protected by
  * lock_super().
- * 
+ *
  * The s_dirt flag is managed by each filesystem and we protect it by ns_sem
  * of the struct the_nilfs.  Lock order must be as follows:
  *
  *   1. lock_super()
  *   2.    down_write(&nilfs->ns_sem)
- * 
+ *
  * Inside NILFS, locking ns_sem is enough to protect s_dirt and the buffer
  * of the super block (nilfs->ns_sbp).
  *
- * In most cases, VFS functions call lock_super() before calling these 
+ * In most cases, VFS functions call lock_super() before calling these
  * methods.  So we must be careful not to bring on deadlocks when using
  * lock_super();  see generic_shutdown_super(), write_super(), and so on.
  *
@@ -520,7 +519,7 @@ static int nilfs_statfs(struct super_block *sb, struct kstatfs *buf)
 	/*
 	 * Compute all of the segment blocks
 	 *
-	 * The blocks before first segment and after last segment 
+	 * The blocks before first segment and after last segment
 	 * are excluded.
 	 */
 	blocks = nilfs->ns_blocks_per_segment * nilfs->ns_nsegments
@@ -538,7 +537,7 @@ static int nilfs_statfs(struct super_block *sb, struct kstatfs *buf)
 	err = nilfs_count_free_blocks(nilfs, &nfreeblocks);
 	if (unlikely(err))
 		return err;
-	
+
 	buf->f_type = NILFS_SUPER_MAGIC;
 	buf->f_bsize = sb->s_blocksize;
 	buf->f_blocks = blocks - overhead;
@@ -618,7 +617,7 @@ static int parse_options(char *options, struct super_block *sb)
 	while((p = strsep(&options, ",")) != NULL) {
 		int token;
 		if (!*p) continue;
-    
+
 		token = match_token(p, tokens, args);
 		switch(token) {
 		case Opt_barrier:
@@ -712,7 +711,7 @@ nilfs_load_super_block(struct super_block *sb, struct buffer_head **pbh)
 	 * Adjusting block size
 	 * Blocksize will be enlarged when it is smaller than hardware
 	 * sector size.
-	 * Disk format of superblock does not change. 
+	 * Disk format of superblock does not change.
 	 */
 	blocksize = sb_min_blocksize(sb, BLOCK_SIZE);
 	if (!blocksize) {
@@ -747,10 +746,10 @@ nilfs_reload_super_block(struct super_block *sb, struct buffer_head **pbh,
 	}
 	brelse(*pbh);
 	sb_set_blocksize(sb, blocksize);
-	
+
 	sb_index = NILFS_SB_OFFSET_BYTES / blocksize;
 	offset = NILFS_SB_OFFSET_BYTES % blocksize;
-	
+
 	*pbh = sb_bread(sb, sb_index);
 	if (!*pbh) {
 		printk(KERN_ERR
@@ -870,7 +869,7 @@ nilfs_fill_super(struct super_block *sb, void *data, int silent,
 				printk(KERN_ERR
 				       "NILFS: The specified checkpoint is "
 				       "not a snapshot "
-				       "(checkpoint number=%llu).\n", 
+				       "(checkpoint number=%llu).\n",
 				       (unsigned long long)sbi->s_snapshot_cno);
 				err = -EINVAL;
 				goto failed_sbi;
@@ -1177,7 +1176,7 @@ nilfs_get_sb(struct file_system_type *fs_type, int flags,
 		err = -EINVAL;
 		goto failed;
 	}
-	
+
 	/*
 	 * once the super is inserted into the list by sget, s_umount
 	 * will protect the lockfs code from trying to start a snapshot
@@ -1461,7 +1460,7 @@ static int __init init_nilfs_fs(void)
 
  failed_transaction_cache:
 	nilfs_destroy_transaction_cache();
-	
+
  failed_inode_cache:
 	nilfs_destroy_inode_cache();
 
