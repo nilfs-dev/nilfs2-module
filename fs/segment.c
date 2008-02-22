@@ -1093,11 +1093,15 @@ static int nilfs_test_metadata_dirty(struct nilfs_sb_info *sbi)
 	struct the_nilfs *nilfs = sbi->s_nilfs;
 	int ret = 0;
 
-	if (nilfs_mdt_fetch_dirty(sbi->s_ifile)) ret++;
-	if (nilfs_mdt_fetch_dirty(nilfs->ns_cpfile)) ret++;
-	if (nilfs_mdt_fetch_dirty(nilfs->ns_sufile)) ret++;
+	if (nilfs_mdt_fetch_dirty(sbi->s_ifile))
+		ret++;
+	if (nilfs_mdt_fetch_dirty(nilfs->ns_cpfile))
+		ret++;
+	if (nilfs_mdt_fetch_dirty(nilfs->ns_sufile))
+		ret++;
 	if (ret || nilfs_doing_gc())
-		if (nilfs_mdt_fetch_dirty(nilfs_dat_inode(nilfs))) ret++;
+		if (nilfs_mdt_fetch_dirty(nilfs_dat_inode(nilfs)))
+			ret++;
 	return ret;
 }
 

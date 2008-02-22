@@ -143,14 +143,16 @@ nilfs_parse_verbose_option(char **dp, char *vopt, substring_t args[],
 	int flag;
 
 	while ((p = strsep(dp, " \t\n")) != NULL) {
-		if (!*p) continue;
+		if (!*p)
+			continue;
 
 		if (strcmp(p, "all") == 0) {
 			nilfs_fill_debug_info(level);
 			return 0;
 		}
 		flag = match_token(p, class_tokens, args);
-		if (flag < 0) break;
+		if (flag < 0)
+			break;
 
 		nilfs_debug_info.verbose[flag] = (char)level;
 		return 0;
@@ -170,8 +172,10 @@ static int nilfs_parse_debug_option(char *data)
 	while ((p = strsep(&data, " \t\n")) != NULL) {
 		int token, level = -1;
 
-		if (!*p) continue;
-		else if (*p != '-') goto bad_option;
+		if (!*p)
+			continue;
+		else if (*p != '-')
+			goto bad_option;
 
 		token = match_token(++p, opt_tokens, args);
 		switch(token) {
@@ -624,11 +628,14 @@ struct proc_dir_entry *nilfs_proc_root;
 static int proc_calc_metrics(char *page, char **start, off_t off,
 			     int count, int *eof, int len)
 {
-	if (len <= off+count) *eof = 1;
+	if (len <= off+count)
+		*eof = 1;
 	*start = page + off;
 	len -= off;
-	if (len>count) len = count;
-	if (len<0) len = 0;
+	if (len > count)
+		len = count;
+	if (len < 0)
+		len = 0;
 	return len;
 }
 

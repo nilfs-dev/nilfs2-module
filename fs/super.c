@@ -612,11 +612,13 @@ static int parse_options(char *options, struct super_block *sb)
 	substring_t args[MAX_OPT_ARGS];
 	int option;
 
-	if(!options) return 1;
+	if (!options)
+		return 1;
 
 	while((p = strsep(&options, ",")) != NULL) {
 		int token;
-		if (!*p) continue;
+		if (!*p)
+			continue;
 
 		token = match_token(p, tokens, args);
 		switch(token) {
