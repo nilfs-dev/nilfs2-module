@@ -61,9 +61,9 @@ static inline int nilfs_add_nondir(struct dentry *dentry, struct inode *inode)
  */
 
 static struct dentry *
-nilfs_lookup(struct inode * dir, struct dentry *dentry, struct nameidata *nd)
+nilfs_lookup(struct inode *dir, struct dentry *dentry, struct nameidata *nd)
 {
-	struct inode * inode;
+	struct inode *inode;
 	ino_t ino;
 
 	if (dentry->d_name.len > NILFS_NAME_LEN)
@@ -93,7 +93,7 @@ nilfs_lookup(struct inode * dir, struct dentry *dentry, struct nameidata *nd)
  * If the create succeeds, we fill in the inode information
  * with d_instantiate().
  */
-static int nilfs_create(struct inode * dir, struct dentry * dentry, int mode,
+static int nilfs_create(struct inode *dir, struct dentry *dentry, int mode,
 			struct nameidata *nd)
 {
 	struct inode *inode;
@@ -117,9 +117,9 @@ static int nilfs_create(struct inode * dir, struct dentry * dentry, int mode,
 }
 
 static int
-nilfs_mknod(struct inode * dir, struct dentry *dentry, int mode, dev_t rdev)
+nilfs_mknod(struct inode *dir, struct dentry *dentry, int mode, dev_t rdev)
 {
-	struct inode * inode;
+	struct inode *inode;
 	struct nilfs_transaction_info ti;
 	int err, err2;
 
@@ -146,7 +146,7 @@ static int nilfs_symlink(struct inode *dir, struct dentry *dentry,
 	struct nilfs_transaction_info ti;
 	struct super_block *sb = dir->i_sb;
 	unsigned l = strlen(symname)+1;
-	struct inode * inode;
+	struct inode *inode;
 	int err, err2;
 
 	if (l > sb->s_blocksize)
@@ -207,7 +207,7 @@ static int nilfs_link(struct dentry *old_dentry, struct inode *dir,
 
 static int nilfs_mkdir(struct inode *dir, struct dentry *dentry, int mode)
 {
-	struct inode * inode;
+	struct inode *inode;
 	struct nilfs_transaction_info ti;
 	int err, err2;
 
@@ -255,9 +255,9 @@ out_dir:
 
 static int nilfs_unlink(struct inode *dir, struct dentry *dentry)
 {
-	struct inode * inode;
-	struct nilfs_dir_entry * de;
-	struct page * page;
+	struct inode *inode;
+	struct nilfs_dir_entry *de;
+	struct page *page;
 	struct nilfs_transaction_info ti;
 	int err, err2;
 
@@ -295,7 +295,7 @@ out:
 
 static int nilfs_rmdir(struct inode *dir, struct dentry *dentry)
 {
-	struct inode * inode = dentry->d_inode;
+	struct inode *inode = dentry->d_inode;
 	struct nilfs_transaction_info ti;
 	int err, err2;
 
@@ -319,12 +319,12 @@ static int nilfs_rmdir(struct inode *dir, struct dentry *dentry)
 static int nilfs_rename(struct inode *old_dir, struct dentry *old_dentry,
 			struct inode *new_dir,	struct dentry *new_dentry)
 {
-	struct inode * old_inode = old_dentry->d_inode;
-	struct inode * new_inode = new_dentry->d_inode;
-	struct page * dir_page = NULL;
-	struct nilfs_dir_entry * dir_de = NULL;
-	struct page * old_page;
-	struct nilfs_dir_entry * old_de;
+	struct inode *old_inode = old_dentry->d_inode;
+	struct inode *new_inode = new_dentry->d_inode;
+	struct page *dir_page = NULL;
+	struct nilfs_dir_entry *dir_de = NULL;
+	struct page *old_page;
+	struct nilfs_dir_entry *old_de;
 	struct nilfs_transaction_info ti;
 	int err;
 

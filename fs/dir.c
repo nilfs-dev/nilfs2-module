@@ -322,7 +322,7 @@ static void nilfs_set_de_type(nilfs_dirent *de, struct inode *inode)
 	de->file_type = nilfs_type_by_mode[(mode & S_IFMT)>>S_SHIFT];
 }
 
-static int nilfs_readdir(struct file * filp, void * dirent, filldir_t filldir)
+static int nilfs_readdir(struct file *filp, void *dirent, filldir_t filldir)
 {
 	loff_t pos = filp->f_pos;
 	struct inode *inode = filp->f_dentry->d_inode;
@@ -419,7 +419,7 @@ nilfs_find_entry(struct inode *dir, struct dentry *dentry,
 	unsigned long npages = dir_pages(dir);
 	struct page *page = NULL;
 	struct nilfs_inode_info *ei = NILFS_I(dir);
-	nilfs_dirent * de;
+	nilfs_dirent *de;
 
 	if (npages == 0)
 		goto out;
@@ -483,10 +483,10 @@ struct nilfs_dir_entry *nilfs_dotdot(struct inode *dir, struct page **p)
 	return de;
 }
 
-ino_t nilfs_inode_by_name(struct inode * dir, struct dentry *dentry)
+ino_t nilfs_inode_by_name(struct inode *dir, struct dentry *dentry)
 {
 	ino_t res = 0;
-	struct nilfs_dir_entry * de;
+	struct nilfs_dir_entry *de;
 	struct page *page;
 
 	de = nilfs_find_entry(dir, dentry, &page);
@@ -531,7 +531,7 @@ int nilfs_add_link(struct dentry *dentry, struct inode *inode)
 	unsigned reclen = NILFS_DIR_REC_LEN(namelen);
 	unsigned short rec_len, name_len;
 	struct page *page = NULL;
-	nilfs_dirent * de;
+	nilfs_dirent *de;
 	unsigned long npages = dir_pages(dir);
 	unsigned long n;
 	char *kaddr;
@@ -628,8 +628,8 @@ int nilfs_delete_entry(struct nilfs_dir_entry *dir, struct page *page)
 	char *kaddr = page_address(page);
 	unsigned from = ((char*)dir - kaddr) & ~(nilfs_chunk_size(inode)-1);
 	unsigned to = ((char*)dir - kaddr) + le16_to_cpu(dir->rec_len);
-	nilfs_dirent * pde = NULL;
-	nilfs_dirent * de = (nilfs_dirent *) (kaddr + from);
+	nilfs_dirent *pde = NULL;
+	nilfs_dirent *de = (nilfs_dirent *) (kaddr + from);
 	int err;
 
 	while ((char*)de < (char*)dir) {
@@ -667,7 +667,7 @@ int nilfs_make_empty(struct inode *inode, struct inode *parent)
 	struct address_space *mapping = inode->i_mapping;
 	struct page *page = grab_cache_page(mapping, 0);
 	unsigned chunk_size = nilfs_chunk_size(inode);
-	struct nilfs_dir_entry * de;
+	struct nilfs_dir_entry *de;
 	int err;
 	void *kaddr;
 
@@ -711,7 +711,7 @@ int nilfs_empty_dir(struct inode *inode)
 
 	for (i = 0; i < npages; i++) {
 		char *kaddr;
-		nilfs_dirent * de;
+		nilfs_dirent *de;
 		page = nilfs_get_page(inode, i);
 
 		if (IS_ERR(page))
