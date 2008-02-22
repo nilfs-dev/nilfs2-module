@@ -30,7 +30,7 @@
 #include "ifile.h"
 
 inline static void
-nilfs_inode_entry_set_flags(struct inode *ifile, struct nilfs_inode *entry,
+nilfs_ifile_entry_set_flags(struct inode *ifile, struct nilfs_inode *entry,
 			    unsigned int flags)
 {
 	entry->i_flags = cpu_to_le32(flags);
@@ -61,13 +61,13 @@ nilfs_ifile_entry_block_init(struct inode *ifile, struct buffer_head *bh,
 	int i;
 
 	for (i = 0; i < NILFS_MDT(ifile)->mi_entries_per_block; i++) {
-		nilfs_inode_entry_set_flags(ifile, entry, 0);
+		nilfs_ifile_entry_set_flags(ifile, entry, 0);
 				/* XXX: set USED flag */
 		entry++;
 	}
 }
 
-static int nilfs_inode_prepare_alloc_ino(struct inode *ifile,
+static int nilfs_ifile_prepare_alloc_ino(struct inode *ifile,
 					 struct nilfs_persistent_req *req)
 {
 	nilfs_bgno_t group;
@@ -87,13 +87,13 @@ static int nilfs_inode_prepare_alloc_ino(struct inode *ifile,
 }
 
 inline static void
-nilfs_inode_commit_alloc_ino(struct inode *ifile,
+nilfs_ifile_commit_alloc_ino(struct inode *ifile,
 			     struct nilfs_persistent_req *req)
 {
 	nilfs_persistent_commit_alloc_entry(ifile, req);
 }
 
-static void nilfs_inode_abort_alloc_ino(struct inode *ifile,
+static void nilfs_ifile_abort_alloc_ino(struct inode *ifile,
 					struct nilfs_persistent_req *req)
 {
 	int bsize = nilfs_persistent_entries_per_group(ifile);
@@ -103,7 +103,7 @@ static void nilfs_inode_abort_alloc_ino(struct inode *ifile,
 	nilfs_persistent_abort_alloc_entry(ifile, req, group, grpoff);
 }
 
-static int nilfs_inode_get_entry_block(struct inode *ifile, ino_t ino,
+static int nilfs_ifile_get_entry_block(struct inode *ifile, ino_t ino,
 				       struct buffer_head **entry_bhp)
 {
 	struct buffer_head *entry_bh = NULL;
@@ -124,22 +124,22 @@ static int nilfs_inode_get_entry_block(struct inode *ifile, ino_t ino,
 	return ret;
 }
 
-inline static int nilfs_inode_prepare_entry(struct inode *ifile,
+inline static int nilfs_ifile_prepare_entry(struct inode *ifile,
 					    struct nilfs_persistent_req *req)
 {
-	return nilfs_inode_get_entry_block(ifile, req->pr_ino,
+	return nilfs_ifile_get_entry_block(ifile, req->pr_ino,
 					   &req->pr_entry_bh);
 }
 
-static int nilfs_inode_prepare_alloc(struct inode *ifile,
+static int nilfs_ifile_prepare_alloc(struct inode *ifile,
 				     struct nilfs_persistent_req *req)
 {
 	int ret;
 
-	if ((ret = nilfs_inode_prepare_alloc_ino(ifile, req)) < 0)
+	if ((ret = nilfs_ifile_prepare_alloc_ino(ifile, req)) < 0)
 		return ret;
-	if ((ret = nilfs_inode_prepare_entry(ifile, req)) < 0) {
-		nilfs_inode_abort_alloc_ino(ifile, req);
+	if ((ret = nilfs_ifile_prepare_entry(ifile, req)) < 0) {
+		nilfs_ifile_abort_alloc_ino(ifile, req);
 		return ret;
 	}
 
@@ -147,20 +147,20 @@ static int nilfs_inode_prepare_alloc(struct inode *ifile,
 }
 
 inline static void
-nilfs_inode_commit_entry(struct inode *ifile, struct nilfs_persistent_req *req)
+nilfs_ifile_commit_entry(struct inode *ifile, struct nilfs_persistent_req *req)
 {
 	nilfs_mdt_mark_buffer_dirty(req->pr_entry_bh);
 }
 
 inline static void
-nilfs_inode_commit_alloc(struct inode *ifile, struct nilfs_persistent_req *req)
+nilfs_ifile_commit_alloc(struct inode *ifile, struct nilfs_persistent_req *req)
 {
-	nilfs_inode_commit_alloc_ino(ifile, req);
-	nilfs_inode_commit_entry(ifile, req);
+	nilfs_ifile_commit_alloc_ino(ifile, req);
+	nilfs_ifile_commit_entry(ifile, req);
 }
 
 inline static int
-nilfs_inode_prepare_free_ino(struct inode *ifile,
+nilfs_ifile_prepare_free_ino(struct inode *ifile,
 			     struct nilfs_persistent_req *req)
 {
 	nilfs_bgno_t group =
@@ -170,27 +170,27 @@ nilfs_inode_prepare_free_ino(struct inode *ifile,
 }
 
 inline static void
-nilfs_inode_abort_free_entry(struct inode *ifile,
+nilfs_ifile_abort_free_entry(struct inode *ifile,
 			     struct nilfs_persistent_req *req)
 {
 	nilfs_persistent_abort_free_entry(ifile, req);
 }
 
 static int
-nilfs_inode_prepare_free(struct inode *ifile, struct nilfs_persistent_req *req)
+nilfs_ifile_prepare_free(struct inode *ifile, struct nilfs_persistent_req *req)
 {
 	int ret;
 
-	if ((ret = nilfs_inode_prepare_free_ino(ifile, req)) < 0)
+	if ((ret = nilfs_ifile_prepare_free_ino(ifile, req)) < 0)
 		return ret;
-	if ((ret = nilfs_inode_prepare_entry(ifile, req)) < 0) {
-		nilfs_inode_abort_free_entry(ifile, req);
+	if ((ret = nilfs_ifile_prepare_entry(ifile, req)) < 0) {
+		nilfs_ifile_abort_free_entry(ifile, req);
 		return ret;
 	}
 	return 0;
 }
 
-static void nilfs_inode_commit_free_ino(struct inode *ifile,
+static void nilfs_ifile_commit_free_ino(struct inode *ifile,
 					struct nilfs_persistent_req *req)
 {
 	struct nilfs_persistent_group_desc *desc;
@@ -225,21 +225,21 @@ static void nilfs_inode_commit_free_ino(struct inode *ifile,
 }
 
 static void
-nilfs_inode_commit_free(struct inode *ifile, struct nilfs_persistent_req *req)
+nilfs_ifile_commit_free(struct inode *ifile, struct nilfs_persistent_req *req)
 {
 	struct nilfs_inode *entry;
 
 	entry = nilfs_ifile_map_inode(ifile, req->pr_ino, req->pr_entry_bh);
 	/* XXX: flags == 0 means unused ?? */
-	nilfs_inode_entry_set_flags(ifile, entry, 0);
+	nilfs_ifile_entry_set_flags(ifile, entry, 0);
 	nilfs_ifile_unmap_inode(ifile, req->pr_ino, req->pr_entry_bh);
 
-	nilfs_inode_commit_entry(ifile, req);
-	nilfs_inode_commit_free_ino(ifile, req);
+	nilfs_ifile_commit_entry(ifile, req);
+	nilfs_ifile_commit_free_ino(ifile, req);
 }
 
 void
-nilfs_inode_abort_free(struct inode *ifile, struct nilfs_persistent_req *req)
+nilfs_ifile_abort_free(struct inode *ifile, struct nilfs_persistent_req *req)
 {
 	nilfs_persistent_put_entry_block(ifile, req->pr_entry_bh);
 	nilfs_persistent_abort_free_entry(ifile, req);
@@ -277,12 +277,12 @@ int nilfs_ifile_create_inode(struct inode *ifile, ino_t *out_ino,
 			   a group. dull code!! */
 	req.pr_entry_bh = NULL;
 
-	if ((ret = nilfs_inode_prepare_alloc(ifile, &req)) < 0) {
+	if ((ret = nilfs_ifile_prepare_alloc(ifile, &req)) < 0) {
 		inode_debug(1, "failed (ret=%d)\n", ret);
 		brelse(req.pr_entry_bh);
 		return ret;
 	}
-	nilfs_inode_commit_alloc(ifile, &req);
+	nilfs_ifile_commit_alloc(ifile, &req);
 	nilfs_mdt_mark_dirty(ifile);
 	*out_ino = req.pr_ino;
 	*out_bh = req.pr_entry_bh;
@@ -316,13 +316,13 @@ int nilfs_ifile_delete_inode(struct inode *ifile, ino_t ino)
 
 	req.pr_ino = ino;
 	req.pr_entry_bh = NULL;
-	if ((ret = nilfs_inode_prepare_free(ifile, &req)) < 0) {
+	if ((ret = nilfs_ifile_prepare_free(ifile, &req)) < 0) {
 		brelse(req.pr_entry_bh);
 		return ret;
 	}
 
 	/* XXX: check! race condition mark dirty and put_bh (nilfs_inode_free()) */
-	nilfs_inode_commit_free(ifile, &req);
+	nilfs_ifile_commit_free(ifile, &req);
 	brelse(req.pr_entry_bh);
 
 	nilfs_mdt_mark_dirty(ifile);
