@@ -74,7 +74,7 @@ struct nilfs_inode_info {
 	struct posix_acl *i_acl;
 	struct posix_acl *i_default_acl;
 #endif
-        struct buffer_head *i_bh;	/* i_bh contains a new or dirty
+	struct buffer_head *i_bh;	/* i_bh contains a new or dirty
 					   disk inode */
 	struct inode vfs_inode;
 };

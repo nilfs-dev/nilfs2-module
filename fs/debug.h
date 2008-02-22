@@ -35,18 +35,18 @@
 		if ((l) <= (int)nilfs_debug_info.verbose[0])  \
 			printk(KERN_DEBUG "NILFS %s: " f,  \
 			       __FUNCTION__, ## a);  \
-        } while(0)
+	} while(0)
 
 #define nilfs_debug_verbose(v, l, c, f, a...)  \
 	do {  \
-                if ((l) <= (int)nilfs_debug_info.verbose[v])  \
+		if ((l) <= (int)nilfs_debug_info.verbose[v])  \
 			printk(KERN_DEBUG "NILFS(" c ") %s: " f, \
 			       __FUNCTION__, ## a);              \
-        } while(0)
+	} while(0)
 
 #define nilfs_dump_stack(v, l)  \
-        do {  \
-                if ((l) <= (int)nilfs_debug_info.verbose[v])  \
+	do {  \
+		if ((l) <= (int)nilfs_debug_info.verbose[v])  \
 			dump_stack();   \
 	} while(0)
 

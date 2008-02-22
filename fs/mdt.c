@@ -76,7 +76,7 @@ nilfs_mdt_insert_new_block(struct inode *inode, nilfs_blkoff_t block,
 
 	mdt_debug(3, "nilfs_bmap_insert() returned %d"
 		  " (blkoff=%llu, blocknr=%llu)\n",
- 		  ret, (unsigned long long)block,
+		  ret, (unsigned long long)block,
 		  (unsigned long long)bh->b_blocknr);
 	if (unlikely(ret))
 		return ret;

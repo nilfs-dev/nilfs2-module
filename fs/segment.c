@@ -1953,9 +1953,9 @@ static int nilfs_segctor_follow_up_check(struct nilfs_sc_info *sci)
 	struct nilfs_segment_buffer *segbuf = sci->sc_curseg;
 	int has_sr = (sci->sc_super_root != NULL);
 
- 	if (NILFS_SEG_SIMPLEX(&segbuf->sb_sum) &&
+	if (NILFS_SEG_SIMPLEX(&segbuf->sb_sum) &&
 	    /* # of payload blocks */
- 	    segbuf->sb_sum.nblocks - segbuf->sb_sum.nsumblk <= has_sr) {
+	    segbuf->sb_sum.nblocks - segbuf->sb_sum.nsumblk <= has_sr) {
 		seg_debug(2, "Aborted construction (no blocks collected)\n");
 		return 1;
 	}
@@ -2924,7 +2924,7 @@ static int nilfs_segctor_sync(struct nilfs_sc_info *sci)
 	wait_req.seq = ++sci->sc_seq_request;
 	spin_unlock(&sci->sc_state_lock);
 
-        seg_debug(3, "start task=%p seq=%d\n", current, wait_req.seq);
+	seg_debug(3, "start task=%p seq=%d\n", current, wait_req.seq);
 	init_waitqueue_entry(&wait_req.wq, current);
 	add_wait_queue(&sci->sc_wait_request, &wait_req.wq);
 	set_current_state(TASK_INTERRUPTIBLE);
@@ -2943,7 +2943,7 @@ static int nilfs_segctor_sync(struct nilfs_sc_info *sci)
 		break;
 	}
 	finish_wait(&sci->sc_wait_request, &wait_req.wq);
-        seg_debug(3, "done task=%p seq=%d err=%d\n",
+	seg_debug(3, "done task=%p seq=%d err=%d\n",
 		  current, wait_req.seq, err);
 
 	return err;
@@ -3307,7 +3307,7 @@ static int nilfs_segctor_thread(void *arg)
 		nilfs_segctor_thread_construct(sci, mode);
 		spin_lock(&sci->sc_state_lock);
 		timeout = 0;
-  	}
+	}
 
 
 #if NEED_REFRIGERATOR_ARGS

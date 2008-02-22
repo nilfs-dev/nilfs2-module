@@ -106,8 +106,8 @@ int nilfs_get_block(struct inode *inode, sector_t blkoff,
 		map_bh(bh_result, inode->i_sb, 0); /* dbn must be changed
 						      to proper value */
 	} else if (ret == -ENOENT) {
-                /* not found is not error (e.g. hole); must return without
-                   the mapped state flag. */
+		/* not found is not error (e.g. hole); must return without
+		   the mapped state flag. */
 		;
 	} else {
 		err = ret;
@@ -260,7 +260,7 @@ static int nilfs_prepare_write(struct file *file, struct page *page,
 	if (unlikely(err))
 		return err;
 
- 	err = block_prepare_write(page, from, to, nilfs_get_block);
+	err = block_prepare_write(page, from, to, nilfs_get_block);
 	if (unlikely(err))
 		nilfs_cancel_file_dirty(inode);
 	return err;
@@ -330,7 +330,7 @@ struct address_space_operations nilfs_aops = {
 	.readpage		= nilfs_readpage,
 	.sync_page		= nilfs_sync_page,
 	.writepages		= nilfs_writepages,
-	.set_page_dirty         = nilfs_set_page_dirty,
+	.set_page_dirty		= nilfs_set_page_dirty,
 	.readpages		= nilfs_readpages,
 #if HAVE_WRITE_BEGIN_WRITE_END
 	.write_begin		= nilfs_write_begin,
@@ -341,7 +341,7 @@ struct address_space_operations nilfs_aops = {
 #endif
 	.releasepage		= nilfs_releasepage,
 	.invalidatepage		= nilfs_invalidatepage,
-        .direct_IO		= nilfs_direct_IO,
+	.direct_IO		= nilfs_direct_IO,
 };
 
 struct inode *nilfs_new_inode(struct inode *dir, int mode)
@@ -730,7 +730,7 @@ void nilfs_truncate(struct inode *inode)
 		nilfs_set_transaction_flag(NILFS_TI_SYNC);
 
 	nilfs_commit_dirty_file(inode, 0);
-        /* May construct a logical segment and may fail in sync mode.
+	/* May construct a logical segment and may fail in sync mode.
 	   But truncate has no return value. */
 }
 
@@ -775,7 +775,7 @@ void nilfs_delete_inode(struct inode *inode)
 	if (IS_SYNC(inode))
 		nilfs_set_transaction_flag(NILFS_TI_SYNC);
 	nilfs_transaction_end(sb, 1);
-        /* May construct a logical segment and may fail in sync mode.
+	/* May construct a logical segment and may fail in sync mode.
 	   But delete_inode has no return value. */
 }
 

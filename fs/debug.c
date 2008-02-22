@@ -55,7 +55,7 @@ DEFINE_SPINLOCK(debug_info_lock);
 
 enum {
 	Opt_quiet, Opt_verbose, Opt_verbose2, Opt_verbose3,
-        /* Opt_quiet ~ Opt_verbose3 must be successive. */
+	/* Opt_quiet ~ Opt_verbose3 must be successive. */
 	Opt_err
 };
 

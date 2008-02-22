@@ -1209,7 +1209,7 @@ nilfs_get_sb(struct file_system_type *fs_type, int flags,
 		struct nilfs_sb_info *sbi = NILFS_SB(s);
 
 		BUG_ON(!sbi || !sbi->s_nilfs);
-                /*
+		/*
 		 * s_umount protects super_block from unmount process;
 		 * It covers pointers of nilfs_sb_info and the_nilfs.
 		 */
@@ -1227,7 +1227,7 @@ nilfs_get_sb(struct file_system_type *fs_type, int flags,
 		s2 = sget(fs_type, nilfs_test_bdev_super2,
 			  nilfs_set_bdev_super, &sd);
 		deactivate_super(s);
-                /*
+		/*
 		 * Although deactivate_super() invokes close_bdev_excl() at
 		 * kill_block_super().  Here, s is an existent mount; we need
 		 * one more close_bdev_excl() call.
@@ -1288,7 +1288,7 @@ nilfs_get_sb(struct file_system_type *fs_type, int flags,
 #else /* NEED_SIMPLE_SET_MNT */
  error_s:
 	nilfs_unlock_bdev(sd.bdev);
-        /*
+	/*
 	 * This unlocking is delayed until the_nilfs is attached to
 	 * nilfs_sb_info. This ensures that the_nilfs is identical for
 	 * the same device in the list of fs_supers.

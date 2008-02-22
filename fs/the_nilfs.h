@@ -85,7 +85,7 @@ enum {
  */
 struct the_nilfs {
 	unsigned long		ns_flags;
-        atomic_t		ns_count;
+	atomic_t		ns_count;
 
 	struct block_device    *ns_bdev;
 	struct backing_dev_info *ns_bdi;
@@ -94,7 +94,7 @@ struct the_nilfs {
 	struct semaphore	ns_writer_sem;
 	atomic_t		ns_writer_sem_count;
 
-        /*
+	/*
 	 * used for
 	 * - loading the latest checkpoint exclusively.
 	 * - allocating a new full segment.

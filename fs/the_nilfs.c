@@ -402,7 +402,7 @@ int init_nilfs(struct the_nilfs *nilfs, struct nilfs_sb_info *sbi, char *data)
 		if (!sbp) {
 			err = -EINVAL;
 			goto out;
-                        /* not failed_sbh; sbh is released automatically
+			/* not failed_sbh; sbh is released automatically
 			   when reloading fails. */
 		}
 	}

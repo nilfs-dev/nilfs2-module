@@ -380,7 +380,7 @@ static int nilfs_rename(struct inode *old_dir, struct dentry *old_dentry,
 
 	/*
 	 * Like most other Unix systems, set the ctime for inodes on a
- 	 * rename.
+	 * rename.
 	 * inode_dec_link_count() will mark the inode dirty.
 	 */
 	old_inode->i_ctime = CURRENT_TIME;
@@ -420,16 +420,16 @@ struct inode_operations nilfs_dir_inode_operations = {
 	.mknod		= nilfs_mknod,
 	.rename		= nilfs_rename,
 	.setattr	= nilfs_setattr,
-	.permission     = nilfs_permission,
+	.permission	= nilfs_permission,
 };
 
 struct inode_operations nilfs_special_inode_operations = {
 	.setattr	= nilfs_setattr,
-	.permission     = nilfs_permission,
+	.permission	= nilfs_permission,
 };
 
 struct inode_operations nilfs_symlink_inode_operations = {
-        .readlink       = generic_readlink,
-        .follow_link    = page_follow_link_light,
-	.put_link       = page_put_link,
+	.readlink	= generic_readlink,
+	.follow_link	= page_follow_link_light,
+	.put_link	= page_put_link,
 };
