@@ -93,11 +93,13 @@ int nilfs_mdt_delete_block(struct inode *, nilfs_blkoff_t);
 int nilfs_mdt_forget_block(struct inode *, nilfs_blkoff_t);
 int nilfs_mdt_truncate_blocks(struct inode *, nilfs_blkoff_t);
 int nilfs_mdt_mark_block_dirty(struct inode *, nilfs_blkoff_t);
+int nilfs_mdt_fetch_dirty(struct inode *);
 
 struct inode *nilfs_mdt_new(struct the_nilfs *, struct super_block *, ino_t,
 			    gfp_t);
 struct inode *nilfs_mdt_new_common(struct the_nilfs *, struct super_block *,
 				   ino_t, gfp_t);
+void nilfs_mdt_destroy(struct inode *);
 void nilfs_mdt_clear(struct inode *);
 struct inode *nilfs_mdt_new_with_blockgroup(struct the_nilfs *,
 					    struct super_block *, ino_t, gfp_t,
@@ -118,29 +120,6 @@ static inline void nilfs_mdt_mark_dirty(struct inode *inode)
 static inline void nilfs_mdt_clear_dirty(struct inode *inode)
 {
 	clear_bit(NILFS_I_DIRTY, &NILFS_I(inode)->i_state);
-}
-
-static inline int nilfs_mdt_fetch_dirty(struct inode *inode)
-{
-	struct nilfs_inode_info *ii = NILFS_I(inode);
-
-	if (nilfs_bmap_test_and_clear_dirty(ii->i_bmap)) {
-		set_bit(NILFS_I_DIRTY, &ii->i_state);
-		return 1;
-	}
-	return test_bit(NILFS_I_DIRTY, &ii->i_state);
-}
-
-static inline void nilfs_mdt_destroy(struct inode *inode)
-{
-	extern void nilfs_destroy_inode(struct inode *);
-	struct nilfs_mdt_info *mdi = NILFS_MDT(inode);
-
-	mdt_debug(2, "called (ino=%lu)\n", inode->i_ino);
-	kfree(mdi->mi_bgl); /* kfree(NULL) is safe */
-	kfree(mdi);
-	nilfs_destroy_inode(inode);
-	mdt_debug(2, "done\n");
 }
 
 static inline void

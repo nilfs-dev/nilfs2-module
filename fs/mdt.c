@@ -573,6 +573,17 @@ int nilfs_mdt_mark_block_dirty(struct inode *inode, nilfs_blkoff_t block)
 	return 0;
 }
 
+int nilfs_mdt_fetch_dirty(struct inode *inode)
+{
+	struct nilfs_inode_info *ii = NILFS_I(inode);
+
+	if (nilfs_bmap_test_and_clear_dirty(ii->i_bmap)) {
+		set_bit(NILFS_I_DIRTY, &ii->i_state);
+		return 1;
+	}
+	return test_bit(NILFS_I_DIRTY, &ii->i_state);
+}
+
 static int
 nilfs_mdt_write_page(struct page *page, struct writeback_control *wbc)
 {
@@ -745,4 +756,16 @@ void nilfs_mdt_clear(struct inode *inode)
 
 	NILFS_CHECK_PAGE_CACHE(inode->i_mapping, -1);
 	mdt_debug(2, "done (ino=%lu)\n", inode->i_ino);
+}
+
+void nilfs_mdt_destroy(struct inode *inode)
+{
+	extern void nilfs_destroy_inode(struct inode *);
+	struct nilfs_mdt_info *mdi = NILFS_MDT(inode);
+
+	mdt_debug(2, "called (ino=%lu)\n", inode->i_ino);
+	kfree(mdi->mi_bgl); /* kfree(NULL) is safe */
+	kfree(mdi);
+	nilfs_destroy_inode(inode);
+	mdt_debug(2, "done\n");
 }
