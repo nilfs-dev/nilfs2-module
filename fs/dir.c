@@ -86,10 +86,9 @@ static unsigned nilfs_last_byte(struct inode *inode, unsigned long page_nr)
 }
 
 #if HAVE_WRITE_BEGIN_WRITE_END
-static inline int
-nilfs_prepare_chunk_uninterruptible(struct page *page,
-				    struct address_space *mapping,
-				    unsigned from, unsigned to)
+static int nilfs_prepare_chunk_uninterruptible(struct page *page,
+					       struct address_space *mapping,
+					       unsigned from, unsigned to)
 {
 	loff_t pos = page_offset(page) + from;
 	return block_write_begin(NULL, mapping, pos, to - from,
@@ -97,9 +96,9 @@ nilfs_prepare_chunk_uninterruptible(struct page *page,
 				 NULL, nilfs_get_block);
 }
 
-static inline int nilfs_prepare_chunk(struct page *page,
-				      struct address_space *mapping,
-				      unsigned from, unsigned to)
+static int nilfs_prepare_chunk(struct page *page,
+			       struct address_space *mapping,
+			       unsigned from, unsigned to)
 {
 	loff_t pos = page_offset(page) + from;
 	return block_write_begin(NULL, mapping, pos, to - from, 0, &page,
@@ -133,9 +132,9 @@ static int nilfs_commit_chunk(struct page *page,
 	return err;
 }
 #else /* HAVE_WRITE_BEGIN_WRITE_END */
-static inline int nilfs_prepare_chunk(struct page *page,
-				      struct address_space *mapping,
-				      unsigned from, unsigned to)
+static int nilfs_prepare_chunk(struct page *page,
+			       struct address_space *mapping,
+			       unsigned from, unsigned to)
 {
 	return mapping->a_ops->prepare_write(NULL, page, from, to);
 }
@@ -261,7 +260,7 @@ fail:
  *
  * len <= NILFS_NAME_LEN and de != NULL are guaranteed by caller.
  */
-static inline int
+static int
 nilfs_match(int len, const char * const name, struct nilfs_dir_entry *de)
 {
 	if (len != de->name_len)
@@ -274,13 +273,12 @@ nilfs_match(int len, const char * const name, struct nilfs_dir_entry *de)
 /*
  * p is at least 6 bytes before the end of page
  */
-static inline
-nilfs_dirent *nilfs_next_entry(nilfs_dirent *p)
+static nilfs_dirent *nilfs_next_entry(nilfs_dirent *p)
 {
 	return (nilfs_dirent *)((char*)p + le16_to_cpu(p->rec_len));
 }
 
-static inline unsigned
+static unsigned
 nilfs_validate_entry(char *base, unsigned offset, unsigned mask)
 {
 	nilfs_dirent *de = (nilfs_dirent*)(base + offset);
@@ -317,7 +315,7 @@ nilfs_type_by_mode[S_IFMT >> S_SHIFT] = {
 	[S_IFLNK >> S_SHIFT]	= NILFS_FT_SYMLINK,
 };
 
-static inline void nilfs_set_de_type(nilfs_dirent *de, struct inode *inode)
+static void nilfs_set_de_type(nilfs_dirent *de, struct inode *inode)
 {
 	mode_t mode = inode->i_mode;
 

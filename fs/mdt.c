@@ -143,7 +143,7 @@ nilfs_mdt_get_page_block(struct inode *inode, nilfs_blkoff_t blkoff)
 	return bh;
 }
 
-static inline void
+static void
 nilfs_mdt_put_page_block(struct inode *inode, struct buffer_head *bh)
 {
 	unlock_page(bh->b_page);

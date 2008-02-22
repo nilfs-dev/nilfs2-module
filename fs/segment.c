@@ -587,7 +587,7 @@ static int nilfs_segctor_add_super_root(struct nilfs_sc_info *sci)
 /*
  * Functions for making segment summary and payloads
  */
-static inline int nilfs_segctor_segsum_block_required(
+static int nilfs_segctor_segsum_block_required(
 	struct nilfs_sc_info *sci, const struct nilfs_segsum_pointer *ssp,
 	unsigned binfo_size)
 {

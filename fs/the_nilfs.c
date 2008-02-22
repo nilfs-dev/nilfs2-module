@@ -207,13 +207,13 @@ static int nilfs_load_super_root(struct the_nilfs *nilfs,
 	goto out;
 }
 
-static inline void nilfs_init_recovery_info(struct nilfs_recovery_info *ri)
+static void nilfs_init_recovery_info(struct nilfs_recovery_info *ri)
 {
 	memset(ri, 0, sizeof(*ri));
 	INIT_LIST_HEAD(&ri->ri_used_segments);
 }
 
-static inline void nilfs_clear_recovery_info(struct nilfs_recovery_info *ri)
+static void nilfs_clear_recovery_info(struct nilfs_recovery_info *ri)
 {
 	nilfs_dispose_segment_list(&ri->ri_used_segments);
 }

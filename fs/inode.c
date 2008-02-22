@@ -556,8 +556,8 @@ static int nilfs_read_sketch_inode(struct inode *inode)
 	return err;
 }
 
-static inline int __nilfs_read_inode(struct super_block *sb, unsigned long ino,
-				     struct inode *inode)
+static int __nilfs_read_inode(struct super_block *sb, unsigned long ino,
+			      struct inode *inode)
 {
 	struct nilfs_sb_info *sbi = NILFS_SB(sb);
 	struct inode *dat = nilfs_dat_inode(sbi->s_nilfs);

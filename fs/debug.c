@@ -84,7 +84,7 @@ static match_table_t class_tokens = {
 	{-1, NULL},
 };
 
-static inline const char *find_token(int token, match_table_t tokens)
+static const char *find_token(int token, match_table_t tokens)
 {
 	struct match_token *pt;
 

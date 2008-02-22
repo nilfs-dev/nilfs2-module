@@ -225,7 +225,7 @@ static struct inode *alloc_gcinode(struct the_nilfs *nilfs, ino_t ino,
 	return inode;
 }
 
-static inline unsigned long ihash(ino_t ino, nilfs_cno_t cno)
+static unsigned long ihash(ino_t ino, nilfs_cno_t cno)
 {
 	return hash_long((unsigned long)((ino << 2) + cno),
 			 NILFS_GCINODE_HASH_BITS);
