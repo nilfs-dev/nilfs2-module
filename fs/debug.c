@@ -228,7 +228,7 @@ nilfs_write_debug_option(struct file *file, const char __user *buffer,
 }
 
 
-#define nbar(n) ((n)++?"|":"")
+#define nbar(n) ((n)++ ? "|" : "")
 #define MSIZ 512
 #define snprint_flag(b, sz, c, f, n, l) \
 	do {							\
@@ -282,7 +282,7 @@ void nilfs_vinode_debug(const char *fname, int line, struct inode *inode,
 #endif
 
 	if (ii->i_state) {
-		n=0;
+		n = 0;
 		len += snprintf(b + len, MSIZ - len, " vi_state=");
 		TEST_NILFS_INODE_STATE(ii, NEW, b, MSIZ, n, len);
 		TEST_NILFS_INODE_STATE(ii, DIRTY, b, MSIZ, n, len);
@@ -394,17 +394,17 @@ static int snprint_page_flags(char *b, int size, struct page *page)
 	TEST_PAGE_FLAG(page, Compound, b, size, n, len);
 	TEST_PAGE_FLAG(page, MappedToDisk, b, size, n, len);
 	TEST_PAGE_FLAG(page, Reclaim, b, size, n, len);
-#if (LINUX_VERSION_CODE > KERNEL_VERSION(2,6,11)) && (BITS_PER_LONG > 32)
+#if (LINUX_VERSION_CODE > KERNEL_VERSION(2, 6, 11)) && (BITS_PER_LONG > 32)
 	TEST_PAGE_FLAG(page, Uncached, b, size, n, len);
 #endif
-#if (LINUX_VERSION_CODE > KERNEL_VERSION(2,6,16))
+#if (LINUX_VERSION_CODE > KERNEL_VERSION(2, 6, 16))
 	TEST_PAGE_FLAG(page, Buddy, b, size, n, len);
 #endif
-#if (LINUX_VERSION_CODE > KERNEL_VERSION(2,6,21))
+#if (LINUX_VERSION_CODE > KERNEL_VERSION(2, 6, 21))
 	TEST_PAGE_FLAG(page, Tail, b, size, n, len);
 	TEST_PAGE_FLAG(page, Head, b, size, n, len);
 #endif
-#if (LINUX_VERSION_CODE > KERNEL_VERSION(2,6,22))
+#if (LINUX_VERSION_CODE > KERNEL_VERSION(2, 6, 22))
 	TEST_PAGE_FLAG(page, Pinned, b, size, n, len);
 	TEST_PAGE_FLAG(page, Readahead, b, size, n, len);
 #endif

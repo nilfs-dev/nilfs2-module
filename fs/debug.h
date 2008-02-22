@@ -208,7 +208,7 @@ extern void nilfs_print_bmap_direct_pointers(struct inode *,
 #define nilfs_releasepage	NULL
 #define nilfs_sync_page		NULL
 #define nilfs_invalidatepage	block_invalidatepage
-#define nilfs_print_bmap_direct_pointers(inode,p)  do {} while(0)
+#define nilfs_print_bmap_direct_pointers(inode, p)  do {} while(0)
 
 #define NILFS_CHECK_PAGE_CACHE(mapping, tag)  do {} while (0)
 #define NILFS_CHECK_BTNODE_CACHE(btnc, tag)  do {} while (0)

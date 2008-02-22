@@ -366,7 +366,7 @@ static int nilfs_readdir(struct file * filp, void * dirent, filldir_t filldir)
  */
 		de = (nilfs_dirent *)(kaddr+offset);
 		limit = kaddr + nilfs_last_byte(inode, n) - NILFS_DIR_REC_LEN(1);
-		for ( ;(char*)de <= limit; de = nilfs_next_entry(de)) {
+		for ( ; (char*)de <= limit; de = nilfs_next_entry(de)) {
 			if (de->rec_len == 0) {
 				nilfs_error(sb, __FUNCTION__,
 					"zero-length directory entry");

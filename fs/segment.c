@@ -147,14 +147,14 @@ static void nilfs_segctor_do_flush(struct nilfs_sc_info *, unsigned long);
 static void nilfs_dispose_list(struct nilfs_sb_info *, struct list_head *,
 			       int);
 
-#define nilfs_cnt32_gt(a,b)   \
+#define nilfs_cnt32_gt(a, b)   \
 	(typecheck(__u32, a) && typecheck(__u32, b) && \
 	 ((__s32)(b) - (__s32)(a) < 0))
-#define nilfs_cnt32_ge(a,b)   \
+#define nilfs_cnt32_ge(a, b)   \
 	(typecheck(__u32, a) && typecheck(__u32, b) && \
 	 ((__s32)(a) - (__s32)(b) >= 0))
-#define nilfs_cnt32_lt(a,b)   nilfs_cnt32_gt(b,a)
-#define nilfs_cnt32_le(a,b)   nilfs_cnt32_ge(b,a)
+#define nilfs_cnt32_lt(a, b)  nilfs_cnt32_gt(b, a)
+#define nilfs_cnt32_le(a, b)  nilfs_cnt32_ge(b, a)
 
 /*
  * Transaction
