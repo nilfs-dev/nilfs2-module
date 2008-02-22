@@ -231,9 +231,11 @@ void nilfs_bmap_add_blocks(const struct nilfs_bmap *, int);
 void nilfs_bmap_sub_blocks(const struct nilfs_bmap *, int);
 
 
-int nilfs_bmap_get_block(const struct nilfs_bmap *, nilfs_bmap_ptr_t, struct buffer_head **);
+int nilfs_bmap_get_block(const struct nilfs_bmap *, nilfs_bmap_ptr_t,
+			 struct buffer_head **);
 void nilfs_bmap_put_block(const struct nilfs_bmap *, struct buffer_head *);
-int nilfs_bmap_get_new_block(const struct nilfs_bmap *, nilfs_bmap_ptr_t, struct buffer_head **);
+int nilfs_bmap_get_new_block(const struct nilfs_bmap *, nilfs_bmap_ptr_t,
+			     struct buffer_head **);
 void nilfs_bmap_delete_block(const struct nilfs_bmap *, struct buffer_head *);
 void nilfs_bmap_delete_all_blocks(const struct nilfs_bmap *);
 

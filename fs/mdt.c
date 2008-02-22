@@ -300,8 +300,8 @@ nilfs_mdt_submit_block(struct inode *inode, nilfs_blkoff_t blkoff,
  *
  * nilfs_mdt_read_block() looks up the specified buffer.
  * When the block is not mapped on disk, it returns ERR_PTR(-ENOENT).
- * Since the buffer is taken exclusively by a page and buffer lock, it is assured to
- * be either existing or formatted through nilfs_mdt_create_block().
+ * Since the buffer is taken exclusively by a page and buffer lock, it is
+ * assured to be either existing or formatted through nilfs_mdt_create_block().
  *
  * Return Value: On success, it returns 0. On error, the following negative
  * error code is returned.

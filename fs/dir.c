@@ -333,7 +333,8 @@ static int nilfs_readdir(struct file *filp, void *dirent, filldir_t filldir)
 		}
 		kaddr = page_address(page);
 		de = (struct nilfs_dir_entry *)(kaddr + offset);
-		limit = kaddr + nilfs_last_byte(inode, n) - NILFS_DIR_REC_LEN(1);
+		limit = kaddr + nilfs_last_byte(inode, n) -
+			NILFS_DIR_REC_LEN(1);
 		for ( ; (char *)de <= limit; de = nilfs_next_entry(de)) {
 			if (de->rec_len == 0) {
 				nilfs_error(sb, __FUNCTION__,

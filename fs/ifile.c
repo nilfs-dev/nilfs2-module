@@ -321,7 +321,7 @@ int nilfs_ifile_delete_inode(struct inode *ifile, ino_t ino)
 		return ret;
 	}
 
-	/* XXX: check! race condition mark dirty and put_bh (nilfs_inode_free()) */
+	/* XXX: check! race condition mark dirty and put_bh() */
 	nilfs_ifile_commit_free(ifile, &req);
 	brelse(req.pr_entry_bh);
 

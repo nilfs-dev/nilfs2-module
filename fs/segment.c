@@ -1202,7 +1202,7 @@ static int nilfs_segctor_fill_in_checkpoint(struct nilfs_sc_info *sci)
 		BUG_ON(err == -EINVAL || err == -ENOENT);
 		goto failed_ibh;
 	}
-	raw_cp->cp_snapshot_list.ssl_next = 0; /* XXX: should be moved to cpfile.c? */
+	raw_cp->cp_snapshot_list.ssl_next = 0;
 	raw_cp->cp_snapshot_list.ssl_prev = 0;
 	raw_cp->cp_inodes_count =
 		cpu_to_le64(atomic_read(&sbi->s_inodes_count));
@@ -1466,10 +1466,10 @@ static int nilfs_segctor_collect_blocks(struct nilfs_sc_info *sci, int mode)
 					sci, &ii->vfs_inode,
 					&nilfs_sc_file_ops);
 				if (unlikely(err)) {
-					sci->sc_stage.gc_inode_ptr =
-						list_entry(ii->i_dirty.prev,
-							   struct nilfs_inode_info,
-							   i_dirty);
+					sci->sc_stage.gc_inode_ptr = list_entry(
+						ii->i_dirty.prev,
+						struct nilfs_inode_info,
+						i_dirty);
 					goto break_or_fail;
 				}
 				set_bit(NILFS_I_COLLECTED, &ii->i_state);
@@ -3484,8 +3484,8 @@ static void nilfs_segctor_destroy(struct nilfs_sc_info *sci)
 
 	spin_lock(&sci->sc_state_lock);
 	nilfs_segctor_kill_thread(sci);
-	flag = ((sci->sc_state & (NILFS_SEGCTOR_COMMIT | NILFS_SEGCTOR_FLUSH)) ||
-		sci->sc_seq_request != sci->sc_seq_done);
+	flag = ((sci->sc_state & (NILFS_SEGCTOR_COMMIT | NILFS_SEGCTOR_FLUSH))
+		|| sci->sc_seq_request != sci->sc_seq_done);
 	spin_unlock(&sci->sc_state_lock);
 
 	if (flag || nilfs_segctor_confirm(sci))

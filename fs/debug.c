@@ -354,7 +354,8 @@ void nilfs_bh_debug(const char *fname, int line, struct buffer_head *bh,
 		printk(KERN_DEBUG "%s: bh=NULL %s at %d\n", b, fname, line);
 		return;
 	}
-	len += snprintf(b + len, MSIZ - len, ": page=%p cnt=%d blk#=%llu lst=%d",
+	len += snprintf(b + len, MSIZ - len,
+			": page=%p cnt=%d blk#=%llu lst=%d",
 			page, atomic_read(&bh->b_count),
 			(unsigned long long)bh->b_blocknr,
 			!list_empty(&bh->b_assoc_buffers));

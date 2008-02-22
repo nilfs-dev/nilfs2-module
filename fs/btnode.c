@@ -171,7 +171,8 @@ repeat:
 		if (!cached_page) {
 			cached_page = nilfs_btnode_alloc_page(btnc);
 			if (unlikely(!cached_page)) {
-				btnode_debug(2, "failed to alloc btnode page\n");
+				btnode_debug(2,
+					     "failed to alloc btnode page\n");
 				return -ENOMEM;
 			}
 		}
@@ -611,8 +612,8 @@ int nilfs_btnode_prepare_change_key(struct nilfs_btnode_cache *btnc,
 			struct page *page;
 
 			if (unlikely(inode->i_ino != NILFS_DAT_INO)) {
-				btnode_debug(1,
-					     "insert failed, ino %lu key %lld\n",
+				btnode_debug(1, "insert failed, "
+					     "ino %lu key %lld\n",
 					     inode->i_ino,
 					     (unsigned long long)newkey);
 				BUG();
@@ -933,7 +934,8 @@ void nilfs_btnode_cache_clear(struct nilfs_btnode_cache *btnc)
 	for (i = 0; i < n; i++) {
 		page = pages[i];
 		lock_page(page);
-		if (unlikely(!nilfs_doing_construction() && PageWriteback(page))) {
+		if (unlikely(!nilfs_doing_construction() &&
+			     PageWriteback(page))) {
 			PAGE_DEBUG(page, "page is on writeback");
 			BUG();
 		}

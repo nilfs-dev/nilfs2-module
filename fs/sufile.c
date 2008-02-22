@@ -193,11 +193,14 @@ int nilfs_sufile_alloc(struct inode *sufile, nilfs_segnum_t *segnump)
 				nilfs_segment_usage_set_dirty(su);
 				kunmap_atomic(kaddr, KM_USER0);
 
-				kaddr = kmap_atomic(header_bh->b_page, KM_USER0);
+				kaddr = kmap_atomic(header_bh->b_page,
+						    KM_USER0);
 				header = nilfs_sufile_block_get_header(
 					sufile, header_bh, kaddr);
-				header->sh_ncleansegs = cpu_to_le64(le64_to_cpu(header->sh_ncleansegs) - 1);
-				header->sh_ndirtysegs =	cpu_to_le64(le64_to_cpu(header->sh_ndirtysegs) + 1);
+				header->sh_ncleansegs = cpu_to_le64(
+					le64_to_cpu(header->sh_ncleansegs) - 1);
+				header->sh_ndirtysegs =	cpu_to_le64(
+					le64_to_cpu(header->sh_ndirtysegs) + 1);
 				header->sh_last_alloc = cpu_to_le64(segnum);
 				kunmap_atomic(kaddr, KM_USER0);
 

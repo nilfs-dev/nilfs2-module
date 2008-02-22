@@ -741,7 +741,8 @@ void nilfs_dat_commit_start(struct inode *dat,
 		printk(KERN_CRIT
 		       "%s: vbn = %llu, start = %llu, end = %llu, pbn = %llu\n",
 		       __FUNCTION__, (unsigned long long)req->dr_vblocknr,
-		       (unsigned long long)nilfs_dat_entry_get_start(dat, entry),
+		       (unsigned long long)nilfs_dat_entry_get_start(dat,
+								     entry),
 		       (unsigned long long)nilfs_dat_entry_get_end(dat, entry),
 		       (unsigned long long)nilfs_dat_entry_get_blocknr(dat,
 								       entry));
@@ -1056,7 +1057,8 @@ int nilfs_dat_move(struct inode *dat,
 		printk(KERN_CRIT "%s: vbn = %llu, [%llu, %llu)\n",
 		       __FUNCTION__,
 		       (unsigned long long)vblocknr,
-		       (unsigned long long)nilfs_dat_entry_get_start(dat, entry),
+		       (unsigned long long)nilfs_dat_entry_get_start(dat,
+								     entry),
 		       (unsigned long long)nilfs_dat_entry_get_end(dat, entry));
 		BUG();
 	}
@@ -1124,7 +1126,8 @@ int nilfs_dat_translate(struct inode *dat,
 #endif	/* CONFIG_NILFS_DEBUG */
 #endif
 	dat_debug(2, "called (vblocknr=%llu)\n", (unsigned long long)vblocknr);
-	if ((ret = nilfs_dat_get_entry_block(dat, vblocknr, 0, &entry_bh)) < 0) {
+	ret = nilfs_dat_get_entry_block(dat, vblocknr, 0, &entry_bh);
+	if (ret < 0) {
 		dat_debug(1, "failed (ret=%d)\n", ret);
 		return ret;
 	}

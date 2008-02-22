@@ -44,7 +44,8 @@ int nilfs_bmap_lookup_at_level(struct nilfs_bmap *bmap,
 	if ((ret = (*bmap->b_ops->bop_lookup)(bmap, key, level, ptrp)) < 0)
 		goto out;
 	if (bmap->b_pops->bpop_translate != NULL) {
-		if ((ret = (*bmap->b_pops->bpop_translate)(bmap, *ptrp, &ptr)) < 0)
+		ret = (*bmap->b_pops->bpop_translate)(bmap, *ptrp, &ptr);
+		if (ret < 0)
 			goto out;
 		*ptrp = ptr;
 	}
@@ -144,7 +145,9 @@ int nilfs_bmap_insert(struct nilfs_bmap *bmap,
 	ret = nilfs_bmap_do_insert(bmap, key, rec);
 #ifdef CONFIG_NILFS_BMAP_DEBUG
 	if ((*bmap->b_ops->bop_verify)(bmap) < 0) {
-		printk(KERN_ERR "%s: insertion of key %lu and rec %lu made bmap %p corrupted\n",
+		printk(KERN_ERR
+		       "%s: insertion of key %lu and rec %lu made bmap %p "
+		       "corrupted\n",
 		       __FUNCTION__, key, rec, bmap);
 		(*bmap->b_ops->bop_print)(bmap);
 		BUG();
@@ -205,7 +208,8 @@ int nilfs_bmap_delete(struct nilfs_bmap *bmap, unsigned long key)
 	ret = nilfs_bmap_do_delete(bmap, key);
 #ifdef CONFIG_NILFS_BMAP_DEBUG
 	if ((*bmap->b_ops->bop_verify)(bmap) < 0) {
-		printk(KERN_ERR "%s: deletion of key %lu made bmap %p corrupted\n",
+		printk(KERN_ERR
+		       "%s: deletion of key %lu made bmap %p corrupted\n",
 		       __FUNCTION__, key, bmap);
 		(*bmap->b_ops->bop_print)(bmap);
 		BUG();
@@ -261,7 +265,8 @@ int nilfs_bmap_truncate(struct nilfs_bmap *bmap, unsigned long key)
 	ret = nilfs_bmap_do_truncate(bmap, key);
 #ifdef CONFIG_NILFS_BMAP_DEBUG
 	if ((*bmap->b_ops->bop_verify)(bmap) < 0) {
-		printk(KERN_ERR "%s: truncation to key %lu made bmap %p corrupted\n",
+		printk(KERN_ERR
+		       "%s: truncation to key %lu made bmap %p corrupted\n",
 		       __FUNCTION__, key, bmap);
 		(*bmap->b_ops->bop_print)(bmap);
 		BUG();
@@ -498,15 +503,15 @@ void nilfs_bmap_delete_all_blocks(const struct nilfs_bmap *bmap)
 }
 
 
-nilfs_bmap_key_t
-nilfs_bmap_data_get_key(const struct nilfs_bmap *bmap,
-			const struct buffer_head *bh)
+nilfs_bmap_key_t nilfs_bmap_data_get_key(const struct nilfs_bmap *bmap,
+					 const struct buffer_head *bh)
 {
 	struct buffer_head *pbh;
 	nilfs_bmap_key_t key;
 
-	for (pbh = page_buffers(bh->b_page), key = page_index(bh->b_page) << (PAGE_CACHE_SHIFT - bmap->b_inode->i_blkbits);
-	     pbh != bh;
+	key = page_index(bh->b_page) << (PAGE_CACHE_SHIFT -
+					 bmap->b_inode->i_blkbits);
+	for (pbh = page_buffers(bh->b_page); pbh != bh;
 	     pbh = pbh->b_this_page, key++);
 
 	return key;
@@ -714,7 +719,8 @@ static struct the_nilfs *nilfs_bmap_get_nilfs_v(const struct nilfs_bmap *bmap)
 	return NILFS_SB(bmap->b_inode->i_sb)->s_nilfs;
 }
 
-static struct the_nilfs *nilfs_bmap_get_nilfs_vmdt(const struct nilfs_bmap *bmap)
+static struct the_nilfs *
+nilfs_bmap_get_nilfs_vmdt(const struct nilfs_bmap *bmap)
 {
 	return NILFS_MDT(bmap->b_inode)->mi_nilfs;
 }
