@@ -669,10 +669,9 @@ void nilfs_write_inode_common(struct inode *inode,
 	raw_inode->i_flags = cpu_to_le32(ii->i_flags);
 	raw_inode->i_generation = cpu_to_le32(inode->i_generation);
 
-	if (has_bmap) {
+	if (has_bmap)
 		nilfs_bmap_write(ii->i_bmap, raw_inode);
-		nilfs_print_bmap_direct_pointers(inode, raw_inode);
-	} else if (S_ISCHR(inode->i_mode) || S_ISBLK(inode->i_mode))
+	else if (S_ISCHR(inode->i_mode) || S_ISBLK(inode->i_mode))
 		raw_inode->i_device_code =
 			cpu_to_le64(new_encode_dev(inode->i_rdev));
 	/* When extending inode, nilfs->ns_inode_size should be checked

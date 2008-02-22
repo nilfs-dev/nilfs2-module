@@ -188,8 +188,6 @@ extern void nilfs_check_radix_tree(const char *, int, struct address_space *,
 struct nilfs_btnode_cache;
 extern void nilfs_check_btnode_cache(const char *, int,
 				     struct nilfs_btnode_cache *, int);
-extern void nilfs_print_bmap_direct_pointers(struct inode *,
-					     struct nilfs_inode *);
 
 #define NILFS_CHECK_PAGE_CACHE(mapping, tag)  \
 	nilfs_check_radix_tree(__FUNCTION__, __LINE__, (mapping), (tag))
@@ -208,7 +206,6 @@ extern void nilfs_print_bmap_direct_pointers(struct inode *,
 #define nilfs_releasepage	NULL
 #define nilfs_sync_page		NULL
 #define nilfs_invalidatepage	block_invalidatepage
-#define nilfs_print_bmap_direct_pointers(inode, p)  do {} while (0)
 
 #define NILFS_CHECK_PAGE_CACHE(mapping, tag)  do {} while (0)
 #define NILFS_CHECK_BTNODE_CACHE(btnc, tag)  do {} while (0)

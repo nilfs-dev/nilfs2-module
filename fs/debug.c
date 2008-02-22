@@ -843,18 +843,3 @@ void nilfs_check_btnode_cache(const char *fname, int line,
 	}
 	goto repeat;
 }
-
-void nilfs_print_bmap_direct_pointers(struct inode *inode,
-				      struct nilfs_inode *raw_inode)
-{
-	int i;
-	__le64 *direct_ptr;
-
-	if (nilfs_debug_info.verbose[NILFS_VERBOSE_INODE] < 3)
-		return;
-	printk(KERN_DEBUG "NILFS inode (ino=%lu)\n", inode->i_ino);
-	for (i = 0, direct_ptr = raw_inode->i_bmap;
-	     i < NILFS_INODE_BMAP_SIZE; i++, direct_ptr++)
-		printk(KERN_DEBUG "  i_bmap[%d]=%llu\n",
-		       i, (unsigned long long)le64_to_cpu(*direct_ptr));
-}
