@@ -376,7 +376,7 @@ int nilfs_cpfile_delete_checkpoints(struct inode *cpfile,
 	int ret, ncps, nicps, count, i;
 
 	if ((start == 0) || (start > end)) {
-		printk("%s: start = %llu, end = %llu\n",
+		printk(KERN_CRIT "%s: start = %llu, end = %llu\n",
 		       __FUNCTION__,
 		       (unsigned long long)start,
 		       (unsigned long long)end);
@@ -428,7 +428,8 @@ int nilfs_cpfile_delete_checkpoints(struct inode *cpfile,
 				ret = nilfs_cpfile_delete_checkpoint_block(
 					cpfile, cno);
 				if (ret < 0) {
-					printk("%s: cannot delete block\n",
+					printk(KERN_ERR
+					       "%s: cannot delete block\n",
 					       __FUNCTION__);
 					goto out_sem;
 				}

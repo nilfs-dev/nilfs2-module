@@ -265,7 +265,7 @@ int nilfs_sufile_cancel_free(struct inode *sufile, nilfs_segnum_t segnum)
 	su = nilfs_sufile_block_get_segment_usage(
 		sufile, segnum, su_bh, kaddr);
 	if (!nilfs_segment_usage_clean(su)) {
-		printk("%s: segment %llu must be clean\n",
+		printk(KERN_CRIT "%s: segment %llu must be clean\n",
 		       __FUNCTION__, (unsigned long long)segnum);
 		BUG();
 	}

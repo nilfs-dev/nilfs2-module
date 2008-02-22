@@ -369,7 +369,7 @@ static int nilfs_ioctl_move_inode_block(struct inode *inode,
 			     vdesc->vd_blocknr,
 			     vdesc->vd_vblocknr)) < 0) {
 			if ((ret == -ENOENT) || (ret == -EEXIST)) {
-				printk("%s: ino = %llu, cno = %llu, "
+				printk(KERN_CRIT "%s: ino = %llu, cno = %llu, "
 				       "offset = %llu, blocknr = %llu, "
 				       "vblocknr = %llu\n",
 				       __FUNCTION__,
@@ -388,7 +388,7 @@ static int nilfs_ioctl_move_inode_block(struct inode *inode,
 			     vdesc->vd_blocknr,
 			     vdesc->vd_vblocknr)) < 0) {
 			if (ret == -EEXIST) {
-				printk("%s: ino = %llu, cno = %llu, "
+				printk(KERN_CRIT "%s: ino = %llu, cno = %llu, "
 				       "blocknr = %llu, vblocknr = %llu\n",
 				       __FUNCTION__,
 				       (unsigned long long)vdesc->vd_ino,

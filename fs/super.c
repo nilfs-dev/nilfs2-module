@@ -294,7 +294,8 @@ int nilfs_sync_super(struct nilfs_sb_info *sbi)
 	}
 #endif
 	if (unlikely(err))
-		printk("NILFS: unable to write superblock (err=%d)\n", err);
+		printk(KERN_ERR
+		       "NILFS: unable to write superblock (err=%d)\n", err);
 	else {
 		nilfs_dispose_used_segments(nilfs);
 		clear_nilfs_discontinued(nilfs);
@@ -314,7 +315,7 @@ int nilfs_commit_super(struct nilfs_sb_info *sbi, int sync)
 	nilfs_debug(2, "called\n");
 	err = nilfs_count_free_blocks(nilfs, &nfreeblocks);
 	if (unlikely(err)) {
-		printk("NILFS: failed to count free blocks\n");
+		printk(KERN_ERR "NILFS: failed to count free blocks\n");
 		goto failed;
 	}
 	sbp->s_free_blocks_count = cpu_to_le64(nfreeblocks);
@@ -717,7 +718,8 @@ nilfs_load_super_block(struct super_block *sb, struct buffer_head **pbh)
 	 */
 	blocksize = sb_min_blocksize(sb, BLOCK_SIZE);
 	if (!blocksize) {
-		printk("NILFS: unable to set blocksize of superblock\n");
+		printk(KERN_ERR
+		       "NILFS: unable to set blocksize of superblock\n");
 		return NULL;
 	}
 	sb_index = NILFS_SB_OFFSET_BYTES / blocksize;
@@ -725,7 +727,7 @@ nilfs_load_super_block(struct super_block *sb, struct buffer_head **pbh)
 
 	*pbh = sb_bread(sb, sb_index);
 	if (!*pbh) {
-		printk("NILFS: unable to read superblock\n");
+		printk(KERN_ERR "NILFS: unable to read superblock\n");
 		return NULL;
 	}
 	return (struct nilfs_super_block *)((char *)(*pbh)->b_data + offset);

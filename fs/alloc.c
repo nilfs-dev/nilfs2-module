@@ -232,12 +232,8 @@ void nilfs_persistent_abort_alloc_entry(struct inode *inode,
 
 	if (!nilfs_persistent_clear_bit_atomic(
 		    nilfs_mdt_bgl_lock(inode, group), grpoff, bitmap_buffer))
-		/*
-		nilfs_error(inode->i_sb, __FUNCTION__,
-			    "persistent entry number %lu already freed",
-			    req->pr_ino);
-		*/
-		printk("persistent entry numer %lu already freed\n",
+		printk(KERN_WARNING
+		       "persistent entry numer %lu already freed\n",
 		       req->pr_ino);
 
 	spin_lock(nilfs_mdt_bgl_lock(inode, group));

@@ -478,7 +478,8 @@ static void nilfs_dat_abort_alloc_vblocknr(struct inode *dat,
 			    "virtual block number %llu already freed",
 			    (unsigned long long)req->dr_vblocknr);
 		*/
-		printk("%s: virtual block number %llu already freed\n",
+		printk(KERN_CRIT
+		       "%s: virtual block number %llu already freed\n",
 		       __FUNCTION__, (unsigned long long)req->dr_vblocknr);
 		BUG();
 	}
@@ -541,7 +542,8 @@ static void nilfs_dat_commit_free_vblocknr(struct inode *dat,
 			    "virtual block number %llu already freed",
 			    (unsigned long long)req->dr_vblocknr);
 		*/
-		printk("%s: virtual block number %llu already freed\n",
+		printk(KERN_CRIT
+		       "%s: virtual block number %llu already freed\n",
 		       __FUNCTION__, (unsigned long long)req->dr_vblocknr);
 		BUG();
 	}
@@ -736,7 +738,8 @@ void nilfs_dat_commit_start(struct inode *dat,
 	nilfs_dat_entry_set_start(dat, entry, nilfs_mdt_cno(dat));
 	if ((nilfs_dat_entry_get_blocknr(dat, entry) != 0) ||
 	    (nilfs_dat_entry_get_end(dat, entry) != NILFS_CNO_MAX)) {
-		printk("%s: vbn = %llu, start = %llu, end = %llu, pbn = %llu\n",
+		printk(KERN_CRIT
+		       "%s: vbn = %llu, start = %llu, end = %llu, pbn = %llu\n",
 		       __FUNCTION__, (unsigned long long)req->dr_vblocknr,
 		       (unsigned long long)nilfs_dat_entry_get_start(dat, entry),
 		       (unsigned long long)nilfs_dat_entry_get_end(dat, entry),
@@ -995,7 +998,8 @@ int nilfs_dat_freev(struct inode *dat, nilfs_sector_t *vblocknrs,
 			if (!nilfs_dat_clear_bit_atomic(
 				    nilfs_mdt_bgl_lock(dat, group),
 				    group_offset, bitmap)) {
-				printk("%s: virtual block number %llu already "
+				printk(KERN_CRIT
+				       "%s: virtual block number %llu already "
 				       "freed\n",
 				       __FUNCTION__,
 				       (unsigned long long)vblocknrs[j]);
@@ -1049,7 +1053,7 @@ int nilfs_dat_move(struct inode *dat,
 	entry = nilfs_dat_block_get_entry(
 		dat, vblocknr, entry_bh, entry_kaddr);
 	if (nilfs_dat_entry_get_blocknr(dat, entry) == 0) {
-		printk("%s: vbn = %llu, [%llu, %llu)\n",
+		printk(KERN_CRIT "%s: vbn = %llu, [%llu, %llu)\n",
 		       __FUNCTION__,
 		       (unsigned long long)vblocknr,
 		       (unsigned long long)nilfs_dat_entry_get_start(dat, entry),
@@ -1110,7 +1114,8 @@ int nilfs_dat_translate(struct inode *dat,
 	bitmap = nilfs_dat_block_get_bitmap(dat, bitmap_bh, bitmap_kaddr);
 	if (!nilfs_dat_test_bit(nilfs_dat_group_offset(dat, vblocknr),
 				bitmap)) {
-		printk("%s: virtual block number %llu not allocated\n",
+		printk(KERN_CRIT
+		       "%s: virtual block number %llu not allocated\n",
 		       __FUNCTION__, (unsigned long long)vblocknr);
 		BUG();
 	}
@@ -1127,7 +1132,7 @@ int nilfs_dat_translate(struct inode *dat,
 	entry = nilfs_dat_block_get_entry(dat, vblocknr, entry_bh, entry_kaddr);
 	if ((blocknr = nilfs_dat_entry_get_blocknr(dat, entry)) == 0) {
 #ifdef CONFIG_NILFS_DEBUG
-		printk("%s: invalid virtual block number: %llu\n",
+		printk(KERN_DEBUG "%s: invalid virtual block number: %llu\n",
 		       __FUNCTION__, (unsigned long long)vblocknr);
 		BUG();
 #endif

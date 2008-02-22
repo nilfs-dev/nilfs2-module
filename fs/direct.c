@@ -397,10 +397,11 @@ static int nilfs_direct_print(const struct nilfs_bmap *bmap)
 	nilfs_bmap_key_t i;
 
 	direct = (const struct nilfs_direct *)bmap;
-	printk("direct is %s\n", nilfs_bmap_dirty(bmap) ? "dirty" : "clean");
-	printk("flags = %d\n", bmap->b_u.u_flags);
+	printk(KERN_DEBUG "direct is %s\n",
+	       nilfs_bmap_dirty(bmap) ? "dirty" : "clean");
+	printk(KERN_DEBUG "flags = %d\n", bmap->b_u.u_flags);
 	for (i = 0; i < NILFS_DIRECT_NBLOCKS; i++) {
-		printk("key = %llu ptr = %llu\n",
+		printk(KERN_DEBUG "key = %llu ptr = %llu\n",
 		       (unsigned long long)i,
 		       (unsigned long long)nilfs_direct_get_ptr(direct, i));
 	}

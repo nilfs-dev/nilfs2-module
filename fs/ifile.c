@@ -207,12 +207,7 @@ static void nilfs_inode_commit_free_ino(struct inode *ifile,
 	if (!nilfs_persistent_clear_bit_atomic(nilfs_mdt_bgl_lock(ifile,
 								  group),
 					       grpoff, bitmap_buffer))
-		/*
-		nilfs_error(ifile->i_sb, __FUNCTION__,
-			    "inode number %llu already freed",
-			    req->pr_ino);
-		*/
-		printk("inode number %lu already freed\n",
+		printk(KERN_WARNING "inode number %lu already freed\n",
 		       req->pr_ino);
 
 	desc = nilfs_persistent_get_group_desc(ifile, group, req->pr_desc_bh);

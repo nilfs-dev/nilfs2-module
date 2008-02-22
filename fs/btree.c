@@ -1936,7 +1936,7 @@ static int nilfs_btree_propagate(const struct nilfs_bmap *bmap,
 					 level + 1)) < 0) {
 		/* BUG_ON(ret == -ENOENT); */
 		if (ret == -ENOENT) {
-			printk("%s: key = %llu, level == %d\n",
+			printk(KERN_CRIT "%s: key = %llu, level == %d\n",
 			       __FUNCTION__, (unsigned long long)key, level);
 			BUG();
 		}
@@ -2403,9 +2403,10 @@ static int nilfs_btree_print_node(const struct nilfs_btree *btree,
 	nchildren = nilfs_btree_node_get_nchildren(btree, node);
 	indent = (nilfs_btree_height(btree) - level - 1) *
 		NILFS_BTREE_PRINT_INDENT_FACTOR;
-	printk("%*slevel = %d nchildren = %d\n", indent, "", level, nchildren);
+	printk(KERN_DEBUG "%*slevel = %d nchildren = %d\n",
+	       indent, "", level, nchildren);
 	for (i = 0; i < nchildren; i++)
-		printk("%*skey = %llu ptr = %llu\n", indent, "",
+		printk(KERN_DEBUG "%*skey = %llu ptr = %llu\n", indent, "",
 		       (unsigned long long)nilfs_btree_node_get_key(btree, node, i),
 		       (unsigned long long)nilfs_btree_node_get_ptr(btree, node, i));
 	return 0;

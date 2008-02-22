@@ -696,8 +696,8 @@ int nilfs_empty_dir(struct inode *inode)
 		while ((char *)de <= kaddr) {
 			if (de->rec_len == 0) {
 				nilfs_error(inode->i_sb, __FUNCTION__,
-					"zero-length directory entry");
-				printk("kaddr=%p, de=%p\n", kaddr, de);
+					    "zero-length directory entry "
+					    "(kaddr=%p, de=%p)\n", kaddr, de);
 				goto not_empty;
 			}
 			if (de->inode != 0) {

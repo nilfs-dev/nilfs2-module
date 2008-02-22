@@ -377,7 +377,7 @@ int init_nilfs(struct the_nilfs *nilfs, struct nilfs_sb_info *sbi, char *data)
 		blocksize = BLOCK_SIZE << le32_to_cpu(sbp->s_log_block_size);
 		if (sb->s_blocksize != blocksize &&
 		    !sb_set_blocksize(sb, blocksize)) {
-			printk("NILFS: blocksize %d unfit to device\n",
+			printk(KERN_ERR "NILFS: blocksize %d unfit to device\n",
 			       blocksize);
 			err = -EINVAL;
 		}
