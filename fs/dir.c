@@ -229,7 +229,7 @@ static struct page *nilfs_get_page(struct inode *dir, unsigned long n)
 {
 	struct address_space *mapping = dir->i_mapping;
 	struct page *page = read_cache_page(mapping, n,
-				(filler_t*)mapping->a_ops->readpage, NULL);
+				(filler_t *)mapping->a_ops->readpage, NULL);
 	if (!IS_ERR(page)) {
 		wait_on_page_locked(page);
 		kmap(page);
@@ -334,7 +334,7 @@ static int nilfs_readdir(struct file *filp, void *dirent, filldir_t filldir)
 		kaddr = page_address(page);
 		de = (struct nilfs_dir_entry *)(kaddr + offset);
 		limit = kaddr + nilfs_last_byte(inode, n) - NILFS_DIR_REC_LEN(1);
-		for ( ; (char*)de <= limit; de = nilfs_next_entry(de)) {
+		for ( ; (char *)de <= limit; de = nilfs_next_entry(de)) {
 			if (de->rec_len == 0) {
 				nilfs_error(sb, __FUNCTION__,
 					"zero-length directory entry");
@@ -558,7 +558,7 @@ int nilfs_add_link(struct dentry *dentry, struct inode *inode)
 	return -EINVAL;
 
 got_it:
-	from = (char*)de - (char*)page_address(page);
+	from = (char *)de - (char *)page_address(page);
 	to = from + rec_len;
 	err = nilfs_prepare_chunk(page, page->mapping, from, to);
 	if (err)
@@ -604,7 +604,7 @@ int nilfs_delete_entry(struct nilfs_dir_entry *dir, struct page *page)
 	struct nilfs_dir_entry *de = (struct nilfs_dir_entry *)(kaddr + from);
 	int err;
 
-	while ((char*)de < (char*)dir) {
+	while ((char *)de < (char *)dir) {
 		if (de->rec_len == 0) {
 			nilfs_error(inode->i_sb, __FUNCTION__,
 				"zero-length directory entry");
@@ -615,7 +615,7 @@ int nilfs_delete_entry(struct nilfs_dir_entry *dir, struct page *page)
 		de = nilfs_next_entry(de);
 	}
 	if (pde)
-		from = (char*)pde - (char*)page_address(page);
+		from = (char *)pde - (char *)page_address(page);
 	lock_page(page);
 	err = nilfs_prepare_chunk(page, mapping, from, to);
 	BUG_ON(err);
