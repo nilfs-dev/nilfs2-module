@@ -40,8 +40,7 @@
 
 
 #ifndef INIT_UNUSED_INODE_FIELDS
-static struct backing_dev_info nilfs_mdt_bdi =
-{
+static struct backing_dev_info nilfs_mdt_bdi = {
 	.ra_pages       = (VM_MAX_READAHEAD * 1024) / PAGE_CACHE_SIZE,
 	.state          = 0,
 	.capabilities   = BDI_CAP_MAP_COPY,
