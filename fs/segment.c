@@ -36,6 +36,7 @@
 #else
 #include <linux/suspend.h>
 #endif
+#include <linux/kthread.h>
 #include "nilfs.h"
 #include "btnode.h"
 #include "page.h"
@@ -3265,8 +3266,6 @@ static int nilfs_segctor_thread(void *arg)
 	struct timer_list timer;
 	int timeout = 0;
 
-	daemonize("segctord");
-
 	init_timer(&timer);
 	timer.data = (unsigned long)current;
 	timer.function = nilfs_construction_timeout;
@@ -3363,11 +3362,20 @@ static int nilfs_segctor_thread(void *arg)
 	return 0;
 }
 
-static void nilfs_segctor_start_thread(struct nilfs_sc_info *sci)
+static int nilfs_segctor_start_thread(struct nilfs_sc_info *sci)
 {
-	kernel_thread(nilfs_segctor_thread, sci,
-		      CLONE_VM | CLONE_FS | CLONE_FILES);
+	struct task_struct *t;
+
+	t = kthread_run(nilfs_segctor_thread, sci, "segctord");
+	if (IS_ERR(t)) {
+		int err = PTR_ERR(t);
+
+		printk(KERN_ERR "NILFS: error %d creating segctord thread\n",
+		       err);
+		return err;
+	}
 	wait_event(sci->sc_wait_task, sci->sc_task != NULL);
+	return 0;
 }
 
 static void nilfs_segctor_kill_thread(struct nilfs_sc_info *sci)
@@ -3382,10 +3390,12 @@ static void nilfs_segctor_kill_thread(struct nilfs_sc_info *sci)
 	}
 }
 
-static void nilfs_segctor_init(struct nilfs_sc_info *sci,
-			       struct nilfs_recovery_info *ri)
+static int nilfs_segctor_init(struct nilfs_sc_info *sci,
+			      struct nilfs_recovery_info *ri)
 {
+	int err;
 #if NEED_READ_INODE
+
 	sci->sc_sketch_inode = iget(sci->sc_super, NILFS_SKETCH_INO);
 #else
 	struct inode *inode = nilfs_iget(sci->sc_super, NILFS_SKETCH_INO);
@@ -3401,7 +3411,17 @@ static void nilfs_segctor_init(struct nilfs_sc_info *sci,
 		list_splice_init(&ri->ri_used_segments,
 				 sci->sc_active_segments.prev);
 
-	nilfs_segctor_start_thread(sci);
+	err = nilfs_segctor_start_thread(sci);
+	if (err) {
+		if (ri)
+			list_splice_init(&sci->sc_active_segments,
+					 ri->ri_used_segments.prev);
+		if (sci->sc_sketch_inode) {
+			iput(sci->sc_sketch_inode);
+			sci->sc_sketch_inode = NULL;
+		}
+	}
+	return err;
 }
 
 /*
@@ -3541,6 +3561,7 @@ int nilfs_attach_segment_constructor(struct nilfs_sb_info *sbi,
 				     struct nilfs_recovery_info *ri)
 {
 	struct the_nilfs *nilfs = sbi->s_nilfs;
+	int err;
 
 	/* Each field of nilfs_segctor is cleared through the initialization
 	   of super-block info */
@@ -3549,8 +3570,13 @@ int nilfs_attach_segment_constructor(struct nilfs_sb_info *sbi,
 		return -ENOMEM;
 
 	nilfs_attach_writer(nilfs, sbi);
-	nilfs_segctor_init(NILFS_SC(sbi), ri);
-	return 0;
+	err = nilfs_segctor_init(NILFS_SC(sbi), ri);
+	if (err) {
+		nilfs_detach_writer(nilfs, sbi);
+		kfree(sbi->s_sc_info);
+		sbi->s_sc_info = NULL;
+	}
+	return err;
 }
 
 /**
