@@ -759,7 +759,6 @@ void nilfs_mdt_clear(struct inode *inode)
 
 void nilfs_mdt_destroy(struct inode *inode)
 {
-	extern void nilfs_destroy_inode(struct inode *);
 	struct nilfs_mdt_info *mdi = NILFS_MDT(inode);
 
 	mdt_debug(2, "called (ino=%lu)\n", inode->i_ino);
