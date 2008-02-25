@@ -292,16 +292,6 @@ static inline void nilfs_set_transaction_flag(unsigned int flag)
 	ti->ti_flags |= flag;
 }
 
-#if 0
-static inline void nilfs_clear_transaction_flag(unsigned int flag)
-{
-	struct nilfs_transaction_info *ti = current->journal_info;
-
-	BUG_ON(!ti);
-	ti->ti_flags &= ~flag;
-}
-#endif
-
 static inline int nilfs_test_transaction_flag(unsigned int flag)
 {
 	struct nilfs_transaction_info *ti = current->journal_info;
