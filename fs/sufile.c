@@ -33,13 +33,13 @@
 #include "sufile.h"
 
 
-inline static unsigned long
+static inline unsigned long
 nilfs_sufile_segment_usages_per_block(const struct inode *sufile)
 {
 	return (1UL << sufile->i_blkbits) / sizeof(struct nilfs_segment_usage);
 }
 
-inline static nilfs_blkoff_t
+static inline nilfs_blkoff_t
 nilfs_sufile_get_blkoff(const struct inode *sufile, nilfs_segnum_t segnum)
 {
 	nilfs_segnum_t t;
@@ -49,7 +49,7 @@ nilfs_sufile_get_blkoff(const struct inode *sufile, nilfs_segnum_t segnum)
 	return (nilfs_blkoff_t)t;
 }
 
-inline static unsigned long
+static inline unsigned long
 nilfs_sufile_get_offset(const struct inode *sufile, nilfs_segnum_t segnum)
 {
 	nilfs_segnum_t t;
@@ -58,7 +58,7 @@ nilfs_sufile_get_offset(const struct inode *sufile, nilfs_segnum_t segnum)
 	return do_div(t, nilfs_sufile_segment_usages_per_block(sufile));
 }
 
-inline static unsigned long
+static inline unsigned long
 nilfs_sufile_segment_usages_in_block(const struct inode *sufile,
 				     nilfs_segnum_t curr,
 				     nilfs_segnum_t max)
@@ -69,7 +69,7 @@ nilfs_sufile_segment_usages_in_block(const struct inode *sufile,
 		     max - curr + 1);
 }
 
-inline static struct nilfs_sufile_header *
+static inline struct nilfs_sufile_header *
 nilfs_sufile_block_get_header(const struct inode *sufile,
 			      struct buffer_head *bh,
 			      void *kaddr)
@@ -77,7 +77,7 @@ nilfs_sufile_block_get_header(const struct inode *sufile,
 	return (struct nilfs_sufile_header *)(kaddr + bh_offset(bh));
 }
 
-inline static struct nilfs_segment_usage *
+static inline struct nilfs_segment_usage *
 nilfs_sufile_block_get_segment_usage(const struct inode *sufile,
 				     nilfs_segnum_t segnum,
 				     struct buffer_head *bh,
@@ -110,13 +110,13 @@ static int nilfs_sufile_get_block(struct inode *sufile,
 	return ret;
 }
 
-inline static int nilfs_sufile_get_header_block(struct inode *sufile,
+static inline int nilfs_sufile_get_header_block(struct inode *sufile,
 						struct buffer_head **bhp)
 {
 	return nilfs_sufile_get_block(sufile, 0, 0, bhp);
 }
 
-inline static int
+static inline int
 nilfs_sufile_get_segment_usage_block(struct inode *sufile,
 				     nilfs_segnum_t segnum,
 				     int create,

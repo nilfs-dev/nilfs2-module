@@ -59,13 +59,13 @@ struct nilfs_dat_req {
 #define nilfs_dat_test_bit		ext2_test_bit
 #define nilfs_dat_find_next_zero_bit	ext2_find_next_zero_bit
 
-inline static unsigned long
+static inline unsigned long
 nilfs_dat_entries_per_block(const struct inode *dat)
 {
 	return (1UL << dat->i_blkbits) / sizeof(struct nilfs_dat_entry);
 }
 
-inline static unsigned long
+static inline unsigned long
 nilfs_dat_entries_per_group(const struct inode *dat)
 {
 	return (1UL << dat->i_blkbits) * NILFS_DAT_CHAR_BIT;

@@ -55,14 +55,14 @@ void nilfs_btree_path_cache_destroy(void)
 	kmem_cache_destroy(nilfs_btree_path_cache);
 }
 
-inline static struct nilfs_btree_path *
+static inline struct nilfs_btree_path *
 nilfs_btree_alloc_path(const struct nilfs_btree *btree)
 {
 	return (struct nilfs_btree_path *)
 		kmem_cache_alloc(nilfs_btree_path_cache, GFP_NOFS);
 }
 
-inline static void nilfs_btree_free_path(const struct nilfs_btree *btree,
+static inline void nilfs_btree_free_path(const struct nilfs_btree *btree,
 					 struct nilfs_btree_path *path)
 {
 	kmem_cache_free(nilfs_btree_path_cache, path);
@@ -113,14 +113,14 @@ static void nilfs_btree_clear_path(const struct nilfs_btree *btree,
  * B-tree node operations
  */
 
-inline static int
+static inline int
 nilfs_btree_node_get_flags(const struct nilfs_btree *btree,
 			   const struct nilfs_btree_node *node)
 {
 	return node->bn_flags;
 }
 
-inline static void
+static inline void
 nilfs_btree_node_set_flags(struct nilfs_btree *btree,
 			   struct nilfs_btree_node *node,
 			   int flags)
@@ -128,20 +128,20 @@ nilfs_btree_node_set_flags(struct nilfs_btree *btree,
 	node->bn_flags = flags;
 }
 
-inline static int nilfs_btree_node_root(const struct nilfs_btree *btree,
+static inline int nilfs_btree_node_root(const struct nilfs_btree *btree,
 					const struct nilfs_btree_node *node)
 {
 	return nilfs_btree_node_get_flags(btree, node) & NILFS_BTREE_NODE_ROOT;
 }
 
-inline static int
+static inline int
 nilfs_btree_node_get_level(const struct nilfs_btree *btree,
 			   const struct nilfs_btree_node *node)
 {
 	return node->bn_level;
 }
 
-inline static void
+static inline void
 nilfs_btree_node_set_level(struct nilfs_btree *btree,
 			   struct nilfs_btree_node *node,
 			   int level)
@@ -149,14 +149,14 @@ nilfs_btree_node_set_level(struct nilfs_btree *btree,
 	node->bn_level = level;
 }
 
-inline static int
+static inline int
 nilfs_btree_node_get_nchildren(const struct nilfs_btree *btree,
 			       const struct nilfs_btree_node *node)
 {
 	return le16_to_cpu(node->bn_nchildren);
 }
 
-inline static void
+static inline void
 nilfs_btree_node_set_nchildren(struct nilfs_btree *btree,
 			       struct nilfs_btree_node *node,
 			       int nchildren)
@@ -164,13 +164,13 @@ nilfs_btree_node_set_nchildren(struct nilfs_btree *btree,
 	node->bn_nchildren = cpu_to_le16(nchildren);
 }
 
-inline static int
+static inline int
 nilfs_btree_node_size(const struct nilfs_btree *btree)
 {
 	return 1 << btree->bt_bmap.b_inode->i_blkbits;
 }
 
-inline static int
+static inline int
 nilfs_btree_node_nchildren_min(const struct nilfs_btree *btree,
 			       const struct nilfs_btree_node *node)
 {
@@ -179,7 +179,7 @@ nilfs_btree_node_nchildren_min(const struct nilfs_btree *btree,
 		NILFS_BTREE_NODE_NCHILDREN_MIN(nilfs_btree_node_size(btree));
 }
 
-inline static int
+static inline int
 nilfs_btree_node_nchildren_max(const struct nilfs_btree *btree,
 			       const struct nilfs_btree_node *node)
 {
@@ -188,7 +188,7 @@ nilfs_btree_node_nchildren_max(const struct nilfs_btree *btree,
 		NILFS_BTREE_NODE_NCHILDREN_MAX(nilfs_btree_node_size(btree));
 }
 
-inline static nilfs_bmap_dkey_t *
+static inline nilfs_bmap_dkey_t *
 nilfs_btree_node_dkeys(const struct nilfs_btree *btree,
 		       const struct nilfs_btree_node *node)
 {
@@ -197,7 +197,7 @@ nilfs_btree_node_dkeys(const struct nilfs_btree *btree,
 				      0 : NILFS_BTREE_NODE_EXTRA_PAD_SIZE));
 }
 
-inline static nilfs_bmap_dptr_t *
+static inline nilfs_bmap_dptr_t *
 nilfs_btree_node_dptrs(const struct nilfs_btree *btree,
 		       const struct nilfs_btree_node *node)
 {
@@ -206,7 +206,7 @@ nilfs_btree_node_dptrs(const struct nilfs_btree *btree,
 								    node));
 }
 
-inline static nilfs_bmap_key_t
+static inline nilfs_bmap_key_t
 nilfs_btree_node_get_key(const struct nilfs_btree *btree,
 			 const struct nilfs_btree_node *node,
 			 int index)
@@ -215,7 +215,7 @@ nilfs_btree_node_get_key(const struct nilfs_btree *btree,
 					index));
 }
 
-inline static void
+static inline void
 nilfs_btree_node_set_key(struct nilfs_btree *btree,
 			 struct nilfs_btree_node *node,
 			 int index,
@@ -225,7 +225,7 @@ nilfs_btree_node_set_key(struct nilfs_btree *btree,
 		nilfs_bmap_key_to_dkey(key);
 }
 
-inline static nilfs_bmap_ptr_t
+static inline nilfs_bmap_ptr_t
 nilfs_btree_node_get_ptr(const struct nilfs_btree *btree,
 			 const struct nilfs_btree_node *node,
 			 int index)
@@ -234,7 +234,7 @@ nilfs_btree_node_get_ptr(const struct nilfs_btree *btree,
 					index));
 }
 
-inline static void
+static inline void
 nilfs_btree_node_set_ptr(struct nilfs_btree *btree,
 			 struct nilfs_btree_node *node,
 			 int index,
@@ -437,13 +437,13 @@ static int nilfs_btree_node_lookup(const struct nilfs_btree *btree,
 	return (s == 0);
 }
 
-inline static struct nilfs_btree_node *
+static inline struct nilfs_btree_node *
 nilfs_btree_get_root(const struct nilfs_btree *btree)
 {
 	return (struct nilfs_btree_node *)btree->bt_bmap.b_u.u_data;
 }
 
-inline static struct nilfs_btree_node *
+static inline struct nilfs_btree_node *
 nilfs_btree_get_nonroot_node(const struct nilfs_btree *btree,
 			     const struct nilfs_btree_path *path,
 			     int level)
@@ -451,7 +451,7 @@ nilfs_btree_get_nonroot_node(const struct nilfs_btree *btree,
 	return (struct nilfs_btree_node *)path[level].bp_bh->b_data;
 }
 
-inline static struct nilfs_btree_node *
+static inline struct nilfs_btree_node *
 nilfs_btree_get_sib_node(const struct nilfs_btree *btree,
 			 const struct nilfs_btree_path *path,
 			 int level)
@@ -459,13 +459,13 @@ nilfs_btree_get_sib_node(const struct nilfs_btree *btree,
 	return (struct nilfs_btree_node *)path[level].bp_sib_bh->b_data;
 }
 
-inline static int nilfs_btree_height(const struct nilfs_btree *btree)
+static inline int nilfs_btree_height(const struct nilfs_btree *btree)
 {
 	return nilfs_btree_node_get_level(btree, nilfs_btree_get_root(btree))
 		+ 1;
 }
 
-inline static struct nilfs_btree_node *
+static inline struct nilfs_btree_node *
 nilfs_btree_get_node(const struct nilfs_btree *btree,
 		     const struct nilfs_btree_path *path,
 		     int level)

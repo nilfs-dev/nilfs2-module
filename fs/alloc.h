@@ -43,18 +43,18 @@ struct nilfs_persistent_group_desc {
 #define nilfs_persistent_test_bit		ext2_test_bit
 #define nilfs_persistent_find_next_zero_bit	ext2_find_next_zero_bit
 
-inline static int nilfs_persistent_entries_per_group(struct inode *inode)
+static inline int nilfs_persistent_entries_per_group(struct inode *inode)
 {
 	return (1UL << inode->i_blkbits) * NILFS_PERSISTENT_CHAR_BIT;
 }
 
-inline static int nilfs_persistent_group_descs_per_block(struct inode *inode)
+static inline int nilfs_persistent_group_descs_per_block(struct inode *inode)
 {
 	return (1UL << inode->i_blkbits) /
 		sizeof(struct nilfs_persistent_group_desc);
 }
 
-inline static int
+static inline int
 nilfs_persistent_blocks_per_groups(struct inode *inode)
 {
 	/* including block descriptor block */
@@ -62,7 +62,7 @@ nilfs_persistent_blocks_per_groups(struct inode *inode)
 		* nilfs_persistent_group_descs_per_block(inode) + 1;
 }
 
-inline static nilfs_blkoff_t
+static inline nilfs_blkoff_t
 nilfs_persistent_group_desc_blkoff(struct inode *inode, nilfs_bgno_t group)
 {
 	sector_div(group, nilfs_persistent_group_descs_per_block(inode));
@@ -71,7 +71,7 @@ nilfs_persistent_group_desc_blkoff(struct inode *inode, nilfs_bgno_t group)
 		  NILFS_MDT(inode)->mi_entries_per_block + 1) + 1);
 }
 
-inline static nilfs_blkoff_t
+static inline nilfs_blkoff_t
 nilfs_persistent_group_bitmap_blkoff(struct inode *inode, nilfs_bgno_t group)
 {
 	nilfs_bgno_t g = group;
@@ -104,7 +104,7 @@ struct nilfs_persistent_req {
 #define pr_ino nr.pr_ino
 #define pr_nslot nr.pr_nslot
 
-inline static void
+static inline void
 nilfs_persistent_put_group_bitmap_block(const struct inode *inode,
 					struct buffer_head *bitmap_bh)
 {
@@ -112,7 +112,7 @@ nilfs_persistent_put_group_bitmap_block(const struct inode *inode,
 }
 
 
-inline static void
+static inline void
 nilfs_persistent_put_entry_block(const struct inode *inode,
 				 struct buffer_head *bh)
 {
@@ -143,14 +143,14 @@ extern void
 nilfs_persistent_put_group_bitmap_buffer(struct inode *,
 					 const struct buffer_head *);
 
-inline static void
+static inline void
 nilfs_persistent_put_group_desc(struct inode *inode,
 				const struct buffer_head *desc_bh)
 {
 	kunmap(desc_bh->b_page);
 }
 
-inline static void
+static inline void
 nilfs_persistent_put_group_desc_block(const struct inode *inode,
 				      struct buffer_head *desc_bh)
 {

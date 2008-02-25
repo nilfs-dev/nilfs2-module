@@ -29,7 +29,7 @@
 #include "mdt.h"
 #include "ifile.h"
 
-inline static void
+static inline void
 nilfs_ifile_entry_set_flags(struct inode *ifile, struct nilfs_inode *entry,
 			    unsigned int flags)
 {
@@ -86,7 +86,7 @@ static int nilfs_ifile_prepare_alloc_ino(struct inode *ifile,
 	return 0;
 }
 
-inline static void
+static inline void
 nilfs_ifile_commit_alloc_ino(struct inode *ifile,
 			     struct nilfs_persistent_req *req)
 {
@@ -124,7 +124,7 @@ static int nilfs_ifile_get_entry_block(struct inode *ifile, ino_t ino,
 	return ret;
 }
 
-inline static int nilfs_ifile_prepare_entry(struct inode *ifile,
+static inline int nilfs_ifile_prepare_entry(struct inode *ifile,
 					    struct nilfs_persistent_req *req)
 {
 	return nilfs_ifile_get_entry_block(ifile, req->pr_ino,
@@ -146,20 +146,20 @@ static int nilfs_ifile_prepare_alloc(struct inode *ifile,
 	return ret;
 }
 
-inline static void
+static inline void
 nilfs_ifile_commit_entry(struct inode *ifile, struct nilfs_persistent_req *req)
 {
 	nilfs_mdt_mark_buffer_dirty(req->pr_entry_bh);
 }
 
-inline static void
+static inline void
 nilfs_ifile_commit_alloc(struct inode *ifile, struct nilfs_persistent_req *req)
 {
 	nilfs_ifile_commit_alloc_ino(ifile, req);
 	nilfs_ifile_commit_entry(ifile, req);
 }
 
-inline static int
+static inline int
 nilfs_ifile_prepare_free_ino(struct inode *ifile,
 			     struct nilfs_persistent_req *req)
 {
@@ -169,7 +169,7 @@ nilfs_ifile_prepare_free_ino(struct inode *ifile,
 	return nilfs_persistent_prepare_free_entry(ifile, req, group);
 }
 
-inline static void
+static inline void
 nilfs_ifile_abort_free_entry(struct inode *ifile,
 			     struct nilfs_persistent_req *req)
 {

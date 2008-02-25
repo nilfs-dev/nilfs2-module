@@ -33,14 +33,14 @@
 #include "cpfile.h"
 
 
-inline static unsigned long
+static inline unsigned long
 nilfs_cpfile_checkpoints_per_block(const struct inode *cpfile)
 {
 	return (1UL << cpfile->i_blkbits) / sizeof(struct nilfs_checkpoint);
 }
 
 /* block number from the beginning of the file */
-inline static nilfs_blkoff_t
+static inline nilfs_blkoff_t
 nilfs_cpfile_get_blkoff(const struct inode *cpfile, nilfs_cno_t cno)
 {
 	nilfs_cno_t tcno;
@@ -53,7 +53,7 @@ nilfs_cpfile_get_blkoff(const struct inode *cpfile, nilfs_cno_t cno)
 }
 
 /* offset in block */
-inline static unsigned long
+static inline unsigned long
 nilfs_cpfile_get_offset(const struct inode *cpfile, nilfs_cno_t cno)
 {
 	nilfs_cno_t tcno;
@@ -62,7 +62,7 @@ nilfs_cpfile_get_offset(const struct inode *cpfile, nilfs_cno_t cno)
 	return do_div(tcno, nilfs_cpfile_checkpoints_per_block(cpfile));
 }
 
-inline static unsigned long
+static inline unsigned long
 nilfs_cpfile_checkpoints_in_block(const struct inode *cpfile,
 				  nilfs_cno_t curr,
 				  nilfs_cno_t max)
@@ -73,7 +73,7 @@ nilfs_cpfile_checkpoints_in_block(const struct inode *cpfile,
 		     max - curr);
 }
 
-inline static int nilfs_cpfile_is_in_first(const struct inode *cpfile,
+static inline int nilfs_cpfile_is_in_first(const struct inode *cpfile,
 					   nilfs_cno_t cno)
 {
 	return nilfs_cpfile_get_blkoff(cpfile, cno) == 0;
@@ -110,7 +110,7 @@ nilfs_cpfile_block_sub_valid_checkpoints(const struct inode *cpfile,
 	return count;
 }
 
-inline static struct nilfs_cpfile_header *
+static inline struct nilfs_cpfile_header *
 nilfs_cpfile_block_get_header(const struct inode *cpfile,
 			      struct buffer_head *bh,
 			      void *kaddr)
@@ -118,7 +118,7 @@ nilfs_cpfile_block_get_header(const struct inode *cpfile,
 	return (struct nilfs_cpfile_header *)(kaddr + bh_offset(bh));
 }
 
-inline static struct nilfs_checkpoint *
+static inline struct nilfs_checkpoint *
 nilfs_cpfile_block_get_checkpoint(const struct inode *cpfile,
 				  nilfs_cno_t cno,
 				  struct buffer_head *bh,
@@ -166,13 +166,13 @@ static int nilfs_cpfile_get_block(struct inode *cpfile,
 	return ret;
 }
 
-inline static int nilfs_cpfile_get_header_block(struct inode *cpfile,
+static inline int nilfs_cpfile_get_header_block(struct inode *cpfile,
 						struct buffer_head **bhp)
 {
 	return nilfs_cpfile_get_block(cpfile, 0, 0, bhp);
 }
 
-inline static int nilfs_cpfile_get_checkpoint_block(struct inode *cpfile,
+static inline int nilfs_cpfile_get_checkpoint_block(struct inode *cpfile,
 						    nilfs_cno_t cno,
 						    int create,
 						    struct buffer_head **bhp)
@@ -183,14 +183,14 @@ inline static int nilfs_cpfile_get_checkpoint_block(struct inode *cpfile,
 				      bhp);
 }
 
-inline static int nilfs_cpfile_delete_checkpoint_block(struct inode *cpfile,
+static inline int nilfs_cpfile_delete_checkpoint_block(struct inode *cpfile,
 						       nilfs_cno_t cno)
 {
 	return nilfs_mdt_delete_block(cpfile,
 				      nilfs_cpfile_get_blkoff(cpfile, cno));
 }
 
-inline static unsigned long
+static inline unsigned long
 nilfs_cpfile_header_add_checkpoints(const struct inode *cpfile,
 				    struct nilfs_cpfile_header *header,
 				    unsigned long n)
@@ -202,7 +202,7 @@ nilfs_cpfile_header_add_checkpoints(const struct inode *cpfile,
 	return ns;
 }
 
-inline static unsigned long
+static inline unsigned long
 nilfs_cpfile_header_sub_checkpoints(const struct inode *cpfile,
 				    struct nilfs_cpfile_header *header,
 				    unsigned long n)
@@ -215,7 +215,7 @@ nilfs_cpfile_header_sub_checkpoints(const struct inode *cpfile,
 	return ns;
 }
 
-inline static unsigned long
+static inline unsigned long
 nilfs_cpfile_header_add_snapshots(const struct inode *cpfile,
 				  struct nilfs_cpfile_header *header,
 				  unsigned long n)
@@ -227,7 +227,7 @@ nilfs_cpfile_header_add_snapshots(const struct inode *cpfile,
 	return ns;
 }
 
-inline static unsigned long
+static inline unsigned long
 nilfs_cpfile_header_sub_snapshots(const struct inode *cpfile,
 				  struct nilfs_cpfile_header *header,
 				  unsigned long n)

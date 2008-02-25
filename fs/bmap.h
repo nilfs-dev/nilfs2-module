@@ -141,7 +141,7 @@ struct nilfs_bmap_ptr_operations {
 #define NILFS_BMAP_NEW_PTR_INIT	\
 	(1UL << (sizeof(unsigned long) * NILFS_BMAP_CHAR_BIT - 1))
 
-inline static int nilfs_bmap_is_new_ptr(unsigned long ptr)
+static inline int nilfs_bmap_is_new_ptr(unsigned long ptr)
 {
 	return !!(ptr & NILFS_BMAP_NEW_PTR_INIT);
 }
@@ -241,19 +241,19 @@ void nilfs_bmap_delete_all_blocks(const struct nilfs_bmap *);
 
 
 /* Assume that bmap semaphore is locked. */
-inline static int nilfs_bmap_dirty(const struct nilfs_bmap *bmap)
+static inline int nilfs_bmap_dirty(const struct nilfs_bmap *bmap)
 {
 	return !!(bmap->b_state & NILFS_BMAP_DIRTY);
 }
 
 /* Assume that bmap semaphore is locked. */
-inline static void nilfs_bmap_set_dirty(struct nilfs_bmap *bmap)
+static inline void nilfs_bmap_set_dirty(struct nilfs_bmap *bmap)
 {
 	bmap->b_state |= NILFS_BMAP_DIRTY;
 }
 
 /* Assume that bmap semaphore is locked. */
-inline static void nilfs_bmap_clear_dirty(struct nilfs_bmap *bmap)
+static inline void nilfs_bmap_clear_dirty(struct nilfs_bmap *bmap)
 {
 	bmap->b_state &= ~NILFS_BMAP_DIRTY;
 }

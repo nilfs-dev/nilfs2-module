@@ -435,7 +435,7 @@ nilfs_ioctl_do_move_blocks(struct the_nilfs *nilfs, int index, int flags,
 	return nmembs;
 }
 
-inline static int nilfs_ioctl_move_blocks(struct the_nilfs *nilfs,
+static inline int nilfs_ioctl_move_blocks(struct the_nilfs *nilfs,
 					  struct nilfs_argv *argv,
 					  int dir)
 {
@@ -462,7 +462,7 @@ nilfs_ioctl_do_delete_checkpoints(struct the_nilfs *nilfs, int index,
 	return nmembs;
 }
 
-inline static int nilfs_ioctl_delete_checkpoints(struct the_nilfs *nilfs,
+static inline int nilfs_ioctl_delete_checkpoints(struct the_nilfs *nilfs,
 						 struct nilfs_argv *argv,
 						 int dir)
 {
@@ -486,7 +486,7 @@ nilfs_ioctl_do_free_vblocknrs(struct the_nilfs *nilfs, int index, int flags,
 	return nmembs;
 }
 
-inline static int nilfs_ioctl_free_vblocknrs(struct the_nilfs *nilfs,
+static inline int nilfs_ioctl_free_vblocknrs(struct the_nilfs *nilfs,
 					     struct nilfs_argv *argv,
 					     int dir)
 {
@@ -540,7 +540,7 @@ nilfs_ioctl_do_mark_blocks_dirty(struct the_nilfs *nilfs, int index, int flags,
 	return nmembs;
 }
 
-inline static int nilfs_ioctl_mark_blocks_dirty(struct the_nilfs *nilfs,
+static inline int nilfs_ioctl_mark_blocks_dirty(struct the_nilfs *nilfs,
 						struct nilfs_argv *argv,
 						int dir)
 {
@@ -568,7 +568,7 @@ nilfs_ioctl_do_free_segments(struct the_nilfs *nilfs, int index, int flags,
 	return nmembs;
 }
 
-inline static int nilfs_ioctl_free_segments(struct the_nilfs *nilfs,
+static inline int nilfs_ioctl_free_segments(struct the_nilfs *nilfs,
 					     struct nilfs_argv *argv,
 					     int dir)
 {
@@ -843,28 +843,28 @@ nilfs_compat_ioctl_change_cpmode(struct inode *inode, struct file *filp,
 }
 
 
-inline static int
+static inline int
 nilfs_compat_ioctl_delete_checkpoint(struct inode *inode, struct file *filp,
 				     unsigned int cmd, unsigned long arg)
 {
 	return nilfs_compat_locked_ioctl(inode, filp, cmd, arg);
 }
 
-inline static int
+static inline int
 nilfs_compat_ioctl_get_cpinfo(struct inode *inode, struct file *filp,
 			      unsigned int cmd, unsigned long arg)
 {
 	return nilfs_compat_ioctl_get_by_argv(inode, filp, cmd, arg);
 }
 
-inline static int
+static inline int
 nilfs_compat_ioctl_get_cpstat(struct inode *inode, struct file *filp,
 			      unsigned int cmd, unsigned long arg)
 {
 	return nilfs_compat_locked_ioctl(inode, filp, cmd, arg);
 }
 
-inline static int
+static inline int
 nilfs_compat_ioctl_get_suinfo(struct inode *inode, struct file *filp,
 			      unsigned int cmd, unsigned long arg)
 {
@@ -900,14 +900,14 @@ nilfs_compat_ioctl_get_sustat(struct inode *inode, struct file *filp,
 	return 0;
 }
 
-inline static int
+static inline int
 nilfs_compat_ioctl_get_vinfo(struct inode *inode, struct file *filp,
 			      unsigned int cmd, unsigned long arg)
 {
 	return nilfs_compat_ioctl_get_by_argv(inode, filp, cmd, arg);
 }
 
-inline static int
+static inline int
 nilfs_compat_ioctl_get_bdescs(struct inode *inode, struct file *filp,
 			     unsigned int cmd, unsigned long arg)
 {

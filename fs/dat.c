@@ -36,13 +36,13 @@
 #define NILFS_CNO_MIN	((nilfs_cno_t)1)
 #define NILFS_CNO_MAX	(~(nilfs_cno_t)0)
 
-inline static unsigned long
+static inline unsigned long
 nilfs_dat_groups_per_desc_block(const struct inode *dat)
 {
 	return (1UL << dat->i_blkbits) / sizeof(struct nilfs_dat_group_desc);
 }
 
-inline static unsigned long
+static inline unsigned long
 nilfs_dat_blocks_per_group(const struct inode *dat)
 {
 	/* including a bitmap block */
@@ -51,7 +51,7 @@ nilfs_dat_blocks_per_group(const struct inode *dat)
 		1;
 }
 
-inline static unsigned long
+static inline unsigned long
 nilfs_dat_blocks_per_desc_block(const struct inode *dat)
 {
 	/* including a group descriptor block and group bitmap blocks */
@@ -59,7 +59,7 @@ nilfs_dat_blocks_per_desc_block(const struct inode *dat)
 		nilfs_dat_blocks_per_group(dat) + 1;
 }
 
-inline static nilfs_bgno_t
+static inline nilfs_bgno_t
 nilfs_dat_group(const struct inode *dat, nilfs_sector_t vblocknr)
 {
 	nilfs_bgno_t group;
@@ -69,39 +69,39 @@ nilfs_dat_group(const struct inode *dat, nilfs_sector_t vblocknr)
 	return group;
 }
 
-inline static unsigned long
+static inline unsigned long
 nilfs_dat_group_offset(const struct inode *dat, nilfs_sector_t vblocknr)
 {
 	return do_div(vblocknr, nilfs_dat_entries_per_group(dat));
 }
 
-inline static nilfs_gdno_t
+static inline nilfs_gdno_t
 nilfs_dat_desc_block(const struct inode *dat, nilfs_bgno_t group)
 {
 	sector_div(group, nilfs_dat_groups_per_desc_block(dat));
 	return group;
 }
 
-inline static unsigned long
+static inline unsigned long
 nilfs_dat_desc_offset(const struct inode *dat, nilfs_bgno_t group)
 {
 	return sector_div(group, nilfs_dat_groups_per_desc_block(dat));
 }
 
-inline static unsigned long
+static inline unsigned long
 nilfs_dat_entry_block(const struct inode *dat, unsigned long group_offset)
 {
 	return group_offset / nilfs_dat_entries_per_block(dat);
 }
 
-inline static unsigned long
+static inline unsigned long
 nilfs_dat_entry_offset(const struct inode *dat, nilfs_sector_t vblocknr)
 {
 	return nilfs_dat_group_offset(dat, vblocknr) %
 		nilfs_dat_entries_per_block(dat);
 }
 
-inline static unsigned long
+static inline unsigned long
 nilfs_dat_rest_groups_in_desc_block(const struct inode *dat,
 				    unsigned long curr, unsigned long max)
 {
@@ -111,14 +111,14 @@ nilfs_dat_rest_groups_in_desc_block(const struct inode *dat,
 		     max - curr + 1);
 }
 
-inline static nilfs_blkoff_t
+static inline nilfs_blkoff_t
 nilfs_dat_desc_blkoff(const struct inode *dat, nilfs_bgno_t group)
 {
 	return nilfs_dat_desc_block(dat, group) *
 		nilfs_dat_blocks_per_desc_block(dat);
 }
 
-inline static nilfs_blkoff_t
+static inline nilfs_blkoff_t
 nilfs_dat_bitmap_blkoff(const struct inode *dat, nilfs_bgno_t group)
 {
 	return nilfs_dat_desc_blkoff(dat, group) + 1 +
@@ -126,7 +126,7 @@ nilfs_dat_bitmap_blkoff(const struct inode *dat, nilfs_bgno_t group)
 		nilfs_dat_blocks_per_group(dat);
 }
 
-inline static nilfs_blkoff_t
+static inline nilfs_blkoff_t
 nilfs_dat_entry_blkoff(const struct inode *dat, nilfs_sector_t vblocknr)
 {
 	return nilfs_dat_bitmap_blkoff(dat, nilfs_dat_group(dat, vblocknr)) +
@@ -135,7 +135,7 @@ nilfs_dat_entry_blkoff(const struct inode *dat, nilfs_sector_t vblocknr)
 				      nilfs_dat_group_offset(dat, vblocknr));
 }
 
-inline static unsigned long
+static inline unsigned long
 nilfs_dat_group_desc_get_nfrees(struct inode *dat,
 				nilfs_bgno_t group,
 				const struct nilfs_dat_group_desc *desc)
@@ -149,7 +149,7 @@ nilfs_dat_group_desc_get_nfrees(struct inode *dat,
 	return nfree;
 }
 
-inline static void
+static inline void
 nilfs_dat_group_desc_set_nfrees(const struct inode *dat,
 				struct nilfs_dat_group_desc *desc,
 				unsigned long nfrees)
@@ -157,7 +157,7 @@ nilfs_dat_group_desc_set_nfrees(const struct inode *dat,
 	desc->dg_nfrees = cpu_to_le32(nfrees);
 }
 
-inline static unsigned long
+static inline unsigned long
 nilfs_dat_group_desc_add_entries(struct inode *dat,
 				 nilfs_bgno_t group,
 				 struct nilfs_dat_group_desc *desc,
@@ -173,7 +173,7 @@ nilfs_dat_group_desc_add_entries(struct inode *dat,
 	return nfrees;
 }
 
-inline static unsigned long
+static inline unsigned long
 nilfs_dat_group_desc_sub_entries(struct inode *dat,
 				 nilfs_bgno_t group,
 				 struct nilfs_dat_group_desc *desc,
@@ -189,42 +189,42 @@ nilfs_dat_group_desc_sub_entries(struct inode *dat,
 	return nfrees;
 }
 
-inline static nilfs_cno_t
+static inline nilfs_cno_t
 nilfs_dat_entry_get_start(const struct inode *dat,
 			  const struct nilfs_dat_entry *entry)
 {
 	return le64_to_cpu(entry->de_start);
 }
 
-inline static void nilfs_dat_entry_set_start(const struct inode *dat,
+static inline void nilfs_dat_entry_set_start(const struct inode *dat,
 					     struct nilfs_dat_entry *entry,
 					     nilfs_cno_t start)
 {
 	entry->de_start = cpu_to_le64(start);
 }
 
-inline static nilfs_cno_t
+static inline nilfs_cno_t
 nilfs_dat_entry_get_end(const struct inode *dat,
 			const struct nilfs_dat_entry *entry)
 {
 	return le64_to_cpu(entry->de_end);
 }
 
-inline static void nilfs_dat_entry_set_end(const struct inode *dat,
+static inline void nilfs_dat_entry_set_end(const struct inode *dat,
 					   struct nilfs_dat_entry *entry,
 					   nilfs_cno_t end)
 {
 	entry->de_end = cpu_to_le64(end);
 }
 
-inline static sector_t
+static inline sector_t
 nilfs_dat_entry_get_blocknr(const struct inode *dat,
 			    const struct nilfs_dat_entry *entry)
 {
 	return le64_to_cpu(entry->de_blocknr);
 }
 
-inline static void nilfs_dat_entry_set_blocknr(const struct inode *dat,
+static inline void nilfs_dat_entry_set_blocknr(const struct inode *dat,
 					       struct nilfs_dat_entry *entry,
 					       sector_t blocknr)
 {
@@ -265,7 +265,7 @@ static void nilfs_dat_entry_block_init(struct inode *dat,
 	}
 }
 
-inline static int nilfs_dat_get_desc_block(struct inode *dat,
+static inline int nilfs_dat_get_desc_block(struct inode *dat,
 					   nilfs_bgno_t group,
 					   int create,
 					   struct buffer_head **bhp)
@@ -274,7 +274,7 @@ inline static int nilfs_dat_get_desc_block(struct inode *dat,
 				   create, nilfs_dat_desc_block_init, bhp);
 }
 
-inline static int nilfs_dat_get_bitmap_block(struct inode *dat,
+static inline int nilfs_dat_get_bitmap_block(struct inode *dat,
 					     nilfs_bgno_t group,
 					     int create,
 					     struct buffer_head **bhp)
@@ -283,7 +283,7 @@ inline static int nilfs_dat_get_bitmap_block(struct inode *dat,
 				   create, nilfs_dat_bitmap_block_init, bhp);
 }
 
-inline static int nilfs_dat_get_entry_block(struct inode *dat,
+static inline int nilfs_dat_get_entry_block(struct inode *dat,
 					    nilfs_sector_t vblocknr,
 					    int create,
 					    struct buffer_head **bhp)
@@ -292,7 +292,7 @@ inline static int nilfs_dat_get_entry_block(struct inode *dat,
 				   create, nilfs_dat_entry_block_init, bhp);
 }
 
-inline static struct nilfs_dat_group_desc *
+static inline struct nilfs_dat_group_desc *
 nilfs_dat_block_get_group_desc(const struct inode *dat,
 			       nilfs_bgno_t group,
 			       const struct buffer_head *bh,
@@ -302,7 +302,7 @@ nilfs_dat_block_get_group_desc(const struct inode *dat,
 		nilfs_dat_desc_offset(dat, group);
 }
 
-inline static unsigned char *
+static inline unsigned char *
 nilfs_dat_block_get_bitmap(const struct inode *dat,
 			   const struct buffer_head *bh,
 			   void *kaddr)
@@ -310,7 +310,7 @@ nilfs_dat_block_get_bitmap(const struct inode *dat,
 	return (unsigned char *)(kaddr + bh_offset(bh));
 }
 
-inline static struct nilfs_dat_entry *
+static inline struct nilfs_dat_entry *
 nilfs_dat_block_get_entry(const struct inode *dat,
 			  nilfs_sector_t vblocknr,
 			  const struct buffer_head *bh,
@@ -934,7 +934,7 @@ int nilfs_dat_alloc(struct inode *dat, nilfs_sector_t *vblocknr)
 	return 0;
 }
 
-inline static int nilfs_dat_group_is_in(struct inode *dat,
+static inline int nilfs_dat_group_is_in(struct inode *dat,
 					unsigned long group,
 					nilfs_sector_t vblocknr)
 {

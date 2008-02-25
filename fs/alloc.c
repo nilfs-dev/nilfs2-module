@@ -24,7 +24,7 @@
 #include "mdt.h"
 #include "alloc.h"
 
-inline static unsigned long
+static inline unsigned long
 nilfs_persistent_desc_offset(struct inode *inode, nilfs_bgno_t group)
 {
 	return sector_div(group,

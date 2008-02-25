@@ -27,20 +27,20 @@
 #include "direct.h"
 
 
-inline static nilfs_bmap_dptr_t *
+static inline nilfs_bmap_dptr_t *
 nilfs_direct_dptrs(const struct nilfs_direct *direct)
 {
 	return (nilfs_bmap_dptr_t *)
 		((struct nilfs_direct_node *)direct->d_bmap.b_u.u_data + 1);
 }
 
-inline static nilfs_bmap_ptr_t
+static inline nilfs_bmap_ptr_t
 nilfs_direct_get_ptr(const struct nilfs_direct *direct, nilfs_bmap_key_t key)
 {
 	return nilfs_bmap_dptr_to_ptr(*(nilfs_direct_dptrs(direct) + key));
 }
 
-inline static void nilfs_direct_set_ptr(struct nilfs_direct *direct,
+static inline void nilfs_direct_set_ptr(struct nilfs_direct *direct,
 					nilfs_bmap_key_t key,
 					nilfs_bmap_ptr_t ptr)
 {

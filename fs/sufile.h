@@ -33,12 +33,12 @@
 
 #define NILFS_SUFILE_GFP	NILFS_MDT_GFP
 
-inline static unsigned long nilfs_sufile_get_nsegments(struct inode *sufile)
+static inline unsigned long nilfs_sufile_get_nsegments(struct inode *sufile)
 {
 	return NILFS_MDT(sufile)->mi_nilfs->ns_nsegments;
 }
 
-inline static unsigned long nilfs_sufile_get_nrsvsegs(struct inode *sufile)
+static inline unsigned long nilfs_sufile_get_nrsvsegs(struct inode *sufile)
 {
 	unsigned long nsegments, rsvpercent, nrsvsegs;
 
