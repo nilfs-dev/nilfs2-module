@@ -31,12 +31,6 @@
 #include <linux/completion.h>
 #include <linux/backing-dev.h>
 
-/*
- * Linux VFS sector size (used when submitting BIO)
- */
-#define NILFS_SECTOR_BITS	9
-#define NILFS_SECTOR_SIZE	(1 << SECTOR_BITS)
-
 /**
  * struct nilfs_segsum_info - On-memory segment summary
  * @flags: Flags

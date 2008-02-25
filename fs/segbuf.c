@@ -377,8 +377,7 @@ static struct bio *nilfs_alloc_seg_bio(struct super_block *sb, sector_t start,
 	}
 	if (likely(bio)) {
 		bio->bi_bdev = sb->s_bdev;
-		bio->bi_sector = (sector_t)start <<
-			(sb->s_blocksize_bits - NILFS_SECTOR_BITS);
+		bio->bi_sector = (sector_t)start << (sb->s_blocksize_bits - 9);
 		seg_debug(3, "allocated bio (max_vecs=%d)\n",
 			  bio->bi_max_vecs);
 	}
