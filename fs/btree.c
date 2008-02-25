@@ -1725,9 +1725,8 @@ nilfs_btree_commit_convert_and_insert(struct nilfs_bmap *bmap,
 		nilfs_btree_node_init(btree, node, NILFS_BTREE_NODE_ROOT,
 				      2, 1, &keys[0], &tmpptr);
 	} else {
-		if (bmap->b_pops->bpop_commit_alloc_ptr != NULL) {
+		if (bmap->b_pops->bpop_commit_alloc_ptr != NULL)
 			(*bmap->b_pops->bpop_commit_alloc_ptr)(bmap, dreq);
-		}
 
 		/* create root node at level 1 */
 		node = nilfs_btree_get_root(btree);
@@ -1924,9 +1923,8 @@ static void nilfs_btree_commit_propagate_v(struct nilfs_btree *btree,
 	if (!buffer_nilfs_volatile(path[minlevel].bp_bh))
 		nilfs_btree_commit_update_v(btree, path, minlevel);
 
-	for (level = minlevel + 1; level <= maxlevel; level++) {
+	for (level = minlevel + 1; level <= maxlevel; level++)
 		nilfs_btree_commit_update_v(btree, path, level);
-	}
 }
 
 static int nilfs_btree_propagate_v(struct nilfs_btree *btree,

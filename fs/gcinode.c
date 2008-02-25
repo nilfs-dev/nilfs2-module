@@ -177,9 +177,9 @@ int nilfs_init_gcinode(struct the_nilfs *nilfs)
 	nilfs->ns_gc_inodes_h =
 		kmalloc(sizeof(struct hlist_head) * NILFS_GCINODE_HASH_SIZE,
 			GFP_NOFS);
-	if (nilfs->ns_gc_inodes_h == NULL) {
+	if (nilfs->ns_gc_inodes_h == NULL)
 		return -ENOMEM;
-	}
+
 	for (loop = 0; loop < NILFS_GCINODE_HASH_SIZE; loop++)
 		INIT_HLIST_HEAD(&nilfs->ns_gc_inodes_h[loop]);
 	return 0;

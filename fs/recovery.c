@@ -974,9 +974,9 @@ int nilfs_search_super_root(struct the_nilfs *nilfs, struct nilfs_sb_info *sbi,
 
 		if (scan_newer)
 			ri->ri_need_recovery = NILFS_RECOVERY_SR_UPDATED;
-		else if (nilfs->ns_mount_state & NILFS_VALID_FS) {
+		else if (nilfs->ns_mount_state & NILFS_VALID_FS)
 			goto super_root_found;
-		}
+
 		scan_newer = 1;
 
 		/* reset region for roll-forward */
