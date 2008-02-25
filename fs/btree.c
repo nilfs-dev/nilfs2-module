@@ -1978,7 +1978,7 @@ static int nilfs_btree_propagate(const struct nilfs_bmap *bmap,
 		/* BUG_ON(ret == -ENOENT); */
 		if (ret == -ENOENT) {
 			printk(KERN_CRIT "%s: key = %llu, level == %d\n",
-			       __FUNCTION__, (unsigned long long)key, level);
+			       __func__, (unsigned long long)key, level);
 			BUG();
 		}
 		goto out;
@@ -2374,7 +2374,7 @@ static int nilfs_btree_verify_node(const struct nilfs_btree *btree,
 	/* check level */
 	if (level != nilfs_btree_node_get_level(btree, node)) {
 		printk(KERN_ERR "%s: level %d must be %d\n",
-		       __FUNCTION__,
+		       __func__,
 		       nilfs_btree_node_get_level(btree, node),
 		       level);
 		return -EINVAL;
@@ -2393,7 +2393,7 @@ static int nilfs_btree_verify_node(const struct nilfs_btree *btree,
 		      (level == nilfs_btree_height(btree) - 2))) {
 			printk(KERN_ERR
 			       "%s: the number of children %d is invalid\n",
-			       __FUNCTION__, nchildren);
+			       __func__, nchildren);
 			return -EINVAL;
 		}
 
@@ -2403,7 +2403,7 @@ static int nilfs_btree_verify_node(const struct nilfs_btree *btree,
 		nkey = nilfs_btree_node_get_key(btree, node, i);
 		if (pkey >= nkey) {
 			printk(KERN_ERR "%s: key order is invalid\n",
-			       __FUNCTION__);
+			       __func__);
 			return -EINVAL;
 		}
 		pkey = nkey;
@@ -2418,7 +2418,7 @@ static int nilfs_btree_verify_node(const struct nilfs_btree *btree,
 			printk(KERN_ERR
 			       "%s: the first key of the node %llu must be "
 			       "the same as the key of the parent %llu\n",
-			       __FUNCTION__,
+			       __func__,
 			       (unsigned long long)nilfs_btree_node_get_key(
 				       btree, node, 0),
 			       (unsigned long long)nilfs_btree_node_get_key(
@@ -2435,7 +2435,7 @@ static int nilfs_btree_verify_node(const struct nilfs_btree *btree,
 		/* volatile buffer must be dirty */
 		printk(KERN_ERR
 		       "%s: buffer head %p is volatile but not dirty\n",
-		       __FUNCTION__, path[level].bp_bh);
+		       __func__, path[level].bp_bh);
 		return -EINVAL;
 	}
 

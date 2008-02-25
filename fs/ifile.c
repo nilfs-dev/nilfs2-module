@@ -346,7 +346,7 @@ int nilfs_ifile_get_inode_block(struct inode *ifile, ino_t ino,
 	int err;
 
 	if (unlikely(!NILFS_VALID_INODE(sb, ino))) {
-		nilfs_error(sb, __FUNCTION__, "bad inode number: %lu",
+		nilfs_error(sb, __func__, "bad inode number: %lu",
 			    (unsigned long) ino);
 		return -EINVAL;
 	}
@@ -358,9 +358,9 @@ int nilfs_ifile_get_inode_block(struct inode *ifile, ino_t ino,
 	err = nilfs_mdt_read_block(ifile, block, out_bh);
 	if (unlikely(err)) {
 		if (err == -EINVAL)
-			nilfs_error(sb, __FUNCTION__, "ifile is broken");
+			nilfs_error(sb, __func__, "ifile is broken");
 		else
-			nilfs_warning(sb, __FUNCTION__,
+			nilfs_warning(sb, __func__,
 				      "unable to read inode: %lu",
 				      (unsigned long) ino);
 	}

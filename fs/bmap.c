@@ -150,7 +150,7 @@ int nilfs_bmap_insert(struct nilfs_bmap *bmap,
 		printk(KERN_ERR
 		       "%s: insertion of key %lu and rec %lu made bmap %p "
 		       "corrupted\n",
-		       __FUNCTION__, key, rec, bmap);
+		       __func__, key, rec, bmap);
 		(*bmap->b_ops->bop_print)(bmap);
 		BUG();
 	}
@@ -213,7 +213,7 @@ int nilfs_bmap_delete(struct nilfs_bmap *bmap, unsigned long key)
 	if ((*bmap->b_ops->bop_verify)(bmap) < 0) {
 		printk(KERN_ERR
 		       "%s: deletion of key %lu made bmap %p corrupted\n",
-		       __FUNCTION__, key, bmap);
+		       __func__, key, bmap);
 		(*bmap->b_ops->bop_print)(bmap);
 		BUG();
 	}
@@ -273,7 +273,7 @@ int nilfs_bmap_truncate(struct nilfs_bmap *bmap, unsigned long key)
 	if ((*bmap->b_ops->bop_verify)(bmap) < 0) {
 		printk(KERN_ERR
 		       "%s: truncation to key %lu made bmap %p corrupted\n",
-		       __FUNCTION__, key, bmap);
+		       __func__, key, bmap);
 		(*bmap->b_ops->bop_print)(bmap);
 		BUG();
 	}

@@ -487,7 +487,7 @@ int nilfs_segbuf_write(struct nilfs_segment_buffer *segbuf,
 
 		res = nilfs_submit_seg_bio(wi, rw);
 		if (res == -EOPNOTSUPP && (rw & (1 << BIO_RW_BARRIER))) {
-			nilfs_warning(wi->sb, __FUNCTION__,
+			nilfs_warning(wi->sb, __func__,
 				      "barrier-based sync failed. "
 				      "disabling barriers\n");
 			nilfs_clear_opt(sbi, BARRIER);

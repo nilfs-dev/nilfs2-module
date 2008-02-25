@@ -273,7 +273,7 @@ int nilfs_sufile_cancel_free(struct inode *sufile, nilfs_segnum_t segnum)
 		sufile, segnum, su_bh, kaddr);
 	if (!nilfs_segment_usage_clean(su)) {
 		printk(KERN_CRIT "%s: segment %llu must be clean\n",
-		       __FUNCTION__, (unsigned long long)segnum);
+		       __func__, (unsigned long long)segnum);
 		BUG();
 	}
 	nilfs_segment_usage_set_dirty(su);

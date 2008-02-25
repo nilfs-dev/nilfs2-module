@@ -408,7 +408,7 @@ int nilfs_set_file_dirty(struct nilfs_sb_info *sbi, struct inode *inode,
 		if (list_empty(&ii->i_dirty) && igrab(inode) == NULL) {
 			/* This will happen when somebody is freeing
 			   this inode. */
-			nilfs_warning(sbi->s_super, __FUNCTION__,
+			nilfs_warning(sbi->s_super, __func__,
 				      "cannot get inode (ino=%lu)\n",
 				      inode->i_ino);
 			spin_unlock(&sbi->s_inode_lock);
@@ -453,7 +453,7 @@ int nilfs_commit_dirty_file(struct inode *inode, unsigned nr_dirty)
 
 #ifdef CONFIG_NILFS_DEBUG
 	if (unlikely(inode->i_state & I_FREEING))
-		nilfs_warning(inode->i_sb, __FUNCTION__,
+		nilfs_warning(inode->i_sb, __func__,
 			      "trying to mark deleting file dirty.\n");
 #endif
 	err = nilfs_set_file_dirty(sbi, inode, nr_dirty);
@@ -469,7 +469,7 @@ static int nilfs_mark_inode_dirty(struct inode *inode)
 	int err = nilfs_load_inode_block(sbi, inode, &ibh);
 
 	if (unlikely(err)) {
-		nilfs_warning(inode->i_sb, __FUNCTION__,
+		nilfs_warning(inode->i_sb, __func__,
 			      "failed to reget inode block.\n");
 		return err;
 	}
@@ -682,7 +682,7 @@ static int nilfs_collect_file_data(struct nilfs_sc_info *sci,
 	/* excluded by scan_dirty_data_buffers() */
 	err = nilfs_bmap_propagate(NILFS_I(inode)->i_bmap, bh);
 	if (unlikely(err < 0))
-		return nilfs_handle_bmap_error(err, __FUNCTION__, inode,
+		return nilfs_handle_bmap_error(err, __func__, inode,
 					       sci->sc_super);
 
 	err = nilfs_segctor_add_file_block(sci, bh, inode,
@@ -702,7 +702,7 @@ static int nilfs_collect_file_node(struct nilfs_sc_info *sci,
 	/* excluded by scan_dirty_node_buffers() */
 	err = nilfs_bmap_propagate(NILFS_I(inode)->i_bmap, bh);
 	if (unlikely(err < 0))
-		return nilfs_handle_bmap_error(err, __FUNCTION__, inode,
+		return nilfs_handle_bmap_error(err, __func__, inode,
 					       sci->sc_super);
 	return 0;
 }
@@ -774,7 +774,7 @@ static int nilfs_collect_dat_data(struct nilfs_sc_info *sci,
 #endif
 	err = nilfs_bmap_propagate(NILFS_I(inode)->i_bmap, bh);
 	if (unlikely(err < 0))
-		return nilfs_handle_bmap_error(err, __FUNCTION__, inode,
+		return nilfs_handle_bmap_error(err, __func__, inode,
 					       sci->sc_super);
 
 	err = nilfs_segctor_add_file_block(sci, bh, inode, sizeof(__le64));
@@ -2049,7 +2049,7 @@ nilfs_segctor_update_payload_blocknr(struct nilfs_sc_info *sci,
 	return 0;
 
  failed_bmap:
-	err = nilfs_handle_bmap_error(err, __FUNCTION__, inode, sci->sc_super);
+	err = nilfs_handle_bmap_error(err, __func__, inode, sci->sc_super);
 	seg_debug(1, "failed\n");
 	return err;
 }
@@ -2474,7 +2474,7 @@ static int nilfs_segctor_check_in_files(struct nilfs_sc_info *sci,
 			err = nilfs_ifile_get_inode_block(
 				sbi->s_ifile, ii->vfs_inode.i_ino, &ibh);
 			if (unlikely(err)) {
-				nilfs_warning(sbi->s_super, __FUNCTION__,
+				nilfs_warning(sbi->s_super, __func__,
 					      "failed to get inode block.\n");
 				return err;
 			}
@@ -2822,7 +2822,7 @@ void nilfs_flush_segment(struct nilfs_sb_info *sbi, ino_t ino)
 	unsigned long flag;
 
 	if (!sci) {
-		nilfs_warning(sbi->s_super, __FUNCTION__,
+		nilfs_warning(sbi->s_super, __func__,
 			      "Tried to flush destructed FS.\n");
 		nilfs_dump_stack(NILFS_VERBOSE_SEGMENT, 1);
 		return;
@@ -3213,7 +3213,7 @@ int nilfs_clean_segments(struct super_block *sb, unsigned long arg)
 		if (likely(!err))
 			break;
 
-		nilfs_warning(sb, __FUNCTION__,
+		nilfs_warning(sb, __func__,
 			      "segment construction failed. (err=%d)", err);
 		set_current_state(TASK_INTERRUPTIBLE);
 		schedule_timeout(sci->sc_interval);
@@ -3500,7 +3500,7 @@ static void nilfs_segctor_destroy(struct nilfs_sc_info *sci)
 		BUG();
 	}
 	if (!list_empty(&sci->sc_dirty_files)) {
-		nilfs_warning(sbi->s_super, __FUNCTION__,
+		nilfs_warning(sbi->s_super, __func__,
 			      "dirty file(s) after the final construction\n");
 		nilfs_dispose_list(sbi, &sci->sc_dirty_files, 1);
 	}
@@ -3575,7 +3575,7 @@ void nilfs_detach_segment_constructor(struct nilfs_sb_info *sbi)
 	spin_lock(&sbi->s_inode_lock);
 	if (!list_empty(&sbi->s_dirty_files)) {
 		list_splice_init(&sbi->s_dirty_files, &garbage_list);
-		nilfs_warning(sbi->s_super, __FUNCTION__,
+		nilfs_warning(sbi->s_super, __func__,
 			      "Non empty dirty list after the last "
 			      "segment construction\n");
 	}

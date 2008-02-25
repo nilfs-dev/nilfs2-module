@@ -324,9 +324,8 @@ static int nilfs_readdir(struct file *filp, void *dirent, filldir_t filldir)
 		struct page *page = nilfs_get_page(inode, n);
 
 		if (IS_ERR(page)) {
-			nilfs_error(sb, __FUNCTION__,
-				   "bad page in #%lu",
-				   inode->i_ino);
+			nilfs_error(sb, __func__, "bad page in #%lu",
+				    inode->i_ino);
 			filp->f_pos += PAGE_CACHE_SIZE - offset;
 			ret = -EIO;
 			goto done;
@@ -337,8 +336,8 @@ static int nilfs_readdir(struct file *filp, void *dirent, filldir_t filldir)
 			NILFS_DIR_REC_LEN(1);
 		for ( ; (char *)de <= limit; de = nilfs_next_entry(de)) {
 			if (de->rec_len == 0) {
-				nilfs_error(sb, __FUNCTION__,
-					"zero-length directory entry");
+				nilfs_error(sb, __func__,
+					    "zero-length directory entry");
 				ret = -EIO;
 				nilfs_put_page(page);
 				goto done;
@@ -410,7 +409,7 @@ nilfs_find_entry(struct inode *dir, struct dentry *dentry,
 			kaddr += nilfs_last_byte(dir, n) - reclen;
 			while ((char *) de <= kaddr) {
 				if (de->rec_len == 0) {
-					nilfs_error(dir->i_sb, __FUNCTION__,
+					nilfs_error(dir->i_sb, __func__,
 						"zero-length directory entry");
 					nilfs_put_page(page);
 					goto out;
@@ -425,7 +424,7 @@ nilfs_find_entry(struct inode *dir, struct dentry *dentry,
 			n = 0;
 		/* next page is past the blocks we've got */
 		if (unlikely(n > (dir->i_blocks >> (PAGE_CACHE_SHIFT - 9)))) {
-			nilfs_error(dir->i_sb, __FUNCTION__,
+			nilfs_error(dir->i_sb, __func__,
 			       "dir %lu size %lld exceeds block cout %llu",
 			       dir->i_ino, dir->i_size,
 			       (unsigned long long)dir->i_blocks);
@@ -536,8 +535,8 @@ int nilfs_add_link(struct dentry *dentry, struct inode *inode)
 				goto got_it;
 			}
 			if (de->rec_len == 0) {
-				nilfs_error(dir->i_sb, __FUNCTION__,
-					"zero-length directory entry");
+				nilfs_error(dir->i_sb, __func__,
+					    "zero-length directory entry");
 				err = -EIO;
 				goto out_unlock;
 			}
@@ -607,8 +606,8 @@ int nilfs_delete_entry(struct nilfs_dir_entry *dir, struct page *page)
 
 	while ((char *)de < (char *)dir) {
 		if (de->rec_len == 0) {
-			nilfs_error(inode->i_sb, __FUNCTION__,
-				"zero-length directory entry");
+			nilfs_error(inode->i_sb, __func__,
+				    "zero-length directory entry");
 			err = -EIO;
 			goto out;
 		}
@@ -696,7 +695,7 @@ int nilfs_empty_dir(struct inode *inode)
 
 		while ((char *)de <= kaddr) {
 			if (de->rec_len == 0) {
-				nilfs_error(inode->i_sb, __FUNCTION__,
+				nilfs_error(inode->i_sb, __func__,
 					    "zero-length directory entry "
 					    "(kaddr=%p, de=%p)\n", kaddr, de);
 				goto not_empty;

@@ -97,7 +97,7 @@ int nilfs_get_block(struct inode *inode, sector_t blkoff,
 				       (unsigned long long)blkoff);
 				BUG();
 			}
-			err = nilfs_handle_bmap_error(ret, __FUNCTION__,
+			err = nilfs_handle_bmap_error(ret, __func__,
 						      inode, inode->i_sb);
 			goto out;
 		}
@@ -574,7 +574,7 @@ static int __nilfs_read_inode(struct super_block *sb, unsigned long ino,
 
 	if (unlikely(raw_inode->i_flags &
 		     cpu_to_le32(NILFS_INODE_NEW | NILFS_INODE_UNUSED))) {
-		nilfs_warning(sb, __FUNCTION__,
+		nilfs_warning(sb, __func__,
 			      "read request for unused inode: %lu", ino);
 		goto failed_unmap;
 	}
@@ -758,11 +758,11 @@ void nilfs_delete_inode(struct inode *inode)
 		err = nilfs_bmap_terminate(ii->i_bmap);
 		if (unlikely(err)) {
 			if (err == -EINVAL)
-				nilfs_error(sb, __FUNCTION__,
+				nilfs_error(sb, __func__,
 					    "bmap is broken (ino=%lu)",
 					    inode->i_ino);
 			else
-				nilfs_warning(sb, __FUNCTION__,
+				nilfs_warning(sb, __func__,
 					      "failed to terminate bmap "
 					      "(ino=%lu, err=%d)",
 					      inode->i_ino, err);

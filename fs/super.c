@@ -285,7 +285,7 @@ int nilfs_sync_super(struct nilfs_sb_info *sbi)
 	err = sync_dirty_buffer(nilfs->ns_sbh);
 #ifdef NILFS_SB_BARRIER
 	if (err == -EOPNOTSUPP && barrier_done) {
-		nilfs_warning(sbi->s_super, __FUNCTION__,
+		nilfs_warning(sbi->s_super, __func__,
 			      "barrier-based sync failed. "
 			      "disabling barriers\n");
 		nilfs_clear_opt(sbi, BARRIER);

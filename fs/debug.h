@@ -33,15 +33,14 @@
 #define nilfs_debug(l, f, a...)  \
 	do {  \
 		if ((l) <= (int)nilfs_debug_info.verbose[0])  \
-			printk(KERN_DEBUG "NILFS %s: " f,  \
-			       __FUNCTION__, ## a);  \
+			printk(KERN_DEBUG "NILFS %s: " f, __func__, ## a);  \
 	} while (0)
 
 #define nilfs_debug_verbose(v, l, c, f, a...)  \
 	do {  \
 		if ((l) <= (int)nilfs_debug_info.verbose[v])  \
-			printk(KERN_DEBUG "NILFS(" c ") %s: " f, \
-			       __FUNCTION__, ## a);              \
+			printk(KERN_DEBUG "NILFS(" c ") %s: " f,
+			       __func__, ## a);              \
 	} while (0)
 
 #define nilfs_dump_stack(v, l)  \
@@ -98,11 +97,11 @@ extern void nilfs_vinode_debug(const char *, int, struct inode *,
 	__attribute__ ((format (printf, 4, 5)));
 
 #define BH_DEBUG(bh, m, a...)  \
-	nilfs_bh_debug(__FUNCTION__, __LINE__, (bh), (m), ## a)
+	nilfs_bh_debug(__func__, __LINE__, (bh), (m), ## a)
 #define PAGE_DEBUG(page, m, a...)  \
-	nilfs_page_debug(__FUNCTION__, __LINE__, (page), (m), ## a)
+	nilfs_page_debug(__func__, __LINE__, (page), (m), ## a)
 #define VINODE_DEBUG(inode, m, a...)  \
-	nilfs_vinode_debug(__FUNCTION__, __LINE__, (inode), (m), ## a)
+	nilfs_vinode_debug(__func__, __LINE__, (inode), (m), ## a)
 
 #define nilfs_dump_page_lru(lru_list, msg)  \
 	do {  \
@@ -190,9 +189,9 @@ extern void nilfs_check_btnode_cache(const char *, int,
 				     struct nilfs_btnode_cache *, int);
 
 #define NILFS_CHECK_PAGE_CACHE(mapping, tag)  \
-	nilfs_check_radix_tree(__FUNCTION__, __LINE__, (mapping), (tag))
+	nilfs_check_radix_tree(__func__, __LINE__, (mapping), (tag))
 #define NILFS_CHECK_BTNODE_CACHE(btnc, tag)  \
-	nilfs_check_btnode_cache(__FUNCTION__, __LINE__, (btnc), (tag))
+	nilfs_check_btnode_cache(__func__, __LINE__, (btnc), (tag))
 
 #else /* CONFIG_NILFS_DEBUG */
 #define nilfs_init_proc_entries()  (0)
