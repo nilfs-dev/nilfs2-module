@@ -1079,7 +1079,8 @@ static int nilfs_identify(char *data, struct nilfs_super_data *sd)
 	int ret = 0;
 
 	do {
-		if ((p = strsep(&options, ",")) != NULL && *p) {
+		p = strsep(&options, ",");
+		if (p != NULL && *p) {
 			token = match_token(p, tokens, args);
 			if (token == Opt_snapshot) {
 				if (!(sd->flags & MS_RDONLY))

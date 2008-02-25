@@ -41,7 +41,8 @@ int nilfs_bmap_lookup_at_level(struct nilfs_bmap *bmap,
 	int ret;
 
 	down_read(&bmap->b_sem);
-	if ((ret = (*bmap->b_ops->bop_lookup)(bmap, key, level, ptrp)) < 0)
+	ret = (*bmap->b_ops->bop_lookup)(bmap, key, level, ptrp);
+	if (ret < 0)
 		goto out;
 	if (bmap->b_pops->bpop_translate != NULL) {
 		ret = (*bmap->b_pops->bpop_translate)(bmap, *ptrp, &ptr);
@@ -98,17 +99,18 @@ static int nilfs_bmap_do_insert(struct nilfs_bmap *bmap,
 	int ret, n;
 
 	if (bmap->b_ops->bop_check_insert != NULL) {
-		if ((ret = (*bmap->b_ops->bop_check_insert)(bmap, key)) > 0) {
-			if ((n = (*bmap->b_ops->bop_gather_data)(
-				     bmap, keys, ptrs,
-				     NILFS_BMAP_SMALL_HIGH + 1)) < 0)
+		ret = (*bmap->b_ops->bop_check_insert)(bmap, key);
+		if (ret > 0) {
+			n = (*bmap->b_ops->bop_gather_data)(
+				bmap, keys, ptrs, NILFS_BMAP_SMALL_HIGH + 1);
+			if (n < 0)
 				return n;
-			if ((ret = (*nilfs_bmap_large_convert_and_insert)(
-				     bmap, key, ptr, keys, ptrs, n,
-				     NILFS_BMAP_LARGE_LOW,
-				     NILFS_BMAP_LARGE_HIGH)) == 0) {
+			ret = (*nilfs_bmap_large_convert_and_insert)(
+				bmap, key, ptr, keys, ptrs, n,
+				NILFS_BMAP_LARGE_LOW, NILFS_BMAP_LARGE_HIGH);
+			if (ret == 0)
 				bmap->b_u.u_flags |= NILFS_BMAP_LARGE;
-			}
+
 			return ret;
 		} else if (ret < 0)
 			return ret;
@@ -164,17 +166,18 @@ static int nilfs_bmap_do_delete(struct nilfs_bmap *bmap, nilfs_bmap_key_t key)
 	int ret, n;
 
 	if (bmap->b_ops->bop_check_delete != NULL) {
-		if ((ret = (*bmap->b_ops->bop_check_delete)(bmap, key)) > 0) {
-			if ((n = (*bmap->b_ops->bop_gather_data)(
-				     bmap, keys, ptrs,
-				     NILFS_BMAP_LARGE_LOW + 1)) < 0)
+		ret = (*bmap->b_ops->bop_check_delete)(bmap, key);
+		if (ret > 0) {
+			n = (*bmap->b_ops->bop_gather_data)(
+				bmap, keys, ptrs, NILFS_BMAP_LARGE_LOW + 1);
+			if (n < 0)
 				return n;
-			if ((ret = (*nilfs_bmap_small_delete_and_convert)(
-				     bmap, key, keys, ptrs, n,
-				     NILFS_BMAP_SMALL_LOW,
-				     NILFS_BMAP_SMALL_HIGH)) == 0) {
+			ret = (*nilfs_bmap_small_delete_and_convert)(
+				bmap, key, keys, ptrs, n,
+				NILFS_BMAP_SMALL_LOW, NILFS_BMAP_SMALL_HIGH);
+			if (ret == 0)
 				bmap->b_u.u_flags &= ~NILFS_BMAP_LARGE;
-			}
+
 			return ret;
 		} else if (ret < 0)
 			return ret;
@@ -224,16 +227,19 @@ static int nilfs_bmap_do_truncate(struct nilfs_bmap *bmap, unsigned long key)
 	nilfs_bmap_key_t lastkey;
 	int ret;
 
-	if ((ret = (*bmap->b_ops->bop_last_key)(bmap, &lastkey)) < 0) {
+	ret = (*bmap->b_ops->bop_last_key)(bmap, &lastkey);
+	if (ret < 0) {
 		if (ret == -ENOENT)
 			ret = 0;
 		return ret;
 	}
 
 	while (key <= lastkey) {
-		if ((ret = nilfs_bmap_do_delete(bmap, lastkey)) < 0)
+		ret = nilfs_bmap_do_delete(bmap, lastkey);
+		if (ret < 0)
 			return ret;
-		if ((ret = (*bmap->b_ops->bop_last_key)(bmap, &lastkey)) < 0) {
+		ret = (*bmap->b_ops->bop_last_key)(bmap, &lastkey);
+		if (ret < 0) {
 			if (ret == -ENOENT)
 				ret = 0;
 			return ret;
@@ -315,7 +321,8 @@ int nilfs_bmap_terminate(struct nilfs_bmap *bmap)
 	int ret;
 
 	down_write(&bmap->b_sem);
-	if ((ret = nilfs_bmap_do_truncate(bmap, 0)) < 0)
+	ret = nilfs_bmap_do_truncate(bmap, 0);
+	if (ret < 0)
 		goto out;
 	/* nilfs_bmap_do_clear(bmap); */
 
@@ -484,8 +491,9 @@ int nilfs_bmap_get_new_block(const struct nilfs_bmap *bmap,
 {
 	int ret;
 
-	if ((ret = nilfs_btnode_get_new(&NILFS_BMAP_I(bmap)->i_btnode_cache,
-					ptr, bhp)) < 0)
+	ret = nilfs_btnode_get_new(&NILFS_BMAP_I(bmap)->i_btnode_cache,
+				   ptr, bhp);
+	if (ret < 0)
 		return ret;
 	set_buffer_nilfs_volatile(*bhp);
 	return 0;
@@ -690,11 +698,13 @@ int nilfs_bmap_prepare_update(struct nilfs_bmap *bmap,
 {
 	int ret;
 
-	if ((ret = (*bmap->b_pops->bpop_prepare_end_ptr)(bmap, oldreq)) < 0)
+	ret = (*bmap->b_pops->bpop_prepare_end_ptr)(bmap, oldreq);
+	if (ret < 0)
 		return ret;
-	if ((ret = (*bmap->b_pops->bpop_prepare_alloc_ptr)(bmap, newreq)) < 0) {
+	ret = (*bmap->b_pops->bpop_prepare_alloc_ptr)(bmap, newreq);
+	if (ret < 0)
 		(*bmap->b_pops->bpop_abort_end_ptr)(bmap, oldreq);
-	}
+
 	return ret;
 }
 
@@ -741,7 +751,8 @@ static int nilfs_bmap_translate_v(const struct nilfs_bmap *bmap,
 
 	nilfs = (*bmap->b_pops->bpop_get_nilfs)(bmap);
 	dat = nilfs_dat_inode(nilfs);
-	if ((ret = nilfs_dat_translate(dat, ptr, &blocknr)) < 0)
+	ret = nilfs_dat_translate(dat, ptr, &blocknr);
+	if (ret < 0)
 		return ret;
 	if (ptrp != NULL)
 		*ptrp = blocknr;

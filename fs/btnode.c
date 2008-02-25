@@ -189,18 +189,26 @@ repeat:
 		cached_page = NULL;
 		nilfs_page_add_to_lru(page, 0);
 
-		if (try_altbc && (altbc = nilfs_btnode_altbc(btnc)) != NULL) {
-			struct page *opage =
-				nilfs_btnode_find_get_page(altbc, index);
-			if (opage) {
-				btnode_debug(3, "got orig dat page %p "
-					     "for index %lu\n", opage, index);
-				lock_page(opage);
-				/* dirty or pdirty pages do not appear here */
-				BUG_ON(PageDirty(opage));
-				nilfs_copy_buffer_page(opage, page, 0);
-				unlock_page(opage);
-				page_cache_release(opage);
+		if (try_altbc) {
+			altbc = nilfs_btnode_altbc(btnc);
+			if (altbc != NULL) {
+				struct page *opage =
+					nilfs_btnode_find_get_page(altbc,
+								   index);
+				if (opage) {
+					btnode_debug(3, "got orig dat page %p "
+						     "for index %lu\n",
+						     opage, index);
+					lock_page(opage);
+					/*
+					 * dirty or pdirty pages do not appear
+					 * here.
+					 */
+					BUG_ON(PageDirty(opage));
+					nilfs_copy_buffer_page(opage, page, 0);
+					unlock_page(opage);
+					page_cache_release(opage);
+				}
 			}
 		}
 		/* pass page_count from btnode_alloc_page to caller */
@@ -501,7 +509,8 @@ static void nilfs_btnode_delete_bh(struct buffer_head *bh)
 
 	clear_buffer_dirty(bh);
 	clear_buffer_nilfs_volatile(bh);
-	if ((bits = nilfs_page_buffers_clean(page)) != 0)
+	bits = nilfs_page_buffers_clean(page);
+	if (bits != 0)
 		nilfs_btnode_page_clear_dirty(page, bits);
 
 	clear_buffer_uptodate(bh);
@@ -673,7 +682,8 @@ void nilfs_btnode_commit_change_key(struct nilfs_btnode_cache *btnc,
 		     BTNC_I(btnc)->i_ino,
 		     (unsigned long long)oldkey, (unsigned long long)newkey);
 	obh = ctxt->bh;
-	if ((nbh = ctxt->newbh) == NULL) {	/* blocksize == pagesize */
+	nbh = ctxt->newbh;
+	if (nbh == NULL) {	/* blocksize == pagesize */
 		opage = obh->b_page;
 		/* BUG_ON(oldkey != opage->index); */
 		if (unlikely(oldkey != opage->index)) {
@@ -739,7 +749,8 @@ void nilfs_btnode_abort_change_key(struct nilfs_btnode_cache *btnc,
 	}
 	btnode_debug(3, "oldkey %llu newkey %llu\n",
 		     (unsigned long long)oldkey, (unsigned long long)newkey);
-	if ((nbh = ctxt->newbh) == NULL) {	/* blocksize == pagesize */
+	nbh = ctxt->newbh;
+	if (nbh == NULL) {	/* blocksize == pagesize */
 		nilfs_btnode_write_lock(btnc);
 		radix_tree_delete(&btnc->page_tree, newkey);
 		nilfs_btnode_write_unlock(btnc);

@@ -391,8 +391,8 @@ static int nilfs_dat_prepare_alloc_vblocknr(struct inode *dat,
 			group = 0;
 			maxgroup = nilfs_dat_group(dat, req->dr_vblocknr) - 1;
 		}
-		if ((ret = nilfs_dat_get_desc_block(
-			     dat, group, 1, &desc_bh)) < 0)
+		ret = nilfs_dat_get_desc_block(dat, group, 1, &desc_bh);
+		if (ret < 0)
 			return ret;
 		desc_kaddr = kmap(desc_bh->b_page);
 		desc = nilfs_dat_block_get_group_desc(
@@ -401,8 +401,9 @@ static int nilfs_dat_prepare_alloc_vblocknr(struct inode *dat,
 		for (j = 0; j < n; j++, desc++, group++) {
 			if (nilfs_dat_group_desc_get_nfrees(
 				    dat, group, desc) > 0) {
-				if ((ret = nilfs_dat_get_bitmap_block(
-					     dat, group, 1, &bitmap_bh)) < 0)
+				ret = nilfs_dat_get_bitmap_block(dat, group, 1,
+								 &bitmap_bh);
+				if (ret < 0)
 					goto out_desc;
 				bitmap_kaddr = kmap(bitmap_bh->b_page);
 				bitmap = nilfs_dat_block_get_bitmap(
@@ -505,9 +506,11 @@ static int nilfs_dat_prepare_free_vblocknr(struct inode *dat,
 	int ret;
 
 	group = nilfs_dat_group(dat, req->dr_vblocknr);
-	if ((ret = nilfs_dat_get_desc_block(dat, group, 0, &desc_bh)) < 0)
+	ret = nilfs_dat_get_desc_block(dat, group, 0, &desc_bh);
+	if (ret < 0)
 		return ret;
-	if ((ret = nilfs_dat_get_bitmap_block(dat, group, 0, &bitmap_bh)) < 0) {
+	ret = nilfs_dat_get_bitmap_block(dat, group, 0, &bitmap_bh);
+	if (ret < 0) {
 		brelse(desc_bh);
 		return ret;
 	}
@@ -603,9 +606,11 @@ int nilfs_dat_prepare_alloc(struct inode *dat, struct nilfs_dat_req *req)
 {
 	int ret;
 
-	if ((ret = nilfs_dat_prepare_alloc_vblocknr(dat, req)) < 0)
+	ret = nilfs_dat_prepare_alloc_vblocknr(dat, req);
+	if (ret < 0)
 		return ret;
-	if ((ret = nilfs_dat_prepare_entry(dat, req, 1)) < 0) {
+	ret = nilfs_dat_prepare_entry(dat, req, 1);
+	if (ret < 0) {
 		nilfs_dat_abort_alloc_vblocknr(dat, req);
 		return ret;
 	}
@@ -661,9 +666,11 @@ int nilfs_dat_prepare_free(struct inode *dat, struct nilfs_dat_req *req)
 {
 	int ret;
 
-	if ((ret = nilfs_dat_prepare_free_vblocknr(dat, req)) < 0)
+	ret = nilfs_dat_prepare_free_vblocknr(dat, req);
+	if (ret < 0)
 		return ret;
-	if ((ret = nilfs_dat_prepare_entry(dat, req, 0)) < 0) {
+	ret = nilfs_dat_prepare_entry(dat, req, 0);
+	if (ret < 0) {
 		nilfs_dat_abort_free_vblocknr(dat, req);
 		return ret;
 	}
@@ -777,7 +784,8 @@ int nilfs_dat_prepare_end(struct inode *dat, struct nilfs_dat_req *req)
 	void *entry_kaddr;
 	int ret;
 
-	if ((ret = nilfs_dat_prepare_entry(dat, req, 0)) < 0) {
+	ret = nilfs_dat_prepare_entry(dat, req, 0);
+	if (ret < 0) {
 		BUG_ON(ret == -ENOENT);
 		return ret;
 	}
@@ -790,7 +798,8 @@ int nilfs_dat_prepare_end(struct inode *dat, struct nilfs_dat_req *req)
 	kunmap_atomic(entry_kaddr, KM_USER0);
 
 	if (blocknr == 0) {
-		if ((ret = nilfs_dat_prepare_free_vblocknr(dat, req)) < 0) {
+		ret = nilfs_dat_prepare_free_vblocknr(dat, req);
+		if (ret < 0) {
 			nilfs_dat_abort_entry(dat, req);
 			return ret;
 		}
@@ -898,7 +907,8 @@ int nilfs_dat_mark_dirty(struct inode *dat, nilfs_sector_t vblocknr)
 	int ret;
 
 	req.dr_vblocknr = vblocknr;
-	if ((ret = nilfs_dat_prepare_entry(dat, &req, 0)) == 0)
+	ret = nilfs_dat_prepare_entry(dat, &req, 0);
+	if (ret == 0)
 		nilfs_dat_commit_entry(dat, &req);
 	return ret;
 }
@@ -927,7 +937,8 @@ int nilfs_dat_alloc(struct inode *dat, nilfs_sector_t *vblocknr)
 	int ret;
 
 	req.dr_vblocknr = *vblocknr;
-	if ((ret = nilfs_dat_prepare_alloc(dat, &req)) < 0)
+	ret = nilfs_dat_prepare_alloc(dat, &req);
+	if (ret < 0)
 		return ret;
 	nilfs_dat_commit_alloc(dat, &req);
 	*vblocknr = req.dr_vblocknr;
@@ -976,11 +987,11 @@ int nilfs_dat_freev(struct inode *dat, nilfs_sector_t *vblocknrs,
 
 	for (i = 0; i < nitems; i += n) {
 		group = nilfs_dat_group(dat, vblocknrs[i]);
-		if ((ret = nilfs_dat_get_desc_block(
-			     dat, group, 0, &desc_bh)) < 0)
+		ret = nilfs_dat_get_desc_block(dat, group, 0, &desc_bh);
+		if (ret < 0)
 			return ret;
-		if ((ret = nilfs_dat_get_bitmap_block(
-			     dat, group, 0, &bitmap_bh)) < 0) {
+		ret = nilfs_dat_get_bitmap_block(dat, group, 0, &bitmap_bh);
+		if (ret < 0) {
 			brelse(desc_bh);
 			return ret;
 		}
@@ -1048,7 +1059,8 @@ int nilfs_dat_move(struct inode *dat,
 	void *entry_kaddr;
 	int ret;
 
-	if ((ret = nilfs_dat_get_entry_block(dat, vblocknr, 0, &entry_bh)) < 0)
+	ret = nilfs_dat_get_entry_block(dat, vblocknr, 0, &entry_bh);
+	if (ret < 0)
 		return ret;
 	entry_kaddr = kmap_atomic(entry_bh->b_page, KM_USER0);
 	entry = nilfs_dat_block_get_entry(
@@ -1109,8 +1121,9 @@ int nilfs_dat_translate(struct inode *dat,
 	void *bitmap_kaddr;
 	unsigned char *bitmap;
 
-	if ((ret = nilfs_dat_get_bitmap_block(dat,
-			nilfs_dat_group(dat, vblocknr), 0, &bitmap_bh)) < 0)
+	ret = nilfs_dat_get_bitmap_block(dat, nilfs_dat_group(dat, vblocknr),
+					 0, &bitmap_bh);
+	if (ret < 0)
 		return ret;
 	bitmap_kaddr = kmap_atomic(bitmap_bh->b_page, KM_USER0);
 	bitmap = nilfs_dat_block_get_bitmap(dat, bitmap_bh, bitmap_kaddr);
@@ -1133,7 +1146,8 @@ int nilfs_dat_translate(struct inode *dat,
 	}
 	entry_kaddr = kmap_atomic(entry_bh->b_page, KM_USER0);
 	entry = nilfs_dat_block_get_entry(dat, vblocknr, entry_bh, entry_kaddr);
-	if ((blocknr = nilfs_dat_entry_get_blocknr(dat, entry)) == 0) {
+	blocknr = nilfs_dat_entry_get_blocknr(dat, entry);
+	if (blocknr == 0) {
 #ifdef CONFIG_NILFS_DEBUG
 		printk(KERN_DEBUG "%s: invalid virtual block number: %llu\n",
 		       __FUNCTION__, (unsigned long long)vblocknr);

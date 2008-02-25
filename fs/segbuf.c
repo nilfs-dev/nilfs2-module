@@ -87,9 +87,9 @@ struct nilfs_segment_buffer *nilfs_segbuf_new(struct super_block *sb)
 
 void nilfs_segbuf_free(struct nilfs_segment_buffer *segbuf)
 {
-	struct nilfs_segment_entry *ent;
+	struct nilfs_segment_entry *ent = segbuf->sb_segent;
 
-	if ((ent = segbuf->sb_segent) != NULL && list_empty(&ent->list)) {
+	if (ent != NULL && list_empty(&ent->list)) {
 		/* free isolated segment list head */
 		nilfs_free_segment_entry(segbuf->sb_segent);
 		segbuf->sb_segent = NULL;
@@ -112,7 +112,8 @@ int nilfs_segbuf_map(struct nilfs_segment_buffer *segbuf,
 		segbuf->sb_fseg_end - segbuf->sb_pseg_start + 1;
 
 	/* Attach a segment list head */
-	if ((ent = segbuf->sb_segent) == NULL) {
+	ent = segbuf->sb_segent;
+	if (ent == NULL) {
 		segbuf->sb_segent = nilfs_alloc_segment_entry(segnum);
 		if (unlikely(!segbuf->sb_segent))
 			return -ENOMEM;
@@ -467,7 +468,8 @@ int nilfs_segbuf_write(struct nilfs_segment_buffer *segbuf,
 	}
 
 #ifdef NILFS_SR_BARRIER
-	if ((bh = wi->bh_sr) != NULL) {
+	bh = wi->bh_sr;
+	if (bh != NULL) {
 		struct nilfs_sb_info *sbi = NILFS_SB(wi->sb);
 
 		seg_debug(3, "submitting super root block (index=%d)\n",

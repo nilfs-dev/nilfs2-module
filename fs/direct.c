@@ -73,8 +73,8 @@ nilfs_direct_find_target_v(const struct nilfs_direct *direct,
 {
 	nilfs_bmap_ptr_t ptr;
 
-	if ((ptr = nilfs_bmap_find_target_seq(&direct->d_bmap, key)) !=
-	    NILFS_BMAP_INVALID_PTR)
+	ptr = nilfs_bmap_find_target_seq(&direct->d_bmap, key);
+	if (ptr != NILFS_BMAP_INVALID_PTR)
 		/* sequential access */
 		return ptr;
 	else
@@ -99,8 +99,9 @@ static int nilfs_direct_prepare_insert(struct nilfs_direct *direct,
 
 	if (direct->d_ops->dop_find_target != NULL)
 		req->bpr_ptr = (*direct->d_ops->dop_find_target)(direct, key);
-	if ((ret = (*direct->d_bmap.b_pops->bpop_prepare_alloc_ptr)(
-		     &direct->d_bmap, req)) < 0)
+	ret = (*direct->d_bmap.b_pops->bpop_prepare_alloc_ptr)(&direct->d_bmap,
+							       req);
+	if (ret < 0)
 		return ret;
 
 	stats->bs_nblocks = 1;
@@ -145,7 +146,8 @@ static int nilfs_direct_insert(struct nilfs_bmap *bmap,
 	if (nilfs_direct_get_ptr(direct, key) != NILFS_BMAP_INVALID_PTR)
 		return -EEXIST;
 
-	if ((ret = nilfs_direct_prepare_insert(direct, key, &req, &stats)) < 0)
+	ret = nilfs_direct_prepare_insert(direct, key, &req, &stats);
+	if (ret < 0)
 		return ret;
 	nilfs_direct_commit_insert(direct, &req, key, ptr);
 	nilfs_bmap_add_blocks(bmap, stats.bs_nblocks);
@@ -162,8 +164,9 @@ static int nilfs_direct_prepare_delete(struct nilfs_direct *direct,
 
 	if (direct->d_bmap.b_pops->bpop_prepare_end_ptr != NULL) {
 		req->bpr_ptr = nilfs_direct_get_ptr(direct, key);
-		if ((ret = (*direct->d_bmap.b_pops->bpop_prepare_end_ptr)(
-			     &direct->d_bmap, req)) < 0)
+		ret = (*direct->d_bmap.b_pops->bpop_prepare_end_ptr)(
+			&direct->d_bmap, req);
+		if (ret < 0)
 			return ret;
 	}
 
@@ -194,7 +197,8 @@ static int nilfs_direct_delete(struct nilfs_bmap *bmap,
 	    nilfs_direct_get_ptr(direct, key) == NILFS_BMAP_INVALID_PTR)
 		return -ENOENT;
 
-	if ((ret = nilfs_direct_prepare_delete(direct, &req, key, &stats)) < 0)
+	ret = nilfs_direct_prepare_delete(direct, &req, key, &stats);
+	if (ret < 0)
 		return ret;
 	nilfs_direct_commit_delete(direct, &req, key);
 	nilfs_bmap_sub_blocks(bmap, stats.bs_nblocks);
@@ -244,13 +248,14 @@ static int nilfs_direct_gather_data(struct nilfs_bmap *bmap,
 	if (nitems > NILFS_DIRECT_NBLOCKS)
 		nitems = NILFS_DIRECT_NBLOCKS;
 	n = 0;
-	for (key = 0; key < nitems; key++)
-		if ((ptr = nilfs_direct_get_ptr(direct, key)) !=
-		    NILFS_BMAP_INVALID_PTR) {
+	for (key = 0; key < nitems; key++) {
+		ptr = nilfs_direct_get_ptr(direct, key);
+		if (ptr != NILFS_BMAP_INVALID_PTR) {
 			keys[n] = key;
 			ptrs[n] = ptr;
 			n++;
 		}
+	}
 	return n;
 }
 
@@ -269,7 +274,8 @@ int nilfs_direct_delete_and_convert(struct nilfs_bmap *bmap,
 	/* no need to allocate any resource for conversion */
 
 	/* delete */
-	if ((ret = (*bmap->b_ops->bop_delete)(bmap, key)) < 0)
+	ret = (*bmap->b_ops->bop_delete)(bmap, key);
+	if (ret < 0)
 		return ret;
 
 	/* free resources */
@@ -307,8 +313,9 @@ static int nilfs_direct_propagate_v(struct nilfs_direct *direct,
 		ptr = nilfs_direct_get_ptr(direct, key);
 		oldreq.bpr_ptr = ptr;
 		newreq.bpr_ptr = ptr;
-		if ((ret = nilfs_bmap_prepare_update(&direct->d_bmap,
-						     &oldreq, &newreq)) < 0)
+		ret = nilfs_bmap_prepare_update(&direct->d_bmap, &oldreq,
+						&newreq);
+		if (ret < 0)
 			return ret;
 		nilfs_bmap_commit_update(&direct->d_bmap, &oldreq, &newreq);
 		set_buffer_nilfs_volatile(bh);
@@ -339,8 +346,9 @@ static int nilfs_direct_assign_v(struct nilfs_direct *direct,
 	int ret;
 
 	req.bpr_ptr = ptr;
-	if ((ret = (*direct->d_bmap.b_pops->bpop_prepare_start_ptr)(
-		     &direct->d_bmap, &req)) < 0)
+	ret = (*direct->d_bmap.b_pops->bpop_prepare_start_ptr)(
+		&direct->d_bmap, &req);
+	if (ret < 0)
 		return ret;
 	(*direct->d_bmap.b_pops->bpop_commit_start_ptr)(&direct->d_bmap,
 							&req, blocknr);

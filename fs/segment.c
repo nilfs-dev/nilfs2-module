@@ -331,7 +331,8 @@ int nilfs_transaction_end(struct super_block *sb, int commit)
 		return 0;
 	}
 	sbi = NILFS_SB(sb);
-	if ((sci = NILFS_SC(sbi)) != NULL) {
+	sci = NILFS_SC(sbi);
+	if (sci != NULL) {
 		if (ti->ti_flags & NILFS_TI_COMMIT)
 			nilfs_segctor_start_timer(sci);
 		if (atomic_read(&sbi->s_nilfs->ns_ndirtyblks) >
@@ -2226,7 +2227,8 @@ static void nilfs_end_page_io(struct page *page, int err)
 	if (err < 0)
 		SetPageError(page);
 	else if (!err) {
-		if ((bits = nilfs_page_buffers_clean(page)) != 0)
+		bits = nilfs_page_buffers_clean(page);
+		if (bits != 0)
 			nilfs_clear_page_dirty(page, bits);
 		ClearPageError(page);
 	}

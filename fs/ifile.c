@@ -136,9 +136,11 @@ static int nilfs_ifile_prepare_alloc(struct inode *ifile,
 {
 	int ret;
 
-	if ((ret = nilfs_ifile_prepare_alloc_ino(ifile, req)) < 0)
+	ret = nilfs_ifile_prepare_alloc_ino(ifile, req);
+	if (ret < 0)
 		return ret;
-	if ((ret = nilfs_ifile_prepare_entry(ifile, req)) < 0) {
+	ret = nilfs_ifile_prepare_entry(ifile, req);
+	if (ret < 0) {
 		nilfs_ifile_abort_alloc_ino(ifile, req);
 		return ret;
 	}
@@ -181,9 +183,11 @@ nilfs_ifile_prepare_free(struct inode *ifile, struct nilfs_persistent_req *req)
 {
 	int ret;
 
-	if ((ret = nilfs_ifile_prepare_free_ino(ifile, req)) < 0)
+	ret = nilfs_ifile_prepare_free_ino(ifile, req);
+	if (ret < 0)
 		return ret;
-	if ((ret = nilfs_ifile_prepare_entry(ifile, req)) < 0) {
+	ret = nilfs_ifile_prepare_entry(ifile, req);
+	if (ret < 0) {
 		nilfs_ifile_abort_free_entry(ifile, req);
 		return ret;
 	}
@@ -277,7 +281,8 @@ int nilfs_ifile_create_inode(struct inode *ifile, ino_t *out_ino,
 			   a group. dull code!! */
 	req.pr_entry_bh = NULL;
 
-	if ((ret = nilfs_ifile_prepare_alloc(ifile, &req)) < 0) {
+	ret = nilfs_ifile_prepare_alloc(ifile, &req);
+	if (ret < 0) {
 		inode_debug(1, "failed (ret=%d)\n", ret);
 		brelse(req.pr_entry_bh);
 		return ret;
@@ -316,7 +321,8 @@ int nilfs_ifile_delete_inode(struct inode *ifile, ino_t ino)
 
 	req.pr_ino = ino;
 	req.pr_entry_bh = NULL;
-	if ((ret = nilfs_ifile_prepare_free(ifile, &req)) < 0) {
+	ret = nilfs_ifile_prepare_free(ifile, &req);
+	if (ret < 0) {
 		brelse(req.pr_entry_bh);
 		return ret;
 	}

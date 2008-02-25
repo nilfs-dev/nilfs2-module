@@ -164,15 +164,16 @@ int nilfs_persistent_prepare_alloc_entry(struct inode *inode,
 	for (i = 0; i < ngroups; i++, group++) {
 		if (group >= ngroups)
 			group = 0;
-		if ((ret = nilfs_persistent_get_group_desc_block(
-			     inode, group, &desc_bh)) < 0)
+		ret = nilfs_persistent_get_group_desc_block(inode, group,
+							    &desc_bh);
+		if (ret < 0)
 			return ret;
 		desc = nilfs_persistent_get_group_desc(inode, group, desc_bh);
 		if (le32_to_cpu(desc->pg_nfrees) > 0) {
-			if ((ret = nilfs_persistent_get_group_bitmap_block(
-				     inode, group, &bitmap_bh)) < 0) {
-				nilfs_persistent_put_group_desc(
-					inode, desc_bh);
+			ret = nilfs_persistent_get_group_bitmap_block(
+				inode, group, &bitmap_bh);
+			if (ret < 0) {
+				nilfs_persistent_put_group_desc(inode, desc_bh);
 				nilfs_persistent_put_group_desc_block(
 					inode, desc_bh);
 				return ret;
@@ -257,12 +258,11 @@ int nilfs_persistent_prepare_free_entry(struct inode *inode,
 	struct buffer_head *desc_bh, *bitmap_bh;
 	int ret;
 
-
-	if ((ret = nilfs_persistent_get_group_desc_block(
-		     inode, group, &desc_bh)) < 0)
+	ret = nilfs_persistent_get_group_desc_block(inode, group, &desc_bh);
+	if (ret < 0)
 		return ret;
-	if ((ret = nilfs_persistent_get_group_bitmap_block(
-		     inode, group, &bitmap_bh)) < 0) {
+	ret = nilfs_persistent_get_group_bitmap_block(inode, group, &bitmap_bh);
+	if (ret < 0) {
 		nilfs_persistent_put_group_desc_block(inode, desc_bh);
 		return ret;
 	}

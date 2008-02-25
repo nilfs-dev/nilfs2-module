@@ -52,9 +52,11 @@ static int nilfs_ioctl_wrap_copy(struct the_nilfs *nilfs,
 	if (argv->v_nmembs == 0)
 		return 0;
 
-	for (ksize = KMALLOC_SIZE_MAX; ksize >= KMALLOC_SIZE_MIN; ksize /= 2)
-		if ((buf = kmalloc(ksize, GFP_NOFS)) != NULL)
+	for (ksize = KMALLOC_SIZE_MAX; ksize >= KMALLOC_SIZE_MIN; ksize /= 2) {
+		buf = kmalloc(ksize, GFP_NOFS);
+		if (buf != NULL)
 			break;
+	}
 	if (ksize < KMALLOC_SIZE_MIN)
 		return -ENOMEM;
 	maxmembs = ksize / argv->v_size;
@@ -71,8 +73,9 @@ static int nilfs_ioctl_wrap_copy(struct the_nilfs *nilfs,
 			ret = -EFAULT;
 			break;
 		}
-		if ((nr = (*dofunc)(nilfs, argv->v_index + i, argv->v_flags,
-				    buf, argv->v_size, n)) < 0) {
+		nr = (*dofunc)(nilfs, argv->v_index + i, argv->v_flags, buf,
+			       argv->v_size, n);
+		if (nr < 0) {
 			ret = nr;
 			break;
 		}
@@ -318,10 +321,11 @@ nilfs_ioctl_do_get_bdescs(struct the_nilfs *nilfs, int index, int flags,
 	dat = nilfs_dat_inode(nilfs);
 	bmap = NILFS_I(dat)->i_bmap;
 	for (i = 0; i < nmembs; i++) {
-		if ((ret = nilfs_bmap_lookup_at_level(bmap,
-			     bdescs[i].bd_offset,
-			     bdescs[i].bd_level + 1,
-			     &bdescs[i].bd_blocknr)) < 0) {
+		ret = nilfs_bmap_lookup_at_level(bmap,
+						 bdescs[i].bd_offset,
+						 bdescs[i].bd_level + 1,
+						 &bdescs[i].bd_blocknr);
+		if (ret < 0) {
 			if (ret != -ENOENT)
 				return ret;
 			ret = 0;
@@ -363,11 +367,10 @@ static int nilfs_ioctl_move_inode_block(struct inode *inode,
 	int ret;
 
 	if (vdesc->vd_flags == 0) {
-		if ((ret = nilfs_gccache_add_data(
-			     inode,
-			     vdesc->vd_offset,
-			     vdesc->vd_blocknr,
-			     vdesc->vd_vblocknr)) < 0) {
+		ret = nilfs_gccache_add_data(inode, vdesc->vd_offset,
+					     vdesc->vd_blocknr,
+					     vdesc->vd_vblocknr);
+		if (ret < 0) {
 			if ((ret == -ENOENT) || (ret == -EEXIST)) {
 				printk(KERN_CRIT "%s: ino = %llu, cno = %llu, "
 				       "offset = %llu, blocknr = %llu, "
@@ -383,10 +386,9 @@ static int nilfs_ioctl_move_inode_block(struct inode *inode,
 			return ret;
 		}
 	} else {
-		if ((ret = nilfs_gccache_add_node(
-			     inode,
-			     vdesc->vd_blocknr,
-			     vdesc->vd_vblocknr)) < 0) {
+		ret = nilfs_gccache_add_node(inode, vdesc->vd_blocknr,
+					     vdesc->vd_vblocknr);
+		if (ret < 0) {
 			if (ret == -EEXIST) {
 				printk(KERN_CRIT "%s: ino = %llu, cno = %llu, "
 				       "blocknr = %llu, vblocknr = %llu\n",
@@ -419,14 +421,15 @@ nilfs_ioctl_do_move_blocks(struct the_nilfs *nilfs, int index, int flags,
 	for (i = 0; i < nmembs; i += n) {
 		ino = vdescs[i].vd_ino;
 		cno = vdescs[i].vd_cno;
-		if ((inode = nilfs_gc_iget(nilfs, ino, cno)) == NULL)
+		inode = nilfs_gc_iget(nilfs, ino, cno);
+		if (inode == NULL)
 			return -ENOMEM;
 		for (j = i, n = 0;
 		     (j < nmembs) && (vdescs[j].vd_ino == ino) &&
 			     (vdescs[j].vd_cno == cno);
 		     j++, n++) {
-			if ((ret = nilfs_ioctl_move_inode_block(
-				     inode, &vdescs[j])) < 0)
+			ret = nilfs_ioctl_move_inode_block(inode, &vdescs[j]);
+			if (ret < 0)
 				return ret;
 		}
 		/* XXX: nilfs_gc_iput() ??? */
@@ -455,10 +458,12 @@ nilfs_ioctl_do_delete_checkpoints(struct the_nilfs *nilfs, int index,
 	cpfile = nilfs->ns_cpfile;
 	periods = (struct nilfs_period *)buf;
 
-	for (i = 0; i < nmembs; i++)
-		if ((ret = nilfs_cpfile_delete_checkpoints(cpfile,
-			     periods[i].p_start, periods[i].p_end)) < 0)
+	for (i = 0; i < nmembs; i++) {
+		ret = nilfs_cpfile_delete_checkpoints(
+			cpfile, periods[i].p_start, periods[i].p_end);
+		if (ret < 0)
 			return ret;
+	}
 	return nmembs;
 }
 
@@ -481,7 +486,8 @@ nilfs_ioctl_do_free_vblocknrs(struct the_nilfs *nilfs, int index, int flags,
 	dat = nilfs_dat_inode(nilfs);
 	vbns = (nilfs_sector_t *)buf;
 
-	if ((ret = nilfs_dat_freev(dat, vbns, nmembs)) < 0)
+	ret = nilfs_dat_freev(dat, vbns, nmembs);
+	if (ret < 0)
 		return ret;
 	return nmembs;
 }
@@ -509,10 +515,11 @@ nilfs_ioctl_do_mark_blocks_dirty(struct the_nilfs *nilfs, int index, int flags,
 	bmap = NILFS_I(dat)->i_bmap;
 	for (i = 0; i < nmembs; i++) {
 		/* XXX: use macro or inline func to check liveness */
-		if ((ret = nilfs_bmap_lookup_at_level(bmap,
-			     bdescs[i].bd_offset,
-			     bdescs[i].bd_level + 1,
-			     &bdescs[i].bd_blocknr)) < 0) {
+		ret = nilfs_bmap_lookup_at_level(bmap,
+						 bdescs[i].bd_offset,
+						 bdescs[i].bd_level + 1,
+						 &bdescs[i].bd_blocknr);
+		if (ret < 0) {
 			if (ret != -ENOENT)
 				return ret;
 			ret = 0;
@@ -522,15 +529,16 @@ nilfs_ioctl_do_mark_blocks_dirty(struct the_nilfs *nilfs, int index, int flags,
 			/* skip dead block */
 			continue;
 		if (bdescs[i].bd_level == 0) {
-			if ((ret = nilfs_mdt_mark_block_dirty(dat,
-				     bdescs[i].bd_offset)) < 0) {
+			ret = nilfs_mdt_mark_block_dirty(dat,
+							 bdescs[i].bd_offset);
+			if (ret < 0) {
 				BUG_ON(ret == -ENOENT);
 				return ret;
 			}
 		} else {
-			if ((ret = nilfs_bmap_mark(bmap,
-				     bdescs[i].bd_offset,
-				     bdescs[i].bd_level)) < 0) {
+			ret = nilfs_bmap_mark(bmap, bdescs[i].bd_offset,
+					      bdescs[i].bd_level);
+			if (ret < 0) {
 				BUG_ON(ret == -ENOENT);
 				return ret;
 			}
@@ -587,15 +595,20 @@ int nilfs_ioctl_prepare_clean_segments(struct the_nilfs *nilfs,
 		return -EFAULT;
 
 	dir = _IOC_WRITE;
-	if ((ret = nilfs_ioctl_move_blocks(nilfs, &argv[0], dir)) < 0)
+	ret = nilfs_ioctl_move_blocks(nilfs, &argv[0], dir);
+	if (ret < 0)
 		goto out_move_blks;
-	if ((ret = nilfs_ioctl_delete_checkpoints(nilfs, &argv[1], dir)) < 0)
+	ret = nilfs_ioctl_delete_checkpoints(nilfs, &argv[1], dir);
+	if (ret < 0)
 		goto out_del_cps;
-	if ((ret = nilfs_ioctl_free_vblocknrs(nilfs, &argv[2], dir)) < 0)
+	ret = nilfs_ioctl_free_vblocknrs(nilfs, &argv[2], dir);
+	if (ret < 0)
 		goto out_free_vbns;
-	if ((ret = nilfs_ioctl_mark_blocks_dirty(nilfs, &argv[3], dir)) < 0)
+	ret = nilfs_ioctl_mark_blocks_dirty(nilfs, &argv[3], dir);
+	if (ret < 0)
 		goto out_free_vbns;
-	if ((ret = nilfs_ioctl_free_segments(nilfs, &argv[4], dir)) < 0)
+	ret = nilfs_ioctl_free_segments(nilfs, &argv[4], dir);
+	if (ret < 0)
 		goto out_free_segs;
 
 	/* success */
@@ -689,7 +702,8 @@ static int nilfs_ioctl_sync(struct inode *inode, struct file *filp,
 	nilfs_cno_t cno;
 	int ret;
 
-	if ((ret = nilfs_construct_segment(inode->i_sb)) < 0)
+	ret = nilfs_construct_segment(inode->i_sb);
+	if (ret < 0)
 		return ret;
 
 	if ((nilfs_cno_t __user *)arg == NULL)
@@ -708,7 +722,8 @@ static int nilfs_ioctl_sync(struct inode *inode, struct file *filp,
 	int ret;
 
 	unlock_kernel();
-	if ((ret = nilfs_construct_segment(inode->i_sb)) < 0)
+	ret = nilfs_construct_segment(inode->i_sb);
+	if (ret < 0)
 		goto out;
 	if ((nilfs_cno_t __user *)arg == NULL)
 		goto out;
@@ -812,11 +827,12 @@ nilfs_compat_ioctl_get_by_argv(struct inode *inode, struct file *filp,
 
 	uargv = compat_alloc_user_space(sizeof(struct nilfs_argv));
 	uargv32 = compat_ptr(arg);
-	if ((ret = nilfs_compat_ioctl_uargv32_to_uargv(uargv32, uargv)) < 0)
+	ret = nilfs_compat_ioctl_uargv32_to_uargv(uargv32, uargv);
+	if (ret < 0)
 		return ret;
 
-	if ((ret = nilfs_compat_locked_ioctl(inode, filp, cmd,
-					     (unsigned long)uargv)) < 0)
+	ret = nilfs_compat_locked_ioctl(inode, filp, cmd, (unsigned long)uargv);
+	if (ret < 0)
 		return ret;
 
 	return nilfs_compat_ioctl_uargv_to_uargv32(uargv, uargv32);
@@ -881,8 +897,9 @@ nilfs_compat_ioctl_get_sustat(struct inode *inode, struct file *filp,
 	int ret;
 
 	usustat = compat_alloc_user_space(sizeof(struct nilfs_sustat));
-	if ((ret = nilfs_compat_locked_ioctl(inode, filp, cmd,
-					     (unsigned long)usustat)) < 0)
+	ret = nilfs_compat_locked_ioctl(inode, filp, cmd,
+					(unsigned long)usustat);
+	if (ret < 0)
 		return ret;
 
 	usustat32 = compat_ptr(arg);
@@ -924,11 +941,12 @@ nilfs_compat_ioctl_clean_segments(struct inode *inode, struct file *filp,
 
 	uargv = compat_alloc_user_space(sizeof(struct nilfs_argv) * 5);
 	uargv32 = compat_ptr(arg);
-	for (i = 0; i < 5; i++)
-		if ((ret = nilfs_compat_ioctl_uargv32_to_uargv(
-			     &uargv32[i], &uargv[i])) < 0)
+	for (i = 0; i < 5; i++) {
+		ret = nilfs_compat_ioctl_uargv32_to_uargv(&uargv32[i],
+							  &uargv[i]);
+		if (ret < 0)
 			return ret;
-
+	}
 	return nilfs_compat_locked_ioctl(
 		inode, filp, cmd, (unsigned long)uargv);
 }
@@ -954,8 +972,9 @@ nilfs_compat_ioctl_timedwait(struct inode *inode, struct file *filp,
 	    put_user(ts.tv_nsec, &uwcond->wc_timeout.tv_nsec))
 		return -EFAULT;
 
-	if ((ret = nilfs_compat_locked_ioctl(
-		     inode, filp, cmd, (unsigned long)uwcond)) < 0)
+	ret = nilfs_compat_locked_ioctl(inode, filp, cmd,
+					(unsigned long)uwcond);
+	if (ret < 0)
 		return ret;
 
 	if (get_user(ts.tv_sec, &uwcond->wc_timeout.tv_sec) ||

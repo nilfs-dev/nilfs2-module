@@ -150,7 +150,8 @@ static int nilfs_cpfile_get_block(struct inode *cpfile,
 	struct buffer_head *bh;
 	int ret;
 
-	if ((ret = nilfs_mdt_read_block(cpfile, blkoff, &bh)) < 0) {
+	ret = nilfs_mdt_read_block(cpfile, blkoff, &bh);
+	if (ret < 0) {
 		if ((ret != -ENOENT) || !create)
 			return ret;
 		/* first block must be allocated by mkfs.nilfs */
@@ -281,7 +282,8 @@ int nilfs_cpfile_get_checkpoint(struct inode *cpfile,
 
 	down_write(&NILFS_MDT(cpfile)->mi_sem);
 
-	if ((ret = nilfs_cpfile_get_header_block(cpfile, &header_bh)) < 0)
+	ret = nilfs_cpfile_get_header_block(cpfile, &header_bh);
+	if (ret < 0)
 		goto out_sem;
 	ret = nilfs_cpfile_get_checkpoint_block(cpfile, cno, create, &cp_bh);
 	if (ret < 0)
@@ -389,14 +391,15 @@ int nilfs_cpfile_delete_checkpoints(struct inode *cpfile,
 
 	down_write(&NILFS_MDT(cpfile)->mi_sem);
 
-	if ((ret = nilfs_cpfile_get_header_block(cpfile, &header_bh)) < 0)
+	ret = nilfs_cpfile_get_header_block(cpfile, &header_bh);
+	if (ret < 0)
 		goto out_sem;
 	tnicps = 0;
 
 	for (cno = start; cno < end; cno += ncps) {
 		ncps = nilfs_cpfile_checkpoints_in_block(cpfile, cno, end);
-		if ((ret = nilfs_cpfile_get_checkpoint_block(
-			     cpfile, cno, 0, &cp_bh)) < 0) {
+		ret = nilfs_cpfile_get_checkpoint_block(cpfile, cno, 0, &cp_bh);
+		if (ret < 0) {
 			if (ret != -ENOENT)
 				goto out_sem;
 			/* skip hole */
@@ -543,8 +546,8 @@ nilfs_cpfile_do_get_cpinfo(struct inode *cpfile, nilfs_cno_t cno,
 	for (n = 0; (cno < nilfs_mdt_cno(cpfile)) && (n < nci); cno += ncps) {
 		ncps = nilfs_cpfile_checkpoints_in_block(
 			cpfile, cno, nilfs_mdt_cno(cpfile));
-		if ((ret = nilfs_cpfile_get_checkpoint_block(
-			     cpfile, cno, 0, &bh)) < 0) {
+		ret = nilfs_cpfile_get_checkpoint_block(cpfile, cno, 0, &bh);
+		if (ret < 0) {
 			if (ret != -ENOENT)
 				goto out;
 			/* skip hole */
@@ -584,7 +587,8 @@ nilfs_cpfile_do_get_ssinfo(struct inode *cpfile, nilfs_cno_t cno,
 	down_read(&NILFS_MDT(cpfile)->mi_sem);
 
 	if (cno == 0) {
-		if ((ret = nilfs_cpfile_get_header_block(cpfile, &bh)) < 0)
+		ret = nilfs_cpfile_get_header_block(cpfile, &bh);
+		if (ret < 0)
 			goto out;
 		kaddr = kmap_atomic(bh->b_page, KM_USER0);
 		header = nilfs_cpfile_block_get_header(cpfile, bh, kaddr);
@@ -606,7 +610,8 @@ nilfs_cpfile_do_get_ssinfo(struct inode *cpfile, nilfs_cno_t cno,
 		cp = nilfs_cpfile_block_get_checkpoint(
 			cpfile, curr, bh, kaddr);
 		nilfs_cpfile_checkpoint_to_cpinfo(cpfile, cp, &ci[n]);
-		if ((next = le64_to_cpu(cp->cp_snapshot_list.ssl_next)) == 0) {
+		next = le64_to_cpu(cp->cp_snapshot_list.ssl_next);
+		if (next == 0) {
 			curr = next;
 			n++;
 			break;
@@ -615,8 +620,9 @@ nilfs_cpfile_do_get_ssinfo(struct inode *cpfile, nilfs_cno_t cno,
 		if (curr_blkoff != next_blkoff) {
 			kunmap_atomic(kaddr, KM_USER0);
 			brelse(bh);
-			if ((ret = nilfs_cpfile_get_checkpoint_block(
-				     cpfile, next, 0, &bh)) < 0)
+			ret = nilfs_cpfile_get_checkpoint_block(cpfile, next,
+								0, &bh);
+			if (ret < 0)
 				goto out;
 			kaddr = kmap_atomic(bh->b_page, KM_USER0);
 		}
@@ -667,13 +673,15 @@ int nilfs_cpfile_delete_checkpoint(struct inode *cpfile, nilfs_cno_t cno)
 	/* checkpoint number 0 is invalid */
 	if (cno == 0)
 		return -ENOENT;
-	if ((nci = nilfs_cpfile_do_get_cpinfo(cpfile, cno, &ci, 1)) < 0)
+	nci = nilfs_cpfile_do_get_cpinfo(cpfile, cno, &ci, 1);
+	if (nci < 0)
 		return nci;
 	else if ((nci == 0) || (ci.ci_cno != cno))
 		return -ENOENT;
 
 	/* cannot delete the latest checkpoint nor snapshots */
-	if ((ret = nilfs_cpinfo_snapshot(&ci)) < 0)
+	ret = nilfs_cpinfo_snapshot(&ci);
+	if (ret < 0)
 		return ret;
 	else if ((ret > 0) || (cno == nilfs_mdt_cno(cpfile) - 1))
 		return -EPERM;
@@ -714,8 +722,8 @@ static int nilfs_cpfile_set_snapshot(struct inode *cpfile, nilfs_cno_t cno)
 
 	down_write(&NILFS_MDT(cpfile)->mi_sem);
 
-	if ((ret = nilfs_cpfile_get_checkpoint_block(
-		     cpfile, cno, 0, &cp_bh)) < 0)
+	ret = nilfs_cpfile_get_checkpoint_block(cpfile, cno, 0, &cp_bh);
+	if (ret < 0)
 		goto out_sem;
 	kaddr = kmap_atomic(cp_bh->b_page, KM_USER0);
 	cp = nilfs_cpfile_block_get_checkpoint(cpfile, cno, cp_bh, kaddr);
@@ -731,7 +739,8 @@ static int nilfs_cpfile_set_snapshot(struct inode *cpfile, nilfs_cno_t cno)
 	}
 	kunmap_atomic(kaddr, KM_USER0);
 
-	if ((ret = nilfs_cpfile_get_header_block(cpfile, &header_bh)) < 0)
+	ret = nilfs_cpfile_get_header_block(cpfile, &header_bh);
+	if (ret < 0)
 		goto out_cp;
 	kaddr = kmap_atomic(header_bh->b_page, KM_USER0);
 	header = nilfs_cpfile_block_get_header(cpfile, header_bh, kaddr);
@@ -747,8 +756,9 @@ static int nilfs_cpfile_set_snapshot(struct inode *cpfile, nilfs_cno_t cno)
 		if (curr_blkoff != prev_blkoff) {
 			kunmap_atomic(kaddr, KM_USER0);
 			brelse(curr_bh);
-			if ((ret = nilfs_cpfile_get_checkpoint_block(
-				     cpfile, curr, 0, &curr_bh)) < 0)
+			ret = nilfs_cpfile_get_checkpoint_block(cpfile, curr,
+								0, &curr_bh);
+			if (ret < 0)
 				goto out_header;
 			kaddr = kmap_atomic(curr_bh->b_page, KM_USER0);
 		}
@@ -761,8 +771,9 @@ static int nilfs_cpfile_set_snapshot(struct inode *cpfile, nilfs_cno_t cno)
 	kunmap_atomic(kaddr, KM_USER0);
 
 	if (prev != 0) {
-		if ((ret = nilfs_cpfile_get_checkpoint_block(
-			     cpfile, prev, 0, &prev_bh)) < 0)
+		ret = nilfs_cpfile_get_checkpoint_block(cpfile, prev, 0,
+							&prev_bh);
+		if (ret < 0)
 			goto out_curr;
 	} else {
 		prev_bh = header_bh;
@@ -827,8 +838,8 @@ static int nilfs_cpfile_clear_snapshot(struct inode *cpfile, nilfs_cno_t cno)
 
 	down_write(&NILFS_MDT(cpfile)->mi_sem);
 
-	if ((ret = nilfs_cpfile_get_checkpoint_block(
-		     cpfile, cno, 0, &cp_bh)) < 0)
+	ret = nilfs_cpfile_get_checkpoint_block(cpfile, cno, 0, &cp_bh);
+	if (ret < 0)
 		goto out_sem;
 	kaddr = kmap_atomic(cp_bh->b_page, KM_USER0);
 	cp = nilfs_cpfile_block_get_checkpoint(cpfile, cno, cp_bh, kaddr);
@@ -848,19 +859,22 @@ static int nilfs_cpfile_clear_snapshot(struct inode *cpfile, nilfs_cno_t cno)
 	prev = le64_to_cpu(list->ssl_prev);
 	kunmap_atomic(kaddr, KM_USER0);
 
-	if ((ret = nilfs_cpfile_get_header_block(cpfile, &header_bh)) < 0)
+	ret = nilfs_cpfile_get_header_block(cpfile, &header_bh);
+	if (ret < 0)
 		goto out_cp;
 	if (next != 0) {
-		if ((ret = nilfs_cpfile_get_checkpoint_block(
-			     cpfile, next, 0, &next_bh)) < 0)
+		ret = nilfs_cpfile_get_checkpoint_block(cpfile, next, 0,
+							&next_bh);
+		if (ret < 0)
 			goto out_header;
 	} else {
 		next_bh = header_bh;
 		get_bh(next_bh);
 	}
 	if (prev != 0) {
-		if ((ret = nilfs_cpfile_get_checkpoint_block(
-			     cpfile, prev, 0, &prev_bh)) < 0)
+		ret = nilfs_cpfile_get_checkpoint_block(cpfile, prev, 0,
+							&prev_bh);
+		if (ret < 0)
 			goto out_next;
 	} else {
 		prev_bh = header_bh;
@@ -939,7 +953,8 @@ int nilfs_cpfile_is_snapshot(struct inode *cpfile, nilfs_cno_t cno)
 
 	down_read(&NILFS_MDT(cpfile)->mi_sem);
 
-	if ((ret = nilfs_cpfile_get_checkpoint_block(cpfile, cno, 0, &bh)) < 0)
+	ret = nilfs_cpfile_get_checkpoint_block(cpfile, cno, 0, &bh);
+	if (ret < 0)
 		goto out;
 	kaddr = kmap_atomic(bh->b_page, KM_USER0);
 	cp = nilfs_cpfile_block_get_checkpoint(cpfile, cno, bh, kaddr);
@@ -1027,7 +1042,8 @@ int nilfs_cpfile_get_stat(struct inode *cpfile, struct nilfs_cpstat *cpstat)
 
 	down_read(&NILFS_MDT(cpfile)->mi_sem);
 
-	if ((ret = nilfs_cpfile_get_header_block(cpfile, &bh)) < 0)
+	ret = nilfs_cpfile_get_header_block(cpfile, &bh);
+	if (ret < 0)
 		goto out_sem;
 	kaddr = kmap_atomic(bh->b_page, KM_USER0);
 	header = nilfs_cpfile_block_get_header(cpfile, bh, kaddr);
@@ -1077,7 +1093,8 @@ int nilfs_cpfile_get_snapshots(struct inode *cpfile,
 	down_write(&NILFS_MDT(cpfile)->mi_sem);
 
 	if (*cno == 0) {
-		if ((ret = nilfs_cpfile_get_header_block(cpfile, &bh)) < 0)
+		ret = nilfs_cpfile_get_header_block(cpfile, &bh);
+		if (ret < 0)
 			goto out_sem;
 		kaddr = kmap_atomic(bh->b_page, KM_USER0);
 		header = nilfs_cpfile_block_get_header(cpfile, bh, kaddr);
@@ -1099,7 +1116,8 @@ int nilfs_cpfile_get_snapshots(struct inode *cpfile,
 		snapshots[n] = curr;
 
 		cp = nilfs_cpfile_block_get_checkpoint(cpfile, curr, bh, kaddr);
-		if ((next = le64_to_cpu(cp->cp_snapshot_list.ssl_next)) == 0) {
+		next = le64_to_cpu(cp->cp_snapshot_list.ssl_next);
+		if (next == 0) {
 			curr = next;
 			n++;
 			break;

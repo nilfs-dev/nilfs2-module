@@ -440,7 +440,8 @@ void nilfs_page_debug(const char *fname, int line, struct page *page,
 	len += snprintf(b + len, MSIZ - len, " %s(%d) flags=", fname, line);
 	len += snprint_page_flags(b + len, MSIZ - len, page);
 	if (mapping) {
-		if ((inode = NILFS_AS_I(mapping)) != NULL)
+		inode = NILFS_AS_I(mapping);
+		if (inode != NULL)
 			len += snprintf(b + len, MSIZ - len, " ino=%lu",
 					inode->i_ino);
 	}
