@@ -92,9 +92,10 @@ static inline struct nilfs_sb_info *NILFS_SB(struct super_block *sb)
 #define nilfs_set_opt(sbi, opt)  \
 	do { (sbi)->s_mount_opt |= NILFS_MOUNT_##opt; } while (0)
 #define nilfs_test_opt(sbi, opt)   ((sbi)->s_mount_opt & NILFS_MOUNT_##opt)
-#define nilfs_write_opt(sbi, mask, opt)  \
-	(sbi)->s_mount_opt = (((sbi)->s_mount_opt & ~NILFS_MOUNT_##mask) |  \
-			      NILFS_MOUNT_##opt)
-
+#define nilfs_write_opt(sbi, mask, opt)					\
+	do { (sbi)->s_mount_opt =					\
+		(((sbi)->s_mount_opt & ~NILFS_MOUNT_##mask) |		\
+		 NILFS_MOUNT_##opt);					\
+	} while (0)
 
 #endif /* _NILFS_SB */

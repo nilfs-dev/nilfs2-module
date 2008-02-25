@@ -44,8 +44,8 @@
 #define B2P(blocknr, inode) \
 	(unsigned long)((blocknr) >> (PAGE_CACHE_SHIFT - (inode)->i_blkbits))
 #define B2O(blocknr, inode) \
-	(unsigned int)((blocknr) & \
-		       ((1UL << (PAGE_CACHE_SHIFT - (inode)->i_blkbits)) - 1))
+	((unsigned int)((blocknr) & \
+			((1UL << (PAGE_CACHE_SHIFT - (inode)->i_blkbits)) - 1)))
 
 static inline struct nilfs_btnode_cache *PAGE_BTNC(struct page *page)
 {

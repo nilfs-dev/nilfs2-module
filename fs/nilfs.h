@@ -119,10 +119,10 @@ enum {
  * Macros to check inode numbers
  */
 #define NILFS_SYS_INO_BITS   \
-  (unsigned int)(1 << NILFS_ROOT_INO | 1 << NILFS_DAT_INO |		\
-		1 << NILFS_CPFILE_INO | 1 << NILFS_SUFILE_INO |		\
-		1 << NILFS_IFILE_INO | 1 << NILFS_ATIME_INO |		\
-		1 << NILFS_SKETCH_INO)
+  ((unsigned int)(1 << NILFS_ROOT_INO | 1 << NILFS_DAT_INO |		\
+		  1 << NILFS_CPFILE_INO | 1 << NILFS_SUFILE_INO |	\
+		  1 << NILFS_IFILE_INO | 1 << NILFS_ATIME_INO |		\
+		  1 << NILFS_SKETCH_INO))
 
 #define NILFS_VALID_INODE(sb, ino) \
   ((ino) >= NILFS_FIRST_INO(sb) || (NILFS_SYS_INO_BITS & (1 << (ino))))
