@@ -3427,8 +3427,7 @@ static int nilfs_segctor_init(struct nilfs_sc_info *sci,
 /*
  * Setup & clean-up functions
  */
-static struct nilfs_sc_info *
-nilfs_segctor_new(struct nilfs_sb_info *sbi, unsigned int max_blocks)
+static struct nilfs_sc_info *nilfs_segctor_new(struct nilfs_sb_info *sbi)
 {
 	struct nilfs_sc_info *sci;
 
@@ -3565,7 +3564,7 @@ int nilfs_attach_segment_constructor(struct nilfs_sb_info *sbi,
 
 	/* Each field of nilfs_segctor is cleared through the initialization
 	   of super-block info */
-	sbi->s_sc_info = nilfs_segctor_new(sbi, nilfs->ns_blocks_per_segment);
+	sbi->s_sc_info = nilfs_segctor_new(sbi);
 	if (!sbi->s_sc_info)
 		return -ENOMEM;
 
