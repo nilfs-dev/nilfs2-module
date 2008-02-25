@@ -208,7 +208,7 @@ static int nilfs_pages_free_lru(int active, int nr, int *nf)
 		}
 		list_move_tail(&page->lru, &l_victim);
 		continue;
-	keep_in_list:
+keep_in_list:
 		page_cache_release(page);
 	}
 	spin_unlock(lock);

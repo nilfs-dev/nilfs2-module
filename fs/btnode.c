@@ -600,7 +600,7 @@ int nilfs_btnode_prepare_change_key(struct nilfs_btnode_cache *btnc,
 				   (unsigned long long)newkey);
 			BUG();
 		}
-	retry:
+ retry:
 		nilfs_btnode_write_lock(btnc);
 		err = radix_tree_insert(&btnc->page_tree, newkey, obh->b_page);
 		nilfs_btnode_write_unlock(btnc);

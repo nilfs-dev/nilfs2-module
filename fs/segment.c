@@ -971,7 +971,7 @@ static int nilfs_segctor_scan_dirty_data_buffers(struct nilfs_sc_info *sci,
 				nilfs_set_page_to_be_frozen(page);
 			}
 		}
-	skip_page:
+ skip_page:
 		page_cache_release(page);
 	}
 	if (!err)

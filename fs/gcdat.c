@@ -169,7 +169,7 @@ repeat:
 			if (PageDirty(page))
 				radix_tree_tag_set(&mapping->page_tree, offset,
 						   PAGECACHE_TAG_DIRTY);
-		skip_unlock:
+skip_unlock:
 			WRITE_UNLOCK_IRQ(&mapping->tree_lock);
 #endif
 		}

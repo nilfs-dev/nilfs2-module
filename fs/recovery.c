@@ -618,18 +618,18 @@ static int recover_dsync_blocks(struct nilfs_sb_info *sbi,
 			       (unsigned long long)rb->blocknr);
 		goto next;
 
-	failed_page:
+ failed_page:
 		unlock_page(page);
 		page_cache_release(page);
 
-	failed_inode:
+ failed_inode:
 		printk(KERN_WARNING
 		       "NILFS warning: error recovering data block "
 		       "(err=%d, ino=%lu, block-offset=%llu)\n",
 		       err, rb->ino, (unsigned long long)rb->blkoff);
 		if (!err2)
 			err2 = err;
-	next:
+ next:
 		iput(inode); /* iput(NULL) is just ignored */
 		list_del_init(&rb->list);
 		kfree(rb);
@@ -717,7 +717,7 @@ static int nilfs_do_roll_forward(struct the_nilfs *nilfs,
 			break; /* Fall through to try_next_pseg */
 		}
 
-	try_next_pseg:
+ try_next_pseg:
 		recovery_debug(2, "try_next_pseg: state=%d\n", state);
 		if (pseg_start == ri->ri_lsegs_end)
 			break;
@@ -726,12 +726,12 @@ static int nilfs_do_roll_forward(struct the_nilfs *nilfs,
 			continue;
 		goto feed_segment;
 
-	strayed:
+ strayed:
 		recovery_debug(2, "strayed: state=%d\n", state);
 		if (pseg_start == ri->ri_lsegs_end)
 			break;
 
-	feed_segment:
+ feed_segment:
 		/* Looking to the next full segment */
 		if (empty_seg++)
 			break;
@@ -985,7 +985,7 @@ int nilfs_search_super_root(struct the_nilfs *nilfs, struct nilfs_sb_info *sbi,
 			continue;
 		goto feed_segment;
 
-	try_next_pseg:
+ try_next_pseg:
 		/* Standing on a course, or met an inconsistent state */
 		recovery_debug(2, "try_next_pseg: scan_newer=%d, ret=%d\n",
 			       scan_newer, ret);
@@ -995,7 +995,7 @@ int nilfs_search_super_root(struct the_nilfs *nilfs, struct nilfs_sb_info *sbi,
 			continue;
 		goto feed_segment;
 
-	strayed:
+ strayed:
 		/* Off the trail */
 		recovery_debug(2, "strayed: scan_newer=%d, ret=%d\n",
 			       scan_newer, ret);
@@ -1006,7 +1006,7 @@ int nilfs_search_super_root(struct the_nilfs *nilfs, struct nilfs_sb_info *sbi,
 			 */
 			goto failed;
 
-	feed_segment:
+ feed_segment:
 		/* Looking to the next full segment */
 		if (empty_seg++)
 			goto super_root_found; /* found a valid super root */

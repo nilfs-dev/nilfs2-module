@@ -478,7 +478,7 @@ int nilfs_segbuf_write(struct nilfs_segment_buffer *segbuf,
 		rw |= (1 << BIO_RW_SYNC);
 		if (nilfs_test_opt(sbi, BARRIER))
 			rw |= (1 << BIO_RW_BARRIER);
-	retry_sr:
+ retry_sr:
 		BUG_ON(wi->bio != NULL);
 		wi->nr_vecs = 1;
 		res = nilfs_submit_bh(wi, bh, 0);
