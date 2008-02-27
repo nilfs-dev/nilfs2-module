@@ -115,28 +115,22 @@ enum {
 /*
  * Definitions for collecting or writing segment summary
  */
-typedef int (*nilfs_collect_proc_t)(struct nilfs_sc_info *,
-				    struct buffer_head *, struct inode *);
-typedef void (*nilfs_write_binfo_proc_t)(struct nilfs_sc_info *,
-					 struct nilfs_segsum_pointer *,
-					 union nilfs_binfo *);
-
-static int nilfs_segctor_scan_dirty_data_buffers(
-	struct nilfs_sc_info *, struct inode *, nilfs_collect_proc_t);
-static int nilfs_segctor_scan_dirty_node_buffers(
-	struct nilfs_sc_info *, struct inode *, nilfs_collect_proc_t);
-static int nilfs_segctor_scan_dirty_bmap_buffers(
-	struct nilfs_sc_info *, struct inode *, nilfs_collect_proc_t);
-
 struct nilfs_sc_operations {
-	nilfs_collect_proc_t		collect_data;
-	nilfs_collect_proc_t		collect_node;
-	nilfs_collect_proc_t		collect_bmap;
-	nilfs_write_binfo_proc_t	write_data_binfo;
-	nilfs_write_binfo_proc_t	write_node_binfo;
+	int (*collect_data)(struct nilfs_sc_info *, struct buffer_head *,
+			    struct inode *);
+	int (*collect_node)(struct nilfs_sc_info *, struct buffer_head *,
+			    struct inode *);
+	int (*collect_bmap)(struct nilfs_sc_info *, struct buffer_head *,
+			    struct inode *);
+	void (*write_data_binfo)(struct nilfs_sc_info *,
+				 struct nilfs_segsum_pointer *,
+				 union nilfs_binfo *);
+	void (*write_node_binfo)(struct nilfs_sc_info *,
+				 struct nilfs_segsum_pointer *,
+				 union nilfs_binfo *);
 #ifdef CONFIG_NILFS_DEBUG
-	nilfs_print_binfo_proc_t	print_data_binfo;
-	nilfs_print_binfo_proc_t	print_node_binfo;
+	int (*print_data_binfo)(char *, int, union nilfs_binfo *);
+	int (*print_node_binfo)(char *, int, union nilfs_binfo *);
 #endif
 };
 
@@ -911,9 +905,12 @@ static int nilfs_prepare_data_page(struct inode *inode, struct page *page)
 	return err;
 }
 
-static int nilfs_segctor_scan_dirty_data_buffers(struct nilfs_sc_info *sci,
-						 struct inode *inode,
-						 nilfs_collect_proc_t proc)
+static int
+nilfs_segctor_scan_dirty_data_buffers(struct nilfs_sc_info *sci,
+				      struct inode *inode,
+				      int (*collect)(struct nilfs_sc_info *,
+						     struct buffer_head *,
+						     struct inode *))
 {
 	struct address_space *mapping = inode->i_mapping;
 	struct page *pages[SC_N_PAGEVEC];
@@ -947,7 +944,7 @@ static int nilfs_segctor_scan_dirty_data_buffers(struct nilfs_sc_info *sci,
 		do {
 			if (buffer_dirty(bh)) {
 				get_bh(bh);
-				err = (*proc)(sci, bh, inode);
+				err = collect(sci, bh, inode);
 				put_bh(bh);
 				if (unlikely(err)) {
 					if (!ndirties || err != -E2BIG)
@@ -982,9 +979,12 @@ static int nilfs_segctor_scan_dirty_data_buffers(struct nilfs_sc_info *sci,
 	return err;
 }
 
-static int nilfs_segctor_scan_dirty_node_buffers(struct nilfs_sc_info *sci,
-						 struct inode *inode,
-						 nilfs_collect_proc_t proc)
+static int
+nilfs_segctor_scan_dirty_node_buffers(struct nilfs_sc_info *sci,
+				      struct inode *inode,
+				      int (*collect)(struct nilfs_sc_info *,
+						     struct buffer_head *,
+						     struct inode *))
 {
 	struct nilfs_inode_info *ii = NILFS_I(inode);
 	struct page *pages[SC_N_PAGEVEC];
@@ -1020,16 +1020,19 @@ static int nilfs_segctor_scan_dirty_node_buffers(struct nilfs_sc_info *sci,
 	list_for_each_entry_safe(bh, head, &node_buffers, b_assoc_buffers) {
 		list_del_init(&bh->b_assoc_buffers);
 		if (likely(!err))
-			err = (*proc)(sci, bh, inode);
+			err = collect(sci, bh, inode);
 		brelse(bh);
 	}
 	seg_debug(3, "done (err=%d, ino=%lu)\n", err, inode->i_ino);
 	return err;
 }
 
-static int nilfs_segctor_scan_dirty_bmap_buffers(struct nilfs_sc_info *sci,
-						 struct inode *inode,
-						 nilfs_collect_proc_t proc)
+static int
+nilfs_segctor_scan_dirty_bmap_buffers(struct nilfs_sc_info *sci,
+				      struct inode *inode,
+				      int (*collect)(struct nilfs_sc_info *,
+						     struct buffer_head *,
+						     struct inode *))
 {
 	struct nilfs_inode_info *ii = NILFS_I(inode);
 	struct buffer_head *bh, *n;
@@ -1039,7 +1042,7 @@ static int nilfs_segctor_scan_dirty_bmap_buffers(struct nilfs_sc_info *sci,
 	nilfs_bmap_lookup_dirty_buffers(ii->i_bmap, &node_buffers);
 	list_for_each_entry_safe(bh, n, &node_buffers, b_assoc_buffers) {
 		list_del_init(&bh->b_assoc_buffers);
-		err = (*proc)(sci, bh, inode);
+		err = collect(sci, bh, inode);
 		brelse(bh);
 		if (unlikely(err)) {
 			while (!list_empty(&node_buffers)) {

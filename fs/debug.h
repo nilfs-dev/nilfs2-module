@@ -161,13 +161,11 @@ extern void nilfs_init_counters(void);
 extern void nilfs_fill_debug_info(int);
 #define nilfs_init_debug_info()  do { nilfs_fill_debug_info(1); } while (0)
 
-typedef int (*nilfs_print_binfo_proc_t)(char *, int, union nilfs_binfo *);
-
 struct nilfs_segment_buffer;
 extern void nilfs_print_seginfo(struct nilfs_segment_buffer *);
 extern void nilfs_print_finfo(sector_t, ino_t, unsigned long, unsigned long);
 extern void nilfs_print_binfo(sector_t, union nilfs_binfo *,
-			      nilfs_print_binfo_proc_t);
+			      int (*print)(char *, int, union nilfs_binfo *));
 extern void nilfs_print_segment_list(const char *, struct list_head *,
 				     struct inode *);
 
@@ -200,7 +198,7 @@ extern void nilfs_check_btnode_cache(const char *, int,
 #define nilfs_init_debug_info()  do {} while (0)
 #define nilfs_print_seginfo(segbuf)  do {} while (0)
 #define nilfs_print_finfo(blocknr, ino, nblocks, ndatablk)  do {} while (0)
-#define nilfs_print_binfo(blocknr, binfo, proc)  do {} while (0)
+#define nilfs_print_binfo(blocknr, binfo, print)  do {} while (0)
 #define nilfs_print_segment_list(name, head, sufile)  do {} while (0)
 #define nilfs_releasepage	NULL
 #define nilfs_sync_page		NULL

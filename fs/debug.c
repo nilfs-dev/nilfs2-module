@@ -607,15 +607,15 @@ void nilfs_print_finfo(sector_t blocknr, ino_t ino,
 }
 
 void nilfs_print_binfo(sector_t blocknr, union nilfs_binfo *binfo,
-		       nilfs_print_binfo_proc_t proc)
+		       int (*print)(char *, int, union nilfs_binfo *))
 {
 	char b[MSIZ];
 
 	if (nilfs_debug_info.verbose[NILFS_VERBOSE_SEGINFO] < 3)
 		return;
 
-	if (proc) {
-		(*proc)(b, MSIZ, binfo);
+	if (print) {
+		print(b, MSIZ, binfo);
 		printk(KERN_DEBUG "BINFO(blocknr=%llu): %s\n",
 		       (unsigned long long)blocknr, b);
 	}
