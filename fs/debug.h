@@ -39,7 +39,7 @@
 #define nilfs_debug_verbose(v, l, c, f, a...)  \
 	do {  \
 		if ((l) <= (int)nilfs_debug_info.verbose[v])  \
-			printk(KERN_DEBUG "NILFS(" c ") %s: " f,
+			printk(KERN_DEBUG "NILFS(" c ") %s: " f,  \
 			       __func__, ## a);              \
 	} while (0)
 
