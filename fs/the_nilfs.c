@@ -58,7 +58,7 @@ struct the_nilfs *alloc_nilfs(struct block_device *bdev)
 {
 	struct the_nilfs *nilfs;
 
-	nilfs = kzalloc(sizeof(struct the_nilfs), GFP_KERNEL);
+	nilfs = kzalloc(sizeof(*nilfs), GFP_KERNEL);
 	if (!nilfs)
 		return NULL;
 

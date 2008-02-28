@@ -853,7 +853,8 @@ nilfs_fill_super(struct super_block *sb, void *data, int silent,
 	 * But we reserve them to keep our interest and make ready
 	 * for the future change.
 	 */
-	get_random_bytes(&sbi->s_next_generation, sizeof(u32));
+	get_random_bytes(&sbi->s_next_generation,
+			 sizeof(sbi->s_next_generation));
 	spin_lock_init(&sbi->s_next_gen_lock);
 
 	sb->s_op = &nilfs_sops;

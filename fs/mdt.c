@@ -721,7 +721,7 @@ nilfs_mdt_new_with_blockgroup(struct the_nilfs *nilfs, struct super_block *sb,
 		unsigned long blocksize = 1 << inode->i_blkbits;
 		unsigned long entries_per_group = blocksize * 8 /* CHAR_BIT */;
 
-		mi->mi_bgl = kmalloc(sizeof(struct blockgroup_lock), GFP_NOFS);
+		mi->mi_bgl = kmalloc(sizeof(*mi->mi_bgl), GFP_NOFS);
 		if (!mi->mi_bgl) {
 			nilfs_mdt_destroy(inode);
 			return NULL;

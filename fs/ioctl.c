@@ -107,7 +107,7 @@ nilfs_ioctl_change_cpmode(struct inode *inode, struct file *filp,
 		return -EPERM;
 
 	if (copy_from_user(&cpmode, (struct nilfs_cpmode __user *)arg,
-			   sizeof(struct nilfs_cpmode)))
+			   sizeof(cpmode)))
 		return -EFAULT;
 	cpfile = NILFS_SB(inode->i_sb)->s_nilfs->ns_cpfile;
 	if (nilfs_transaction_begin(inode->i_sb, &ti, 0))
@@ -131,8 +131,7 @@ nilfs_ioctl_delete_checkpoint(struct inode *inode, struct file *filp,
 	if (!capable(CAP_SYS_ADMIN))
 		return -EPERM;
 
-	if (copy_from_user(&cno, (nilfs_cno_t __user *)arg,
-			   sizeof(nilfs_cno_t)))
+	if (copy_from_user(&cno, (nilfs_cno_t __user *)arg, sizeof(cno)))
 		return -EFAULT;
 
 	cpfile = NILFS_SB(inode->i_sb)->s_nilfs->ns_cpfile;
@@ -167,7 +166,7 @@ static int nilfs_ioctl_get_cpinfo(struct inode *inode, struct file *filp,
 
 	nilfs = NILFS_SB(inode->i_sb)->s_nilfs;
 	if (copy_from_user(&argv, (struct nilfs_argv __user *)arg,
-			   sizeof(struct nilfs_argv)))
+			   sizeof(argv)))
 		return -EFAULT;
 
 	if (nilfs_transaction_begin(inode->i_sb, &ti, 0))
@@ -177,8 +176,7 @@ static int nilfs_ioctl_get_cpinfo(struct inode *inode, struct file *filp,
 	if (nilfs_transaction_end(inode->i_sb, 0))
 		BUG();
 
-	if (copy_to_user((struct nilfs_argv __user *)arg,
-			 &argv, sizeof(struct nilfs_argv)))
+	if (copy_to_user((struct nilfs_argv __user *)arg, &argv, sizeof(argv)))
 		ret = -EFAULT;
 
 	return ret;
@@ -201,8 +199,8 @@ static int nilfs_ioctl_get_cpstat(struct inode *inode, struct file *filp,
 	if (ret < 0)
 		return ret;
 
-	if (copy_to_user((struct nilfs_cpstat __user *)arg,
-			 &cpstat, sizeof(struct nilfs_cpstat)))
+	if (copy_to_user((struct nilfs_cpstat __user *)arg, &cpstat,
+			 sizeof(cpstat)))
 		return -EFAULT;
 	return 0;
 }
@@ -230,7 +228,7 @@ static int nilfs_ioctl_get_suinfo(struct inode *inode, struct file *filp,
 
 	nilfs = NILFS_SB(inode->i_sb)->s_nilfs;
 	if (copy_from_user(&argv, (struct nilfs_argv __user *)arg,
-			   sizeof(struct nilfs_argv)))
+			   sizeof(argv)))
 		return -EFAULT;
 	if (nilfs_transaction_begin(inode->i_sb, &ti, 0))
 		BUG();
@@ -239,8 +237,7 @@ static int nilfs_ioctl_get_suinfo(struct inode *inode, struct file *filp,
 	if (nilfs_transaction_end(inode->i_sb, 0))
 		BUG();
 
-	if (copy_to_user((struct nilfs_argv __user *)arg,
-			 &argv, sizeof(struct nilfs_argv)))
+	if (copy_to_user((struct nilfs_argv __user *)arg, &argv, sizeof(argv)))
 		ret = -EFAULT;
 	return ret;
 }
@@ -262,8 +259,8 @@ static int nilfs_ioctl_get_sustat(struct inode *inode, struct file *filp,
 	if (ret < 0)
 		return ret;
 
-	if (copy_to_user((struct nilfs_sustat __user *)arg,
-			 &sustat, sizeof(struct nilfs_sustat)))
+	if (copy_to_user((struct nilfs_sustat __user *)arg, &sustat,
+			 sizeof(sustat)))
 		return -EFAULT;
 	return 0;
 }
@@ -291,7 +288,7 @@ static int nilfs_ioctl_get_vinfo(struct inode *inode, struct file *filp,
 
 	nilfs = NILFS_SB(inode->i_sb)->s_nilfs;
 	if (copy_from_user(&argv, (struct nilfs_argv __user *)arg,
-			   sizeof(struct nilfs_argv)))
+			   sizeof(argv)))
 		return -EFAULT;
 
 	if (nilfs_transaction_begin(inode->i_sb, &ti, 0))
@@ -301,8 +298,7 @@ static int nilfs_ioctl_get_vinfo(struct inode *inode, struct file *filp,
 	if (nilfs_transaction_end(inode->i_sb, 0))
 		BUG();
 
-	if (copy_to_user((struct nilfs_argv __user *)arg,
-			 &argv, sizeof(struct nilfs_argv)))
+	if (copy_to_user((struct nilfs_argv __user *)arg, &argv, sizeof(argv)))
 		ret = -EFAULT;
 	return ret;
 }
@@ -345,7 +341,7 @@ static int nilfs_ioctl_get_bdescs(struct inode *inode, struct file *filp,
 
 	nilfs = NILFS_SB(inode->i_sb)->s_nilfs;
 	if (copy_from_user(&argv, (struct nilfs_argv __user *)arg,
-			   sizeof(struct nilfs_argv)))
+			   sizeof(argv)))
 		return -EFAULT;
 
 	if (nilfs_transaction_begin(inode->i_sb, &ti, 0))
@@ -355,8 +351,7 @@ static int nilfs_ioctl_get_bdescs(struct inode *inode, struct file *filp,
 	if (nilfs_transaction_end(inode->i_sb, 0))
 		BUG();
 
-	if (copy_to_user((struct nilfs_argv __user *)arg,
-			 &argv, sizeof(struct nilfs_argv)))
+	if (copy_to_user((struct nilfs_argv __user *)arg, &argv, sizeof(argv)))
 		ret = -EFAULT;
 	return ret;
 }
@@ -591,7 +586,7 @@ int nilfs_ioctl_prepare_clean_segments(struct the_nilfs *nilfs,
 	int dir, ret;
 
 	if (copy_from_user(argv, (struct nilfs_argv __user *)arg,
-			   sizeof(struct nilfs_argv) * 5))
+			   sizeof(argv)))
 		return -EFAULT;
 
 	dir = _IOC_WRITE;
@@ -668,7 +663,7 @@ static int nilfs_ioctl_timedwait(struct inode *inode, struct file *filp,
 
 	nilfs = NILFS_SB(inode->i_sb)->s_nilfs;
 	if (copy_from_user(&wc, (struct nilfs_wait_cond __user *)arg,
-			   sizeof(struct nilfs_wait_cond)))
+			   sizeof(wc)))
 		return -EFAULT;
 
 	unlock_kernel();
@@ -685,8 +680,8 @@ static int nilfs_ioctl_timedwait(struct inode *inode, struct file *filp,
 
 	if (ret > 0) {
 		jiffies_to_timespec(ret, &wc.wc_timeout);
-		if (copy_to_user((struct nilfs_wait_cond __user *)arg,
-				 &wc, sizeof(struct nilfs_wait_cond)))
+		if (copy_to_user((struct nilfs_wait_cond __user *)arg, &wc,
+				 sizeof(wc)))
 			return -EFAULT;
 		return 0;
 	} else if (ret == 0) {
@@ -709,7 +704,7 @@ static int nilfs_ioctl_sync(struct inode *inode, struct file *filp,
 	if ((nilfs_cno_t __user *)arg == NULL)
 		return 0;
 	cno = NILFS_SB(inode->i_sb)->s_nilfs->ns_cno - 1;
-	if (copy_to_user((nilfs_cno_t __user *)arg, &cno, sizeof(nilfs_cno_t)))
+	if (copy_to_user((nilfs_cno_t __user *)arg, &cno, sizeof(cno)))
 		return -EFAULT;
 	return 0;
 }
@@ -728,7 +723,7 @@ static int nilfs_ioctl_sync(struct inode *inode, struct file *filp,
 	if ((nilfs_cno_t __user *)arg == NULL)
 		goto out;
 	cno = NILFS_SB(inode->i_sb)->s_nilfs->ns_cno - 1;
-	if (copy_to_user((nilfs_cno_t __user *)arg, &cno, sizeof(nilfs_cno_t)))
+	if (copy_to_user((nilfs_cno_t __user *)arg, &cno, sizeof(cno)))
 		ret = -EFAULT;
  out:
 	lock_kernel();

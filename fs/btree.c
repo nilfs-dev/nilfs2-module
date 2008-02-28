@@ -287,14 +287,10 @@ static void nilfs_btree_node_move_left(struct nilfs_btree *btree,
 	rdptrs = nilfs_btree_node_dptrs(btree, right);
 	rnchildren = nilfs_btree_node_get_nchildren(btree, right);
 
-	memcpy(ldkeys + lnchildren,
-	       rdkeys, n * sizeof(nilfs_bmap_dkey_t));
-	memcpy(ldptrs + lnchildren,
-	       rdptrs, n * sizeof(nilfs_bmap_dptr_t));
-	memmove(rdkeys, rdkeys + n,
-		(rnchildren - n) * sizeof(nilfs_bmap_dkey_t));
-	memmove(rdptrs, rdptrs + n,
-		(rnchildren - n) * sizeof(nilfs_bmap_dptr_t));
+	memcpy(ldkeys + lnchildren, rdkeys, n * sizeof(*rdkeys));
+	memcpy(ldptrs + lnchildren, rdptrs, n * sizeof(*rdptrs));
+	memmove(rdkeys, rdkeys + n, (rnchildren - n) * sizeof(*rdkeys));
+	memmove(rdptrs, rdptrs + n, (rnchildren - n) * sizeof(*rdptrs));
 
 	lnchildren += n;
 	rnchildren -= n;
@@ -320,14 +316,10 @@ static void nilfs_btree_node_move_right(struct nilfs_btree *btree,
 	rdptrs = nilfs_btree_node_dptrs(btree, right);
 	rnchildren = nilfs_btree_node_get_nchildren(btree, right);
 
-	memmove(rdkeys + n, rdkeys,
-		rnchildren * sizeof(nilfs_bmap_dkey_t));
-	memmove(rdptrs + n, rdptrs,
-		rnchildren * sizeof(nilfs_bmap_dptr_t));
-	memcpy(rdkeys, ldkeys + lnchildren - n,
-	       n * sizeof(nilfs_bmap_dkey_t));
-	memcpy(rdptrs, ldptrs + lnchildren - n,
-	       n * sizeof(nilfs_bmap_dptr_t));
+	memmove(rdkeys + n, rdkeys, rnchildren * sizeof(*rdkeys));
+	memmove(rdptrs + n, rdptrs, rnchildren * sizeof(*rdptrs));
+	memcpy(rdkeys, ldkeys + lnchildren - n, n * sizeof(*rdkeys));
+	memcpy(rdptrs, ldptrs + lnchildren - n, n * sizeof(*rdptrs));
 
 	lnchildren -= n;
 	rnchildren += n;
@@ -351,9 +343,9 @@ static void nilfs_btree_node_insert(struct nilfs_btree *btree,
 	nchildren = nilfs_btree_node_get_nchildren(btree, node);
 	if (index < nchildren) {
 		memmove(dkeys + index + 1, dkeys + index,
-			(nchildren - index) * sizeof(nilfs_bmap_dkey_t));
+			(nchildren - index) * sizeof(*dkeys));
 		memmove(dptrs + index + 1, dptrs + index,
-			(nchildren - index) * sizeof(nilfs_bmap_dptr_t));
+			(nchildren - index) * sizeof(*dptrs));
 	}
 	dkeys[index] = nilfs_bmap_key_to_dkey(key);
 	dptrs[index] = nilfs_bmap_ptr_to_dptr(ptr);
@@ -386,9 +378,9 @@ static void nilfs_btree_node_delete(struct nilfs_btree *btree,
 
 	if (index < nchildren - 1) {
 		memmove(dkeys + index, dkeys + index + 1,
-			(nchildren - index - 1) * sizeof(nilfs_bmap_dkey_t));
+			(nchildren - index - 1) * sizeof(*dkeys));
 		memmove(dptrs + index, dptrs + index + 1,
-			(nchildren - index - 1) * sizeof(nilfs_bmap_dptr_t));
+			(nchildren - index - 1) * sizeof(*dptrs));
 	}
 	nchildren--;
 	nilfs_btree_node_set_nchildren(btree, node, nchildren);
