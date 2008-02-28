@@ -2808,7 +2808,7 @@ static void
 nilfs_segctor_do_flush(struct nilfs_sc_info *sci, unsigned long flag)
 {
 	spin_lock(&sci->sc_state_lock);
-	if (!(sci->sc_state & (NILFS_SEGCTOR_INIT | flag))) {
+	if (!(sci->sc_state & flag)) {
 		sci->sc_state |= flag;
 		wake_up(&sci->sc_wait_daemon);
 	}
@@ -2919,10 +2919,6 @@ static int nilfs_segctor_sync(struct nilfs_sc_info *sci)
 	int err = 0;
 
 	spin_lock(&sci->sc_state_lock);
-	if (sci->sc_state & NILFS_SEGCTOR_INIT) {
-		spin_unlock(&sci->sc_state_lock);
-		return -EROFS;
-	}
 	init_wait(&wait_req.wq);
 	wait_req.err = 0;
 	atomic_set(&wait_req.done, 0);
@@ -3408,7 +3404,6 @@ static int nilfs_segctor_init(struct nilfs_sc_info *sci,
 	if (sci->sc_sketch_inode)
 		i_size_write(sci->sc_sketch_inode, 0);
 
-	sci->sc_state &= ~NILFS_SEGCTOR_INIT;
 	sci->sc_seq_done = sci->sc_seq_request;
 	if (ri)
 		list_splice_init(&ri->ri_used_segments,
@@ -3455,7 +3450,6 @@ static struct nilfs_sc_info *nilfs_segctor_new(struct nilfs_sb_info *sbi)
 	sci->sc_interval = HZ * NILFS_SC_DEFAULT_TIMEOUT;
 	sci->sc_mjcp_freq = HZ * NILFS_SC_DEFAULT_SR_FREQ;
 	sci->sc_watermark = NILFS_SC_DEFAULT_WATERMARK;
-	sci->sc_state = NILFS_SEGCTOR_INIT;
 
 	if (sbi->s_interval)
 		sci->sc_interval = sbi->s_interval;
@@ -3497,13 +3491,6 @@ static void nilfs_segctor_destroy(struct nilfs_sc_info *sci)
 	struct nilfs_sb_info *sbi = sci->sc_sbi;
 	int flag;
 
-	spin_lock(&sci->sc_state_lock);
-	flag = (sci->sc_state & NILFS_SEGCTOR_INIT);
-	spin_unlock(&sci->sc_state_lock);
-	if (flag)
-		/* segctord is not running */
-		goto destroy;
-
 	up_write(&sbi->s_nilfs->ns_segctor_sem);
 
 	spin_lock(&sci->sc_state_lock);
@@ -3542,7 +3529,6 @@ static void nilfs_segctor_destroy(struct nilfs_sc_info *sci)
 	}
 	down_write(&sbi->s_nilfs->ns_segctor_sem);
 
- destroy:
 	kfree(sci);
 }
 

@@ -213,7 +213,6 @@ enum {
 
 /* sc_state */
 #define NILFS_SEGCTOR_QUIT	    0x0001  /* segctord is being destroyed */
-#define NILFS_SEGCTOR_INIT	    0x0002  /* segctord is being started */
 #define NILFS_SEGCTOR_COMMIT	    0x0004  /* committed transaction exists */
 #define NILFS_SEGCTOR_FLUSH_DATA    0x0010
 #define NILFS_SEGCTOR_FLUSH_IFILE   0x0020
