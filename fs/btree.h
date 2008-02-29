@@ -53,7 +53,7 @@ struct nilfs_btree_path {
 	union nilfs_bmap_ptr_req bp_newreq;
 	struct nilfs_btnode_chkey_ctxt bp_ctxt;
 	void (*bp_op)(struct nilfs_btree *, struct nilfs_btree_path *,
-		      int, nilfs_bmap_key_t *, nilfs_bmap_ptr_t *);
+		      int, __u64 *, nilfs_bmap_ptr_t *);
 };
 
 /**
@@ -62,9 +62,9 @@ struct nilfs_btree_path {
 struct nilfs_btree_operations {
 	nilfs_bmap_ptr_t (*btop_find_target)(const struct nilfs_btree *,
 					     const struct nilfs_btree_path *,
-					     nilfs_bmap_key_t);
+					     __u64);
 	void (*btop_set_target)(struct nilfs_btree *,
-				nilfs_bmap_key_t,
+				__u64,
 				nilfs_bmap_ptr_t);
 
 	struct the_nilfs *(*btop_get_nilfs)(struct nilfs_btree *);
@@ -128,21 +128,18 @@ struct nilfs_btree {
 	 (sizeof(__le64 /* dkey */) + sizeof(__le64 /* dptr */)))
 #define NILFS_BTREE_NODE_NCHILDREN_MIN(nodesize)			\
 	((NILFS_BTREE_NODE_NCHILDREN_MAX(nodesize) - 1) / 2 + 1)
-#define NILFS_BTREE_KEY_MIN	((nilfs_bmap_key_t)0)
-#define NILFS_BTREE_KEY_MAX	(~(nilfs_bmap_key_t)0)
+#define NILFS_BTREE_KEY_MIN	((__u64)0)
+#define NILFS_BTREE_KEY_MAX	(~(__u64)0)
 
 
 int nilfs_btree_path_cache_init(void);
 void nilfs_btree_path_cache_destroy(void);
-int nilfs_btree_init(struct nilfs_bmap *, nilfs_bmap_key_t, nilfs_bmap_key_t);
-int nilfs_btree_convert_and_insert(struct nilfs_bmap *,
-				   nilfs_bmap_key_t,
+int nilfs_btree_init(struct nilfs_bmap *, __u64, __u64);
+int nilfs_btree_convert_and_insert(struct nilfs_bmap *, __u64,
 				   nilfs_bmap_ptr_t,
-				   const nilfs_bmap_key_t *,
+				   const __u64 *,
 				   const nilfs_bmap_ptr_t *,
-				   int,
-				   nilfs_bmap_key_t,
-				   nilfs_bmap_key_t);
+				   int, __u64, __u64);
 void nilfs_btree_init_gc(struct nilfs_bmap *);
 
 #endif	/* _NILFS_BTREE_H */

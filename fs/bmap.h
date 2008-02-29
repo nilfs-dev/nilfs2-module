@@ -34,7 +34,6 @@
 
 #define NILFS_BMAP_INVALID_PTR	0
 
-typedef __u64 nilfs_bmap_key_t;
 typedef __u64 nilfs_bmap_ptr_t;
 
 #define nilfs_bmap_dkey_to_key(dkey)	le64_to_cpu(dkey)
@@ -69,12 +68,10 @@ struct nilfs_bmap_stats {
  * struct nilfs_bmap_operations - bmap operation table
  */
 struct nilfs_bmap_operations {
-	int (*bop_lookup)(const struct nilfs_bmap *,
-			  nilfs_bmap_key_t, int,
+	int (*bop_lookup)(const struct nilfs_bmap *, __u64, int,
 			  nilfs_bmap_ptr_t *);
-	int (*bop_insert)(struct nilfs_bmap *,
-			  nilfs_bmap_key_t, nilfs_bmap_ptr_t);
-	int (*bop_delete)(struct nilfs_bmap *, nilfs_bmap_key_t);
+	int (*bop_insert)(struct nilfs_bmap *, __u64, nilfs_bmap_ptr_t);
+	int (*bop_delete)(struct nilfs_bmap *, __u64);
 	void (*bop_clear)(struct nilfs_bmap *);
 
 	int (*bop_propagate)(const struct nilfs_bmap *, struct buffer_head *);
@@ -85,14 +82,14 @@ struct nilfs_bmap_operations {
 			  struct buffer_head **,
 			  sector_t,
 			  union nilfs_binfo *);
-	int (*bop_mark)(struct nilfs_bmap *, nilfs_bmap_key_t, int);
+	int (*bop_mark)(struct nilfs_bmap *, __u64, int);
 
 	/* The following functions are internal use only. */
-	int (*bop_last_key)(const struct nilfs_bmap *, nilfs_bmap_key_t *);
-	int (*bop_check_insert)(const struct nilfs_bmap *, nilfs_bmap_key_t);
-	int (*bop_check_delete)(struct nilfs_bmap *, nilfs_bmap_key_t);
+	int (*bop_last_key)(const struct nilfs_bmap *, __u64 *);
+	int (*bop_check_insert)(const struct nilfs_bmap *, __u64);
+	int (*bop_check_delete)(struct nilfs_bmap *, __u64);
 	int (*bop_gather_data)(struct nilfs_bmap *,
-			       nilfs_bmap_key_t *, nilfs_bmap_ptr_t *, int);
+			       __u64 *, nilfs_bmap_ptr_t *, int);
 
 #ifdef CONFIG_NILFS_BMAP_DEBUG
 	int (*bop_verify)(const struct nilfs_bmap *);
@@ -165,9 +162,9 @@ struct nilfs_bmap {
 	struct inode *b_inode;
 	const struct nilfs_bmap_operations *b_ops;
 	const struct nilfs_bmap_ptr_operations *b_pops;
-	nilfs_bmap_key_t b_low;
-	nilfs_bmap_key_t b_high;
-	nilfs_bmap_key_t b_last_allocated_key;
+	__u64 b_low;
+	__u64 b_high;
+	__u64 b_last_allocated_key;
 	nilfs_bmap_ptr_t b_last_allocated_ptr;
 	int b_state;
 };
@@ -189,9 +186,9 @@ int nilfs_bmap_propagate(struct nilfs_bmap *, struct buffer_head *);
 void nilfs_bmap_lookup_dirty_buffers(struct nilfs_bmap *, struct list_head *);
 int nilfs_bmap_assign(struct nilfs_bmap *, struct buffer_head **,
 		      unsigned long, union nilfs_binfo *);
-int nilfs_bmap_lookup_at_level(struct nilfs_bmap *, nilfs_bmap_key_t,
+int nilfs_bmap_lookup_at_level(struct nilfs_bmap *, __u64,
 			       int, nilfs_bmap_ptr_t *);
-int nilfs_bmap_mark(struct nilfs_bmap *, nilfs_bmap_key_t, int);
+int nilfs_bmap_mark(struct nilfs_bmap *, __u64, int);
 
 void nilfs_bmap_init_gc(struct nilfs_bmap *);
 void nilfs_bmap_init_gcdat(struct nilfs_bmap *, struct nilfs_bmap *);
@@ -206,11 +203,10 @@ int nilfs_bmap_move_v(const struct nilfs_bmap *, nilfs_sector_t, sector_t);
 int nilfs_bmap_mark_dirty(const struct nilfs_bmap *, nilfs_sector_t);
 
 
-nilfs_bmap_key_t nilfs_bmap_data_get_key(const struct nilfs_bmap *,
-					 const struct buffer_head *);
+__u64 nilfs_bmap_data_get_key(const struct nilfs_bmap *,
+			      const struct buffer_head *);
 
-nilfs_bmap_ptr_t nilfs_bmap_find_target_seq(const struct nilfs_bmap *,
-					    nilfs_bmap_key_t);
+nilfs_bmap_ptr_t nilfs_bmap_find_target_seq(const struct nilfs_bmap *, __u64);
 nilfs_bmap_ptr_t nilfs_bmap_find_target_in_group(const struct nilfs_bmap *);
 
 int nilfs_bmap_prepare_update(struct nilfs_bmap *,

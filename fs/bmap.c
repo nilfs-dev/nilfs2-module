@@ -32,9 +32,7 @@
 #include "dat.h"
 #include "bmap.h"
 
-int nilfs_bmap_lookup_at_level(struct nilfs_bmap *bmap,
-			       nilfs_bmap_key_t key,
-			       int level,
+int nilfs_bmap_lookup_at_level(struct nilfs_bmap *bmap, __u64 key, int level,
 			       nilfs_bmap_ptr_t *ptrp)
 {
 	nilfs_bmap_ptr_t ptr;
@@ -90,11 +88,10 @@ int nilfs_bmap_lookup(struct nilfs_bmap *bmap,
 	return ret;
 }
 
-static int nilfs_bmap_do_insert(struct nilfs_bmap *bmap,
-				nilfs_bmap_key_t key,
+static int nilfs_bmap_do_insert(struct nilfs_bmap *bmap, __u64 key,
 				nilfs_bmap_ptr_t ptr)
 {
-	nilfs_bmap_key_t keys[NILFS_BMAP_SMALL_HIGH + 1];
+	__u64 keys[NILFS_BMAP_SMALL_HIGH + 1];
 	nilfs_bmap_ptr_t ptrs[NILFS_BMAP_SMALL_HIGH + 1];
 	int ret, n;
 
@@ -159,9 +156,9 @@ int nilfs_bmap_insert(struct nilfs_bmap *bmap,
 	return ret;
 }
 
-static int nilfs_bmap_do_delete(struct nilfs_bmap *bmap, nilfs_bmap_key_t key)
+static int nilfs_bmap_do_delete(struct nilfs_bmap *bmap, __u64 key)
 {
-	nilfs_bmap_key_t keys[NILFS_BMAP_LARGE_LOW + 1];
+	__u64 keys[NILFS_BMAP_LARGE_LOW + 1];
 	nilfs_bmap_ptr_t ptrs[NILFS_BMAP_LARGE_LOW + 1];
 	int ret, n;
 
@@ -224,7 +221,7 @@ int nilfs_bmap_delete(struct nilfs_bmap *bmap, unsigned long key)
 
 static int nilfs_bmap_do_truncate(struct nilfs_bmap *bmap, unsigned long key)
 {
-	nilfs_bmap_key_t lastkey;
+	__u64 lastkey;
 	int ret;
 
 	ret = (*bmap->b_ops->bop_last_key)(bmap, &lastkey);
@@ -416,7 +413,7 @@ int nilfs_bmap_assign(struct nilfs_bmap *bmap,
  *
  * %-ENOMEM - Insufficient amount of memory available.
  */
-int nilfs_bmap_mark(struct nilfs_bmap *bmap, nilfs_bmap_key_t key, int level)
+int nilfs_bmap_mark(struct nilfs_bmap *bmap, __u64 key, int level)
 {
 	int ret;
 
@@ -511,11 +508,11 @@ void nilfs_bmap_delete_all_blocks(const struct nilfs_bmap *bmap)
 }
 
 
-nilfs_bmap_key_t nilfs_bmap_data_get_key(const struct nilfs_bmap *bmap,
-					 const struct buffer_head *bh)
+__u64 nilfs_bmap_data_get_key(const struct nilfs_bmap *bmap,
+			      const struct buffer_head *bh)
 {
 	struct buffer_head *pbh;
-	nilfs_bmap_key_t key;
+	__u64 key;
 
 	key = page_index(bh->b_page) << (PAGE_CACHE_SHIFT -
 					 bmap->b_inode->i_blkbits);
@@ -526,7 +523,7 @@ nilfs_bmap_key_t nilfs_bmap_data_get_key(const struct nilfs_bmap *bmap,
 }
 
 nilfs_bmap_ptr_t nilfs_bmap_find_target_seq(const struct nilfs_bmap *bmap,
-					    nilfs_bmap_key_t key)
+					    __u64 key)
 {
 	__s64 diff;
 

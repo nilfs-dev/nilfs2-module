@@ -37,16 +37,11 @@ struct nilfs_direct;
  */
 struct nilfs_direct_operations {
 	nilfs_bmap_ptr_t (*dop_find_target)(const struct nilfs_direct *,
-					    nilfs_bmap_key_t);
-	void (*dop_set_target)(struct nilfs_direct *,
-			       nilfs_bmap_key_t,
-			       nilfs_bmap_ptr_t);
+					    __u64);
+	void (*dop_set_target)(struct nilfs_direct *, __u64, nilfs_bmap_ptr_t);
 	int (*dop_propagate)(struct nilfs_direct *, struct buffer_head *);
-	int (*dop_assign)(struct nilfs_direct *,
-			  nilfs_bmap_key_t,
-			  nilfs_bmap_ptr_t,
-			  struct buffer_head **,
-			  sector_t,
+	int (*dop_assign)(struct nilfs_direct *, __u64, nilfs_bmap_ptr_t,
+			  struct buffer_head **, sector_t,
 			  union nilfs_binfo *);
 };
 
@@ -78,10 +73,10 @@ struct nilfs_direct {
 #define NILFS_DIRECT_KEY_MAX	(NILFS_DIRECT_NBLOCKS - 1)
 
 
-int nilfs_direct_init(struct nilfs_bmap *, nilfs_bmap_key_t, nilfs_bmap_key_t);
-int nilfs_direct_delete_and_convert(struct nilfs_bmap *, nilfs_bmap_key_t,
-				    nilfs_bmap_key_t *, nilfs_bmap_ptr_t *,
-				    int, nilfs_bmap_key_t, nilfs_bmap_key_t);
+int nilfs_direct_init(struct nilfs_bmap *, __u64, __u64);
+int nilfs_direct_delete_and_convert(struct nilfs_bmap *, __u64, __u64 *,
+				    nilfs_bmap_ptr_t *,
+				    int, __u64, __u64);
 
 
 #endif	/* _NILFS_DIRECT_H */
