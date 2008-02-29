@@ -34,7 +34,6 @@
 
 #define NILFS_BMAP_INVALID_PTR	0
 
-typedef __le64 nilfs_bmap_dkey_t;
 typedef __le64 nilfs_bmap_dptr_t;
 
 typedef __u64 nilfs_bmap_key_t;

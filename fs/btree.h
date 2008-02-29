@@ -119,13 +119,13 @@ struct nilfs_btree {
 #define NILFS_BTREE_ROOT_SIZE		NILFS_BMAP_SIZE
 #define NILFS_BTREE_ROOT_NCHILDREN_MAX					\
 	((NILFS_BTREE_ROOT_SIZE - sizeof(struct nilfs_btree_node)) /	\
-	 (sizeof(nilfs_bmap_dkey_t) + sizeof(nilfs_bmap_dptr_t)))
+	 (sizeof(__le64 /* dkey */) + sizeof(nilfs_bmap_dptr_t)))
 #define NILFS_BTREE_ROOT_NCHILDREN_MIN	0
 #define NILFS_BTREE_NODE_EXTRA_PAD_SIZE	(sizeof(__le64))
 #define NILFS_BTREE_NODE_NCHILDREN_MAX(nodesize)			\
 	(((nodesize) - sizeof(struct nilfs_btree_node) -		\
 		NILFS_BTREE_NODE_EXTRA_PAD_SIZE) /			\
-	 (sizeof(nilfs_bmap_dkey_t) + sizeof(nilfs_bmap_dptr_t)))
+	 (sizeof(__le64 /* dkey */) + sizeof(nilfs_bmap_dptr_t)))
 #define NILFS_BTREE_NODE_NCHILDREN_MIN(nodesize)			\
 	((NILFS_BTREE_NODE_NCHILDREN_MAX(nodesize) - 1) / 2 + 1)
 #define NILFS_BTREE_KEY_MIN	((nilfs_bmap_key_t)0)
