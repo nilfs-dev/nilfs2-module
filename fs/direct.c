@@ -27,10 +27,9 @@
 #include "direct.h"
 
 
-static inline nilfs_bmap_dptr_t *
-nilfs_direct_dptrs(const struct nilfs_direct *direct)
+static inline __le64 *nilfs_direct_dptrs(const struct nilfs_direct *direct)
 {
-	return (nilfs_bmap_dptr_t *)
+	return (__le64 *)
 		((struct nilfs_direct_node *)direct->d_bmap.b_u.u_data + 1);
 }
 
@@ -268,7 +267,7 @@ int nilfs_direct_delete_and_convert(struct nilfs_bmap *bmap,
 				    nilfs_bmap_key_t high)
 {
 	struct nilfs_direct *direct;
-	nilfs_bmap_dptr_t *dptrs;
+	__le64 *dptrs;
 	int ret, i, j;
 
 	/* no need to allocate any resource for conversion */

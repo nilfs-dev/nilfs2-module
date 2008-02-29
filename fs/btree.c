@@ -197,13 +197,12 @@ nilfs_btree_node_dkeys(const struct nilfs_btree *btree,
 			   0 : NILFS_BTREE_NODE_EXTRA_PAD_SIZE));
 }
 
-static inline nilfs_bmap_dptr_t *
+static inline __le64 *
 nilfs_btree_node_dptrs(const struct nilfs_btree *btree,
 		       const struct nilfs_btree_node *node)
 {
-	return (nilfs_bmap_dptr_t *)(nilfs_btree_node_dkeys(btree, node) +
-				     nilfs_btree_node_nchildren_max(btree,
-								    node));
+	return (__le64 *)(nilfs_btree_node_dkeys(btree, node) +
+			  nilfs_btree_node_nchildren_max(btree, node));
 }
 
 static inline nilfs_bmap_key_t
@@ -254,7 +253,7 @@ nilfs_btree_node_init(struct nilfs_btree *btree,
 		      const nilfs_bmap_ptr_t *ptrs)
 {
 	__le64 *dkeys;
-	nilfs_bmap_dptr_t *dptrs;
+	__le64 *dptrs;
 	int i;
 
 	nilfs_btree_node_set_flags(btree, node, flags);
@@ -276,7 +275,7 @@ static void nilfs_btree_node_move_left(struct nilfs_btree *btree,
 				       int n)
 {
 	__le64 *ldkeys, *rdkeys;
-	nilfs_bmap_dptr_t *ldptrs, *rdptrs;
+	__le64 *ldptrs, *rdptrs;
 	int lnchildren, rnchildren;
 
 	ldkeys = nilfs_btree_node_dkeys(btree, left);
@@ -305,7 +304,7 @@ static void nilfs_btree_node_move_right(struct nilfs_btree *btree,
 					int n)
 {
 	__le64 *ldkeys, *rdkeys;
-	nilfs_bmap_dptr_t *ldptrs, *rdptrs;
+	__le64 *ldptrs, *rdptrs;
 	int lnchildren, rnchildren;
 
 	ldkeys = nilfs_btree_node_dkeys(btree, left);
@@ -335,7 +334,7 @@ static void nilfs_btree_node_insert(struct nilfs_btree *btree,
 				    int index)
 {
 	__le64 *dkeys;
-	nilfs_bmap_dptr_t *dptrs;
+	__le64 *dptrs;
 	int nchildren;
 
 	dkeys = nilfs_btree_node_dkeys(btree, node);
@@ -363,7 +362,7 @@ static void nilfs_btree_node_delete(struct nilfs_btree *btree,
 	nilfs_bmap_key_t key;
 	nilfs_bmap_ptr_t ptr;
 	__le64 *dkeys;
-	nilfs_bmap_dptr_t *dptrs;
+	__le64 *dptrs;
 	int nchildren;
 
 	dkeys = nilfs_btree_node_dkeys(btree, node);
@@ -1570,7 +1569,7 @@ static int nilfs_btree_gather_data(struct nilfs_bmap *bmap,
 	struct nilfs_btree *btree;
 	struct nilfs_btree_node *node, *root;
 	__le64 *dkeys;
-	nilfs_bmap_dptr_t *dptrs;
+	__le64 *dptrs;
 	nilfs_bmap_ptr_t ptr;
 	int nchildren, i, ret;
 
