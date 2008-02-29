@@ -528,7 +528,7 @@ nilfs_bmap_key_t nilfs_bmap_data_get_key(const struct nilfs_bmap *bmap,
 nilfs_bmap_ptr_t nilfs_bmap_find_target_seq(const struct nilfs_bmap *bmap,
 					    nilfs_bmap_key_t key)
 {
-	nilfs_bmap_keydiff_t diff;
+	__s64 diff;
 
 	diff = key - bmap->b_last_allocated_key;
 	if ((nilfs_bmap_keydiff_abs(diff) < NILFS_INODE_BMAP_SIZE) &&

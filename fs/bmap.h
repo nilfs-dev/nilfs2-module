@@ -36,7 +36,6 @@
 
 typedef __u64 nilfs_bmap_key_t;
 typedef __u64 nilfs_bmap_ptr_t;
-typedef __s64 nilfs_bmap_keydiff_t;
 
 #define nilfs_bmap_dkey_to_key(dkey)	le64_to_cpu(dkey)
 #define nilfs_bmap_key_to_dkey(key)	cpu_to_le64(key)
