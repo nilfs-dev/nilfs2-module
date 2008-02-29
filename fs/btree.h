@@ -53,19 +53,17 @@ struct nilfs_btree_path {
 	union nilfs_bmap_ptr_req bp_newreq;
 	struct nilfs_btnode_chkey_ctxt bp_ctxt;
 	void (*bp_op)(struct nilfs_btree *, struct nilfs_btree_path *,
-		      int, __u64 *, nilfs_bmap_ptr_t *);
+		      int, __u64 *, __u64 *);
 };
 
 /**
  * struct nilfs_btree_operations - B-tree operation table
  */
 struct nilfs_btree_operations {
-	nilfs_bmap_ptr_t (*btop_find_target)(const struct nilfs_btree *,
+	__u64 (*btop_find_target)(const struct nilfs_btree *,
 					     const struct nilfs_btree_path *,
 					     __u64);
-	void (*btop_set_target)(struct nilfs_btree *,
-				__u64,
-				nilfs_bmap_ptr_t);
+	void (*btop_set_target)(struct nilfs_btree *, __u64, __u64);
 
 	struct the_nilfs *(*btop_get_nilfs)(struct nilfs_btree *);
 
@@ -135,10 +133,8 @@ struct nilfs_btree {
 int nilfs_btree_path_cache_init(void);
 void nilfs_btree_path_cache_destroy(void);
 int nilfs_btree_init(struct nilfs_bmap *, __u64, __u64);
-int nilfs_btree_convert_and_insert(struct nilfs_bmap *, __u64,
-				   nilfs_bmap_ptr_t,
-				   const __u64 *,
-				   const nilfs_bmap_ptr_t *,
+int nilfs_btree_convert_and_insert(struct nilfs_bmap *, __u64, __u64,
+				   const __u64 *, const __u64 *,
 				   int, __u64, __u64);
 void nilfs_btree_init_gc(struct nilfs_bmap *);
 

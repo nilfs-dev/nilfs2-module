@@ -36,11 +36,10 @@ struct nilfs_direct;
  * struct nilfs_direct_operations - direct mapping operation table
  */
 struct nilfs_direct_operations {
-	nilfs_bmap_ptr_t (*dop_find_target)(const struct nilfs_direct *,
-					    __u64);
-	void (*dop_set_target)(struct nilfs_direct *, __u64, nilfs_bmap_ptr_t);
+	__u64 (*dop_find_target)(const struct nilfs_direct *, __u64);
+	void (*dop_set_target)(struct nilfs_direct *, __u64, __u64);
 	int (*dop_propagate)(struct nilfs_direct *, struct buffer_head *);
-	int (*dop_assign)(struct nilfs_direct *, __u64, nilfs_bmap_ptr_t,
+	int (*dop_assign)(struct nilfs_direct *, __u64, __u64,
 			  struct buffer_head **, sector_t,
 			  union nilfs_binfo *);
 };
@@ -75,8 +74,7 @@ struct nilfs_direct {
 
 int nilfs_direct_init(struct nilfs_bmap *, __u64, __u64);
 int nilfs_direct_delete_and_convert(struct nilfs_bmap *, __u64, __u64 *,
-				    nilfs_bmap_ptr_t *,
-				    int, __u64, __u64);
+				    __u64 *, int, __u64, __u64);
 
 
 #endif	/* _NILFS_DIRECT_H */

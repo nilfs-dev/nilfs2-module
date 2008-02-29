@@ -33,23 +33,23 @@ static inline __le64 *nilfs_direct_dptrs(const struct nilfs_direct *direct)
 		((struct nilfs_direct_node *)direct->d_bmap.b_u.u_data + 1);
 }
 
-static inline nilfs_bmap_ptr_t
+static inline __u64
 nilfs_direct_get_ptr(const struct nilfs_direct *direct, __u64 key)
 {
 	return nilfs_bmap_dptr_to_ptr(*(nilfs_direct_dptrs(direct) + key));
 }
 
 static inline void nilfs_direct_set_ptr(struct nilfs_direct *direct,
-					__u64 key, nilfs_bmap_ptr_t ptr)
+					__u64 key, __u64 ptr)
 {
 	*(nilfs_direct_dptrs(direct) + key) = nilfs_bmap_ptr_to_dptr(ptr);
 }
 
 static int nilfs_direct_lookup(const struct nilfs_bmap *bmap,
-			       __u64 key, int level, nilfs_bmap_ptr_t *ptrp)
+			       __u64 key, int level, __u64 *ptrp)
 {
 	struct nilfs_direct *direct;
-	nilfs_bmap_ptr_t ptr;
+	__u64 ptr;
 
 	direct = (struct nilfs_direct *)bmap;
 	if ((key > NILFS_DIRECT_KEY_MAX) ||
@@ -63,10 +63,10 @@ static int nilfs_direct_lookup(const struct nilfs_bmap *bmap,
 	return 0;
 }
 
-static nilfs_bmap_ptr_t
+static __u64
 nilfs_direct_find_target_v(const struct nilfs_direct *direct, __u64 key)
 {
-	nilfs_bmap_ptr_t ptr;
+	__u64 ptr;
 
 	ptr = nilfs_bmap_find_target_seq(&direct->d_bmap, key);
 	if (ptr != NILFS_BMAP_INVALID_PTR)
@@ -78,7 +78,7 @@ nilfs_direct_find_target_v(const struct nilfs_direct *direct, __u64 key)
 }
 
 static void nilfs_direct_set_target_v(struct nilfs_direct *direct,
-				      __u64 key, nilfs_bmap_ptr_t ptr)
+				      __u64 key, __u64 ptr)
 {
 	direct->d_bmap.b_last_allocated_key = key;
 	direct->d_bmap.b_last_allocated_ptr = ptr;
@@ -104,8 +104,7 @@ static int nilfs_direct_prepare_insert(struct nilfs_direct *direct,
 
 static void nilfs_direct_commit_insert(struct nilfs_direct *direct,
 				       union nilfs_bmap_ptr_req *req,
-				       __u64 key,
-				       nilfs_bmap_ptr_t ptr)
+				       __u64 key, __u64 ptr)
 {
 	struct buffer_head *bh;
 
@@ -125,8 +124,7 @@ static void nilfs_direct_commit_insert(struct nilfs_direct *direct,
 		(*direct->d_ops->dop_set_target)(direct, key, req->bpr_ptr);
 }
 
-static int nilfs_direct_insert(struct nilfs_bmap *bmap, __u64 key,
-			       nilfs_bmap_ptr_t ptr)
+static int nilfs_direct_insert(struct nilfs_bmap *bmap, __u64 key, __u64 ptr)
 {
 	struct nilfs_direct *direct;
 	union nilfs_bmap_ptr_req req;
@@ -177,8 +175,7 @@ static void nilfs_direct_commit_delete(struct nilfs_direct *direct,
 	nilfs_direct_set_ptr(direct, key, NILFS_BMAP_INVALID_PTR);
 }
 
-static int nilfs_direct_delete(struct nilfs_bmap *bmap,
-			       __u64 key)
+static int nilfs_direct_delete(struct nilfs_bmap *bmap, __u64 key)
 {
 	struct nilfs_direct *direct;
 	union nilfs_bmap_ptr_req req;
@@ -226,12 +223,11 @@ static int nilfs_direct_check_insert(const struct nilfs_bmap *bmap, __u64 key)
 }
 
 static int nilfs_direct_gather_data(struct nilfs_bmap *bmap,
-				    __u64 *keys, nilfs_bmap_ptr_t *ptrs,
-				    int nitems)
+				    __u64 *keys, __u64 *ptrs, int nitems)
 {
 	struct nilfs_direct *direct;
 	__u64 key;
-	nilfs_bmap_ptr_t ptr;
+	__u64 ptr;
 	int n;
 
 	direct = (struct nilfs_direct *)bmap;
@@ -250,8 +246,7 @@ static int nilfs_direct_gather_data(struct nilfs_bmap *bmap,
 }
 
 int nilfs_direct_delete_and_convert(struct nilfs_bmap *bmap,
-				    __u64 key, __u64 *keys,
-				    nilfs_bmap_ptr_t *ptrs,
+				    __u64 key, __u64 *keys, __u64 *ptrs,
 				    int n, __u64 low, __u64 high)
 {
 	struct nilfs_direct *direct;
@@ -292,7 +287,7 @@ static int nilfs_direct_propagate_v(struct nilfs_direct *direct,
 {
 	union nilfs_bmap_ptr_req oldreq, newreq;
 	__u64 key;
-	nilfs_bmap_ptr_t ptr;
+	__u64 ptr;
 	int ret;
 
 	if (!buffer_nilfs_volatile(bh)) {
@@ -323,8 +318,7 @@ static int nilfs_direct_propagate(const struct nilfs_bmap *bmap,
 }
 
 static int nilfs_direct_assign_v(struct nilfs_direct *direct,
-				 __u64 key,
-				 nilfs_bmap_ptr_t ptr,
+				 __u64 key, __u64 ptr,
 				 struct buffer_head **bh,
 				 sector_t blocknr,
 				 union nilfs_binfo *binfo)
@@ -347,8 +341,7 @@ static int nilfs_direct_assign_v(struct nilfs_direct *direct,
 }
 
 static int nilfs_direct_assign_p(struct nilfs_direct *direct,
-				 __u64 key,
-				 nilfs_bmap_ptr_t ptr,
+				 __u64 key, __u64 ptr,
 				 struct buffer_head **bh,
 				 sector_t blocknr,
 				 union nilfs_binfo *binfo)
@@ -368,7 +361,7 @@ static int nilfs_direct_assign(struct nilfs_bmap *bmap,
 {
 	struct nilfs_direct *direct;
 	__u64 key;
-	nilfs_bmap_ptr_t ptr;
+	__u64 ptr;
 
 	direct = (struct nilfs_direct *)bmap;
 	key = nilfs_bmap_data_get_key(bmap, *bh);

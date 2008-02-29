@@ -33,9 +33,9 @@
 #include "bmap.h"
 
 int nilfs_bmap_lookup_at_level(struct nilfs_bmap *bmap, __u64 key, int level,
-			       nilfs_bmap_ptr_t *ptrp)
+			       __u64 *ptrp)
 {
-	nilfs_bmap_ptr_t ptr;
+	__u64 ptr;
 	int ret;
 
 	down_read(&bmap->b_sem);
@@ -78,7 +78,7 @@ int nilfs_bmap_lookup(struct nilfs_bmap *bmap,
 		      unsigned long key,
 		      unsigned long *recp)
 {
-	nilfs_bmap_ptr_t ptr;
+	__u64 ptr;
 	int ret;
 
 	/* XXX: use macro for level 1 */
@@ -88,11 +88,10 @@ int nilfs_bmap_lookup(struct nilfs_bmap *bmap,
 	return ret;
 }
 
-static int nilfs_bmap_do_insert(struct nilfs_bmap *bmap, __u64 key,
-				nilfs_bmap_ptr_t ptr)
+static int nilfs_bmap_do_insert(struct nilfs_bmap *bmap, __u64 key, __u64 ptr)
 {
 	__u64 keys[NILFS_BMAP_SMALL_HIGH + 1];
-	nilfs_bmap_ptr_t ptrs[NILFS_BMAP_SMALL_HIGH + 1];
+	__u64 ptrs[NILFS_BMAP_SMALL_HIGH + 1];
 	int ret, n;
 
 	if (bmap->b_ops->bop_check_insert != NULL) {
@@ -159,7 +158,7 @@ int nilfs_bmap_insert(struct nilfs_bmap *bmap,
 static int nilfs_bmap_do_delete(struct nilfs_bmap *bmap, __u64 key)
 {
 	__u64 keys[NILFS_BMAP_LARGE_LOW + 1];
-	nilfs_bmap_ptr_t ptrs[NILFS_BMAP_LARGE_LOW + 1];
+	__u64 ptrs[NILFS_BMAP_LARGE_LOW + 1];
 	int ret, n;
 
 	if (bmap->b_ops->bop_check_delete != NULL) {
@@ -469,8 +468,7 @@ void nilfs_bmap_sub_blocks(const struct nilfs_bmap *bmap, int n)
 		mark_inode_dirty(bmap->b_inode);
 }
 
-int nilfs_bmap_get_block(const struct nilfs_bmap *bmap,
-			 nilfs_bmap_ptr_t ptr,
+int nilfs_bmap_get_block(const struct nilfs_bmap *bmap, __u64 ptr,
 			 struct buffer_head **bhp)
 {
 	return nilfs_btnode_get(&NILFS_BMAP_I(bmap)->i_btnode_cache, ptr, bhp);
@@ -482,8 +480,7 @@ void nilfs_bmap_put_block(const struct nilfs_bmap *bmap,
 	brelse(bh);
 }
 
-int nilfs_bmap_get_new_block(const struct nilfs_bmap *bmap,
-			     nilfs_bmap_ptr_t ptr,
+int nilfs_bmap_get_new_block(const struct nilfs_bmap *bmap, __u64 ptr,
 			     struct buffer_head **bhp)
 {
 	int ret;
@@ -522,8 +519,7 @@ __u64 nilfs_bmap_data_get_key(const struct nilfs_bmap *bmap,
 	return key;
 }
 
-nilfs_bmap_ptr_t nilfs_bmap_find_target_seq(const struct nilfs_bmap *bmap,
-					    __u64 key)
+__u64 nilfs_bmap_find_target_seq(const struct nilfs_bmap *bmap, __u64 key)
 {
 	__s64 diff;
 
@@ -537,7 +533,7 @@ nilfs_bmap_ptr_t nilfs_bmap_find_target_seq(const struct nilfs_bmap *bmap,
 }
 
 #define NILFS_BMAP_GROUP_DIV	8
-nilfs_bmap_ptr_t nilfs_bmap_find_target_in_group(const struct nilfs_bmap *bmap)
+__u64 nilfs_bmap_find_target_in_group(const struct nilfs_bmap *bmap)
 {
 	struct the_nilfs *nilfs;
 	struct inode *dat;
@@ -737,9 +733,8 @@ static struct the_nilfs *nilfs_bmap_get_nilfs_gc(const struct nilfs_bmap *bmap)
 	return NILFS_MDT(bmap->b_inode)->mi_nilfs;
 }
 
-static int nilfs_bmap_translate_v(const struct nilfs_bmap *bmap,
-				  nilfs_bmap_ptr_t ptr,
-				  nilfs_bmap_ptr_t *ptrp)
+static int nilfs_bmap_translate_v(const struct nilfs_bmap *bmap, __u64 ptr,
+				  __u64 *ptrp)
 {
 	struct the_nilfs *nilfs;
 	struct inode *dat;

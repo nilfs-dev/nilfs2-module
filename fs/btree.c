@@ -221,7 +221,7 @@ nilfs_btree_node_set_key(struct nilfs_btree *btree,
 		nilfs_bmap_key_to_dkey(key);
 }
 
-static inline nilfs_bmap_ptr_t
+static inline __u64
 nilfs_btree_node_get_ptr(const struct nilfs_btree *btree,
 			 const struct nilfs_btree_node *node,
 			 int index)
@@ -234,20 +234,16 @@ static inline void
 nilfs_btree_node_set_ptr(struct nilfs_btree *btree,
 			 struct nilfs_btree_node *node,
 			 int index,
-			 nilfs_bmap_ptr_t ptr)
+			 __u64 ptr)
 {
 	*(nilfs_btree_node_dptrs(btree, node) + index) =
 		nilfs_bmap_ptr_to_dptr(ptr);
 }
 
-static void
-nilfs_btree_node_init(struct nilfs_btree *btree,
-		      struct nilfs_btree_node *node,
-		      int flags,
-		      int level,
-		      int nchildren,
-		      const __u64 *keys,
-		      const nilfs_bmap_ptr_t *ptrs)
+static void nilfs_btree_node_init(struct nilfs_btree *btree,
+				  struct nilfs_btree_node *node,
+				  int flags, int level, int nchildren,
+				  const __u64 *keys, const __u64 *ptrs)
 {
 	__le64 *dkeys;
 	__le64 *dptrs;
@@ -326,9 +322,7 @@ static void nilfs_btree_node_move_right(struct nilfs_btree *btree,
 /* Assume that the buffer head corresponding to node is locked. */
 static void nilfs_btree_node_insert(struct nilfs_btree *btree,
 				    struct nilfs_btree_node *node,
-				    __u64 key,
-				    nilfs_bmap_ptr_t ptr,
-				    int index)
+				    __u64 key, __u64 ptr, int index)
 {
 	__le64 *dkeys;
 	__le64 *dptrs;
@@ -352,12 +346,10 @@ static void nilfs_btree_node_insert(struct nilfs_btree *btree,
 /* Assume that the buffer head corresponding to node is locked. */
 static void nilfs_btree_node_delete(struct nilfs_btree *btree,
 				    struct nilfs_btree_node *node,
-				    __u64 *keyp,
-				    nilfs_bmap_ptr_t *ptrp,
-				    int index)
+				    __u64 *keyp, __u64 *ptrp, int index)
 {
 	__u64 key;
-	nilfs_bmap_ptr_t ptr;
+	__u64 ptr;
 	__le64 *dkeys;
 	__le64 *dptrs;
 	int nchildren;
@@ -384,8 +376,7 @@ static void nilfs_btree_node_delete(struct nilfs_btree *btree,
 
 static int nilfs_btree_node_lookup(const struct nilfs_btree *btree,
 				   const struct nilfs_btree_node *node,
-				   __u64 key,
-				   int *indexp)
+				   __u64 key, int *indexp)
 {
 	__u64 nkey;
 	int index, low, high, s;
@@ -465,12 +456,10 @@ nilfs_btree_get_node(const struct nilfs_btree *btree,
 
 static int nilfs_btree_do_lookup(const struct nilfs_btree *btree,
 				 struct nilfs_btree_path *path,
-				 __u64 key,
-				 nilfs_bmap_ptr_t *ptrp,
-				 int minlevel)
+				 __u64 key, __u64 *ptrp, int minlevel)
 {
 	struct nilfs_btree_node *node;
-	nilfs_bmap_ptr_t ptr;
+	__u64 ptr;
 	int level, index, found, ret;
 
 	BUG_ON(minlevel <= NILFS_BTREE_LEVEL_DATA);
@@ -518,11 +507,10 @@ static int nilfs_btree_do_lookup(const struct nilfs_btree *btree,
 
 static int nilfs_btree_do_lookup_last(const struct nilfs_btree *btree,
 				      struct nilfs_btree_path *path,
-				      __u64 *keyp,
-				      nilfs_bmap_ptr_t *ptrp)
+				      __u64 *keyp, __u64 *ptrp)
 {
 	struct nilfs_btree_node *node;
-	nilfs_bmap_ptr_t ptr;
+	__u64 ptr;
 	int index, level, ret;
 
 	node = nilfs_btree_get_root(btree);
@@ -555,11 +543,11 @@ static int nilfs_btree_do_lookup_last(const struct nilfs_btree *btree,
 }
 
 static int nilfs_btree_lookup(const struct nilfs_bmap *bmap,
-			      __u64 key, int level, nilfs_bmap_ptr_t *ptrp)
+			      __u64 key, int level, __u64 *ptrp)
 {
 	struct nilfs_btree *btree;
 	struct nilfs_btree_path *path;
-	nilfs_bmap_ptr_t ptr;
+	__u64 ptr;
 	int ret;
 
 	btree = (struct nilfs_btree *)bmap;
@@ -608,9 +596,7 @@ static void nilfs_btree_promote_key(struct nilfs_btree *btree,
 
 static void nilfs_btree_do_insert(struct nilfs_btree *btree,
 				  struct nilfs_btree_path *path,
-				  int level,
-				  __u64 *keyp,
-				  nilfs_bmap_ptr_t *ptrp)
+				  int level, __u64 *keyp, __u64 *ptrp)
 {
 	struct nilfs_btree_node *node;
 
@@ -636,9 +622,7 @@ static void nilfs_btree_do_insert(struct nilfs_btree *btree,
 
 static void nilfs_btree_carry_left(struct nilfs_btree *btree,
 				   struct nilfs_btree_path *path,
-				   int level,
-				   __u64 *keyp,
-				   nilfs_bmap_ptr_t *ptrp)
+				   int level, __u64 *keyp, __u64 *ptrp)
 {
 	struct nilfs_btree_node *node, *left;
 	int nchildren, lnchildren, n, move;
@@ -689,9 +673,7 @@ static void nilfs_btree_carry_left(struct nilfs_btree *btree,
 
 static void nilfs_btree_carry_right(struct nilfs_btree *btree,
 				    struct nilfs_btree_path *path,
-				    int level,
-				    __u64 *keyp,
-				    nilfs_bmap_ptr_t *ptrp)
+				    int level, __u64 *keyp, __u64 *ptrp)
 {
 	struct nilfs_btree_node *node, *right;
 	int nchildren, rnchildren, n, move;
@@ -744,13 +726,11 @@ static void nilfs_btree_carry_right(struct nilfs_btree *btree,
 
 static void nilfs_btree_split(struct nilfs_btree *btree,
 			      struct nilfs_btree_path *path,
-			      int level,
-			      __u64 *keyp,
-			      nilfs_bmap_ptr_t *ptrp)
+			      int level, __u64 *keyp, __u64 *ptrp)
 {
 	struct nilfs_btree_node *node, *right;
 	__u64 newkey;
-	nilfs_bmap_ptr_t newptr;
+	__u64 newptr;
 	int nchildren, n, move;
 
 	lock_buffer(path[level].bp_bh);
@@ -807,9 +787,7 @@ static void nilfs_btree_split(struct nilfs_btree *btree,
 
 static void nilfs_btree_grow(struct nilfs_btree *btree,
 			     struct nilfs_btree_path *path,
-			     int level,
-			     __u64 *keyp,
-			     nilfs_bmap_ptr_t *ptrp)
+			     int level, __u64 *keyp, __u64 *ptrp)
 {
 	struct nilfs_btree_node *root, *child;
 	int n;
@@ -838,9 +816,8 @@ static void nilfs_btree_grow(struct nilfs_btree *btree,
 	*ptrp = path[level].bp_newreq.bpr_ptr;
 }
 
-static nilfs_bmap_ptr_t
-nilfs_btree_find_near(const struct nilfs_btree *btree,
-		      const struct nilfs_btree_path *path)
+static __u64 nilfs_btree_find_near(const struct nilfs_btree *btree,
+				   const struct nilfs_btree_path *path)
 {
 	struct nilfs_btree_node *node;
 	int level;
@@ -867,12 +844,11 @@ nilfs_btree_find_near(const struct nilfs_btree *btree,
 	return NILFS_BMAP_INVALID_PTR;
 }
 
-static nilfs_bmap_ptr_t
-nilfs_btree_find_target_v(const struct nilfs_btree *btree,
-			  const struct nilfs_btree_path *path,
-			  __u64 key)
+static __u64 nilfs_btree_find_target_v(const struct nilfs_btree *btree,
+				       const struct nilfs_btree_path *path,
+				       __u64 key)
 {
-	nilfs_bmap_ptr_t ptr;
+	__u64 ptr;
 
 	ptr = nilfs_bmap_find_target_seq(&btree->bt_bmap, key);
 	if (ptr != NILFS_BMAP_INVALID_PTR)
@@ -889,7 +865,7 @@ nilfs_btree_find_target_v(const struct nilfs_btree *btree,
 }
 
 static void nilfs_btree_set_target_v(struct nilfs_btree *btree, __u64 key,
-				     nilfs_bmap_ptr_t ptr)
+				     __u64 ptr)
 {
 	btree->bt_bmap.b_last_allocated_key = key;
 	btree->bt_bmap.b_last_allocated_ptr = ptr;
@@ -897,14 +873,12 @@ static void nilfs_btree_set_target_v(struct nilfs_btree *btree, __u64 key,
 
 static int nilfs_btree_prepare_insert(struct nilfs_btree *btree,
 				      struct nilfs_btree_path *path,
-				      int *levelp,
-				      __u64 key,
-				      nilfs_bmap_ptr_t ptr,
+				      int *levelp, __u64 key, __u64 ptr,
 				      struct nilfs_bmap_stats *stats)
 {
 	struct buffer_head *bh;
 	struct nilfs_btree_node *node, *parent, *sib;
-	nilfs_bmap_ptr_t sibptr;
+	__u64 sibptr;
 	int pindex, level, ret;
 
 	stats->bs_nblocks = 0;
@@ -1057,9 +1031,7 @@ static int nilfs_btree_prepare_insert(struct nilfs_btree *btree,
 
 static void nilfs_btree_commit_insert(struct nilfs_btree *btree,
 				      struct nilfs_btree_path *path,
-				      int maxlevel,
-				      __u64 key,
-				      nilfs_bmap_ptr_t ptr)
+				      int maxlevel, __u64 key, __u64 ptr)
 {
 	int level;
 
@@ -1080,8 +1052,7 @@ static void nilfs_btree_commit_insert(struct nilfs_btree *btree,
 		nilfs_bmap_set_dirty(&btree->bt_bmap);
 }
 
-static int nilfs_btree_insert(struct nilfs_bmap *bmap, __u64 key,
-			      nilfs_bmap_ptr_t ptr)
+static int nilfs_btree_insert(struct nilfs_bmap *bmap, __u64 key, __u64 ptr)
 {
 	struct nilfs_btree *btree;
 	struct nilfs_btree_path *path;
@@ -1116,9 +1087,7 @@ static int nilfs_btree_insert(struct nilfs_bmap *bmap, __u64 key,
 
 static void nilfs_btree_do_delete(struct nilfs_btree *btree,
 				  struct nilfs_btree_path *path,
-				  int level,
-				  __u64 *keyp,
-				  nilfs_bmap_ptr_t *ptrp)
+				  int level, __u64 *keyp, __u64 *ptrp)
 {
 	struct nilfs_btree_node *node;
 
@@ -1142,9 +1111,7 @@ static void nilfs_btree_do_delete(struct nilfs_btree *btree,
 
 static void nilfs_btree_borrow_left(struct nilfs_btree *btree,
 				    struct nilfs_btree_path *path,
-				    int level,
-				    __u64 *keyp,
-				    nilfs_bmap_ptr_t *ptrp)
+				    int level, __u64 *keyp, __u64 *ptrp)
 {
 	struct nilfs_btree_node *node, *left;
 	int nchildren, lnchildren, n;
@@ -1181,9 +1148,7 @@ static void nilfs_btree_borrow_left(struct nilfs_btree *btree,
 
 static void nilfs_btree_borrow_right(struct nilfs_btree *btree,
 				     struct nilfs_btree_path *path,
-				     int level,
-				     __u64 *keyp,
-				     nilfs_bmap_ptr_t *ptrp)
+				     int level, __u64 *keyp, __u64 *ptrp)
 {
 	struct nilfs_btree_node *node, *right;
 	int nchildren, rnchildren, n;
@@ -1221,9 +1186,7 @@ static void nilfs_btree_borrow_right(struct nilfs_btree *btree,
 
 static void nilfs_btree_concat_left(struct nilfs_btree *btree,
 				    struct nilfs_btree_path *path,
-				    int level,
-				    __u64 *keyp,
-				    nilfs_bmap_ptr_t *ptrp)
+				    int level, __u64 *keyp, __u64 *ptrp)
 {
 	struct nilfs_btree_node *node, *left;
 	int n;
@@ -1254,9 +1217,7 @@ static void nilfs_btree_concat_left(struct nilfs_btree *btree,
 
 static void nilfs_btree_concat_right(struct nilfs_btree *btree,
 				     struct nilfs_btree_path *path,
-				     int level,
-				     __u64 *keyp,
-				     nilfs_bmap_ptr_t *ptrp)
+				     int level, __u64 *keyp, __u64 *ptrp)
 {
 	struct nilfs_btree_node *node, *right;
 	int n;
@@ -1286,9 +1247,7 @@ static void nilfs_btree_concat_right(struct nilfs_btree *btree,
 
 static void nilfs_btree_shrink(struct nilfs_btree *btree,
 			       struct nilfs_btree_path *path,
-			       int level,
-			       __u64 *keyp,
-			       nilfs_bmap_ptr_t *ptrp)
+			       int level, __u64 *keyp, __u64 *ptrp)
 {
 	struct nilfs_btree_node *root, *child;
 	int n;
@@ -1317,7 +1276,7 @@ static int nilfs_btree_prepare_delete(struct nilfs_btree *btree,
 {
 	struct buffer_head *bh;
 	struct nilfs_btree_node *node, *parent, *sib;
-	nilfs_bmap_ptr_t sibptr;
+	__u64 sibptr;
 	int pindex, level, ret;
 
 	ret = 0;
@@ -1515,7 +1474,7 @@ static int nilfs_btree_check_delete(struct nilfs_bmap *bmap, __u64 key)
 	struct nilfs_btree *btree;
 	struct nilfs_btree_node *root, *node;
 	__u64 maxkey, nextmaxkey;
-	nilfs_bmap_ptr_t ptr;
+	__u64 ptr;
 	int nchildren, ret;
 
 	btree = (struct nilfs_btree *)bmap;
@@ -1550,15 +1509,14 @@ static int nilfs_btree_check_delete(struct nilfs_bmap *bmap, __u64 key)
 }
 
 static int nilfs_btree_gather_data(struct nilfs_bmap *bmap,
-				   __u64 *keys, nilfs_bmap_ptr_t *ptrs,
-				   int nitems)
+				   __u64 *keys, __u64 *ptrs, int nitems)
 {
 	struct buffer_head *bh;
 	struct nilfs_btree *btree;
 	struct nilfs_btree_node *node, *root;
 	__le64 *dkeys;
 	__le64 *dptrs;
-	nilfs_bmap_ptr_t ptr;
+	__u64 ptr;
 	int nchildren, i, ret;
 
 	btree = (struct nilfs_btree *)bmap;
@@ -1599,8 +1557,7 @@ static int nilfs_btree_gather_data(struct nilfs_bmap *bmap,
 }
 
 static int
-nilfs_btree_prepare_convert_and_insert(struct nilfs_bmap *bmap,
-				       __u64 key,
+nilfs_btree_prepare_convert_and_insert(struct nilfs_bmap *bmap, __u64 key,
 				       union nilfs_bmap_ptr_req *dreq,
 				       union nilfs_bmap_ptr_req *nreq,
 				       struct buffer_head **bhp,
@@ -1653,20 +1610,16 @@ nilfs_btree_prepare_convert_and_insert(struct nilfs_bmap *bmap,
 
 static void
 nilfs_btree_commit_convert_and_insert(struct nilfs_bmap *bmap,
-				      __u64 key,
-				      nilfs_bmap_ptr_t ptr,
-				      const __u64 *keys,
-				      const nilfs_bmap_ptr_t *ptrs,
-				      int n,
-				      __u64 low,
-				      __u64 high,
+				      __u64 key, __u64 ptr,
+				      const __u64 *keys, const __u64 *ptrs,
+				      int n, __u64 low, __u64 high,
 				      union nilfs_bmap_ptr_req *dreq,
 				      union nilfs_bmap_ptr_req *nreq,
 				      struct buffer_head *bh)
 {
 	struct nilfs_btree *btree;
 	struct nilfs_btree_node *node;
-	nilfs_bmap_ptr_t tmpptr;
+	__u64 tmpptr;
 
 	/* free resources */
 	if (bmap->b_ops->bop_clear != NULL)
@@ -1733,13 +1686,9 @@ nilfs_btree_commit_convert_and_insert(struct nilfs_bmap *bmap,
  * @high:
  */
 int nilfs_btree_convert_and_insert(struct nilfs_bmap *bmap,
-				   __u64 key,
-				   nilfs_bmap_ptr_t ptr,
-				   const __u64 *keys,
-				   const nilfs_bmap_ptr_t *ptrs,
-				   int n,
-				   __u64 low,
-				   __u64 high)
+				   __u64 key, __u64 ptr,
+				   const __u64 *keys, const __u64 *ptrs,
+				   int n, __u64 low, __u64 high)
 {
 	struct buffer_head *bh;
 	union nilfs_bmap_ptr_req dreq, nreq, *di, *ni;
@@ -2080,7 +2029,7 @@ static int nilfs_btree_assign_p(struct nilfs_btree *btree,
 {
 	struct nilfs_btree_node *parent;
 	__u64 key;
-	nilfs_bmap_ptr_t ptr;
+	__u64 ptr;
 	int ret;
 
 	parent = nilfs_btree_get_node(btree, path, level + 1);
@@ -2122,7 +2071,7 @@ static int nilfs_btree_assign_v(struct nilfs_btree *btree,
 {
 	struct nilfs_btree_node *parent;
 	__u64 key;
-	nilfs_bmap_ptr_t ptr;
+	__u64 ptr;
 	union nilfs_bmap_ptr_req req;
 	int ret;
 
@@ -2221,7 +2170,7 @@ static int nilfs_btree_mark(struct nilfs_bmap *bmap, __u64 key, int level)
 	struct buffer_head *bh;
 	struct nilfs_btree *btree;
 	struct nilfs_btree_path *path;
-	nilfs_bmap_ptr_t ptr;
+	__u64 ptr;
 	int ret;
 
 	btree = (struct nilfs_btree *)bmap;
@@ -2267,7 +2216,7 @@ static int nilfs_btree_traverse(const struct nilfs_btree *btree,
 	struct buffer_head *bh;
 	struct nilfs_btree_path *path;
 	struct nilfs_btree_node *node;
-	nilfs_bmap_ptr_t ptr;
+	__u64 ptr;
 	int level, ret;
 
 	if ((precb == NULL) && (postcb == NULL))
