@@ -247,6 +247,10 @@ extern int
 nilfs_load_inode_block_nolock(struct nilfs_sb_info *, struct inode *,
 			      struct buffer_head **);
 extern int nilfs_inode_dirty(struct inode *);
+extern int nilfs_set_file_dirty(struct nilfs_sb_info *, struct inode *,
+				unsigned);
+extern int nilfs_mark_inode_dirty(struct inode *);
+extern void nilfs_dirty_inode(struct inode *);
 
 /* super.c */
 extern struct inode *nilfs_alloc_inode(struct super_block *);
