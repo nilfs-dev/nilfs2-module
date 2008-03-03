@@ -805,21 +805,21 @@ int nilfs_setattr(struct dentry *dentry, struct iattr *iattr)
 	return (err ? : err2);
 }
 
-int nilfs_load_inode_block_nolock(struct nilfs_sb_info *sbi,
-				  struct inode *inode,
-				  struct buffer_head **pbh)
+int nilfs_load_inode_block(struct nilfs_sb_info *sbi, struct inode *inode,
+			   struct buffer_head **pbh)
 {
 	struct nilfs_inode_info *ii = NILFS_I(inode);
 	int err;
 
+	spin_lock(&sbi->s_inode_lock);
 	/* Caller of this function MUST lock s_inode_lock */
 	if (ii->i_bh == NULL) {
 		spin_unlock(&sbi->s_inode_lock);
 		err = nilfs_ifile_get_inode_block(sbi->s_ifile, inode->i_ino,
 						  pbh);
-		spin_lock(&sbi->s_inode_lock);
 		if (unlikely(err))
 			return err;
+		spin_lock(&sbi->s_inode_lock);
 		if (ii->i_bh == NULL)
 			ii->i_bh = *pbh;
 		else {
@@ -830,6 +830,7 @@ int nilfs_load_inode_block_nolock(struct nilfs_sb_info *sbi,
 		*pbh = ii->i_bh;
 
 	get_bh(*pbh);
+	spin_unlock(&sbi->s_inode_lock);
 	return 0;
 }
 

@@ -243,9 +243,8 @@ extern void nilfs_update_inode(struct inode *, struct buffer_head *);
 extern void nilfs_truncate(struct inode *);
 extern void nilfs_delete_inode(struct inode *);
 extern int nilfs_setattr(struct dentry *, struct iattr *);
-extern int
-nilfs_load_inode_block_nolock(struct nilfs_sb_info *, struct inode *,
-			      struct buffer_head **);
+extern int nilfs_load_inode_block(struct nilfs_sb_info *, struct inode *,
+				  struct buffer_head **);
 extern int nilfs_inode_dirty(struct inode *);
 extern int nilfs_set_file_dirty(struct nilfs_sb_info *, struct inode *,
 				unsigned);
@@ -284,19 +283,6 @@ void nilfs_remove_all_gcinode(struct the_nilfs *);
 int nilfs_init_gcdat_inode(struct the_nilfs *);
 void nilfs_commit_gcdat_inode(struct the_nilfs *);
 void nilfs_clear_gcdat_inode(struct the_nilfs *);
-
-/* inode.c */
-static inline int
-nilfs_load_inode_block(struct nilfs_sb_info *sbi, struct inode *inode,
-		       struct buffer_head **pbh)
-{
-	int err;
-
-	spin_lock(&sbi->s_inode_lock);
-	err = nilfs_load_inode_block_nolock(sbi, inode, pbh);
-	spin_unlock(&sbi->s_inode_lock);
-	return err;
-}
 
 /*
  * Temporal definitions required for compiling
