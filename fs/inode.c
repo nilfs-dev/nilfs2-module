@@ -195,7 +195,7 @@ static int nilfs_write_begin(struct file *file, struct address_space *mapping,
 
 {
 	struct inode *inode = mapping->host;
-	int err = nilfs_prepare_file_dirty(inode);
+	int err = nilfs_transaction_begin(inode->i_sb, NULL, 1);
 
 	if (unlikely(err))
 		return err;
@@ -204,7 +204,7 @@ static int nilfs_write_begin(struct file *file, struct address_space *mapping,
 	err = block_write_begin(file, mapping, pos, len, flags, pagep,
 				fsdata, nilfs_get_block);
 	if (unlikely(err))
-		nilfs_cancel_file_dirty(inode);
+		nilfs_transaction_end(inode->i_sb, 0);
 	return err;
 }
 
@@ -221,7 +221,8 @@ static int nilfs_write_end(struct file *file, struct address_space *mapping,
 						  start + copied);
 	copied = generic_write_end(file, mapping, pos, len, copied, page,
 				   fsdata);
-	err = nilfs_commit_dirty_file(inode, nr_dirty);
+	nilfs_set_file_dirty(NILFS_SB(inode->i_sb), inode, nr_dirty);
+	err = nilfs_transaction_end(inode->i_sb, 1);
 	return err ? : copied;
 }
 #else /* HAVE_WRITE_BEGIN_WRITE_END */
@@ -242,13 +243,13 @@ static int nilfs_prepare_write(struct file *file, struct page *page,
 #endif
 
 	unlock_page(page);
-	err = nilfs_prepare_file_dirty(inode);
+	err = nilfs_transaction_begin(inode->i_sb, NULL, 1);
 	lock_page(page);
 #if HAVE_AOP_TRUNCATED_PAGE
 	if (unlikely(page->mapping != mapping || page->index != offset)) {
 		unlock_page(page);
 		if (likely(!err))
-			nilfs_cancel_file_dirty(inode);
+			nilfs_transaction_end(inode->i_sb, 0);
 		return AOP_TRUNCATED_PAGE;
 	}
 #else
@@ -263,7 +264,7 @@ static int nilfs_prepare_write(struct file *file, struct page *page,
 
 	err = block_prepare_write(page, from, to, nilfs_get_block);
 	if (unlikely(err))
-		nilfs_cancel_file_dirty(inode);
+		nilfs_transaction_end(inode->i_sb, 0);
 	return err;
 }
 
@@ -272,9 +273,12 @@ static int nilfs_commit_write(struct file *file, struct page *page,
 {
 	struct inode *inode = page->mapping->host;
 	unsigned nr_dirty = nilfs_page_count_clean_buffers(page, from, to);
+	int err;
 
 	generic_commit_write(file, page, from, to);
-	return nilfs_commit_dirty_file(inode, nr_dirty);
+	nilfs_set_file_dirty(NILFS_SB(inode->i_sb), inode, nr_dirty);
+	err = nilfs_transaction_end(inode->i_sb, 1);
+	return err;
 }
 #endif /* HAVE_WRITE_BEGIN_WRITE_END */
 
@@ -729,7 +733,8 @@ void nilfs_truncate(struct inode *inode)
 	if (IS_SYNC(inode))
 		nilfs_set_transaction_flag(NILFS_TI_SYNC);
 
-	nilfs_commit_dirty_file(inode, 0);
+	nilfs_set_file_dirty(NILFS_SB(sb), inode, 0);
+	nilfs_transaction_end(sb, 1);
 	/* May construct a logical segment and may fail in sync mode.
 	   But truncate has no return value. */
 }

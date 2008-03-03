@@ -308,22 +308,6 @@ static inline int nilfs_file_dirty(struct inode *inode)
 	return ret;
 }
 
-static inline int nilfs_prepare_file_dirty(struct inode *inode)
-{
-	if (is_bad_inode(inode)) {
-		inode_debug(1, "tried to register bad_inode. ignored.\n");
-		nilfs_dump_stack(NILFS_VERBOSE_INODE, 2);
-		return -EIO;
-	}
-	return nilfs_transaction_begin(inode->i_sb, NULL, 1);
-}
-
-static inline void nilfs_cancel_file_dirty(struct inode *inode)
-{
-	nilfs_transaction_end(inode->i_sb, 0);
-}
-
-
 /*
  * Temporal definitions required for compiling
  */

@@ -251,7 +251,6 @@ extern int nilfs_transaction_end(struct super_block *, int);
 
 extern int nilfs_set_file_dirty(struct nilfs_sb_info *, struct inode *,
 				unsigned);
-extern int nilfs_commit_dirty_file(struct inode *, unsigned);
 extern void nilfs_dirty_inode(struct inode *);
 
 extern int nilfs_construct_segment(struct super_block *);

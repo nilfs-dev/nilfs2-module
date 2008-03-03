@@ -420,43 +420,6 @@ int nilfs_set_file_dirty(struct nilfs_sb_info *sbi, struct inode *inode,
 	return 0;
 }
 
-/**
- * nilfs_commit_dirty_file - register a file to the dirty file list
- * @inode: inode of the file to be registered.
- * @nr_dirty: number of dirtied buffers
- *
- * Return Value: On success, 0 is returned. On error, one of the following
- * negative error code is returned.
- *
- * %-EINVAL - cannot grab the inode (This may happen when somebody is
- * freeing the inode) or specified inode has an invalid inode number.
- *
- * %-EIO - I/O error
- */
-int nilfs_commit_dirty_file(struct inode *inode, unsigned nr_dirty)
-{
-	struct nilfs_sb_info *sbi;
-	int err, err2;
-
-	if (is_bad_inode(inode)) {
-		inode_debug(1, "tried to commit bad_inode. ignored.\n");
-		nilfs_dump_stack(NILFS_VERBOSE_INODE, 2);
-		err = -EIO;
-		goto failed;
-	}
-	sbi = NILFS_SB(inode->i_sb);
-
-#ifdef CONFIG_NILFS_DEBUG
-	if (unlikely(inode->i_state & I_FREEING))
-		nilfs_warning(inode->i_sb, __func__,
-			      "trying to mark deleting file dirty.\n");
-#endif
-	err = nilfs_set_file_dirty(sbi, inode, nr_dirty);
- failed:
-	err2 = nilfs_transaction_end(inode->i_sb, 1);
-	return err ? : err2;
-}
-
 static int nilfs_mark_inode_dirty(struct inode *inode)
 {
 	struct nilfs_sb_info *sbi = NILFS_SB(inode->i_sb);
