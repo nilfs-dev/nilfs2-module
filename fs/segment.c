@@ -456,8 +456,9 @@ void nilfs_dirty_inode(struct inode *inode)
 
 	inode_debug(3, "called (ino=%lu)\n", inode->i_ino);
 	if (is_bad_inode(inode)) {
-		inode_debug(1, "tried to make bad_inode dirty. ignored.\n");
-		nilfs_dump_stack(NILFS_VERBOSE_INODE, 2);
+		nilfs_warning(inode->i_sb, __func__,
+			      "tried to mark bad_inode dirty. ignored.\n");
+		dump_stack();
 		return;
 	}
 	nilfs_transaction_begin(inode->i_sb, &ti, 0);
@@ -2802,7 +2803,7 @@ void nilfs_flush_segment(struct nilfs_sb_info *sbi, ino_t ino)
 	if (!sci) {
 		nilfs_warning(sbi->s_super, __func__,
 			      "Tried to flush destructed FS.\n");
-		nilfs_dump_stack(NILFS_VERBOSE_SEGMENT, 1);
+		dump_stack();
 		return;
 	}
 	if (ino >= sbi->s_nilfs->ns_first_ino)

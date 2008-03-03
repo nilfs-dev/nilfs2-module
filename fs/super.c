@@ -109,7 +109,6 @@ nilfs_error(struct super_block *sb, const char *function,
 			nilfs_commit_super(sbi, 1);
 		}
 		up_write(&nilfs->ns_sem);
-		nilfs_dump_stack(NILFS_VERBOSE_FS, 2);
 
 		if (nilfs_test_opt(sbi, ERRORS_RO)) {
 			printk(KERN_CRIT "Remounting filesystem read-only\n");

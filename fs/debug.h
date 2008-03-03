@@ -43,12 +43,6 @@
 			       __func__, ## a);              \
 	} while (0)
 
-#define nilfs_dump_stack(v, l)  \
-	do {  \
-		if ((l) <= (int)nilfs_debug_info.verbose[v])  \
-			dump_stack();   \
-	} while (0)
-
 #define seg_debug(l, f, a...)  \
 	nilfs_debug_verbose(NILFS_VERBOSE_SEGMENT, l, "segment", f, ## a)
 #define recovery_debug(l, f, a...)  \
@@ -69,7 +63,6 @@
 #else /* CONFIG_NILFS_DEBUG */
 #define nilfs_debug(l, f, a...)  do {} while (0)
 #define nilfs_debug_verbose(v, l, c, f, a...)  do {} while (0)
-#define nilfs_dump_stack(v, l)  do {} while (0)
 
 #define seg_debug(l, f, a...)  do {} while (0)
 #define recovery_debug(l, f, a...)   do {} while (0)
