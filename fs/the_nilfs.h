@@ -26,8 +26,6 @@
 #ifndef _THE_NILFS_H
 #define _THE_NILFS_H
 
-#include "nilfs_types.h"
-
 /* the_nilfs struct */
 enum {
 	THE_NILFS_INIT = 0,     /* Information from super_block is set */

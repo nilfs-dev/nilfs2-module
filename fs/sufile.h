@@ -28,7 +28,6 @@
 #include <linux/fs.h>
 #include <linux/buffer_head.h>
 #include "nilfs_fs.h"
-#include "nilfs_types.h"
 #include "mdt.h"
 
 #define NILFS_SUFILE_GFP	NILFS_MDT_GFP

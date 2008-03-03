@@ -29,7 +29,6 @@
 #include <linux/buffer_head.h>
 #include <linux/fs.h>
 #include <linux/bitops.h>
-#include "nilfs_types.h"
 
 
 struct nilfs_persistent_group_desc {

@@ -28,7 +28,6 @@
 #include <linux/buffer_head.h>
 #include <linux/blockgroup_lock.h>
 #include "nilfs.h"
-#include "nilfs_types.h"
 #include "kern_feature.h"
 
 /**

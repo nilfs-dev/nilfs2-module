@@ -29,7 +29,6 @@
 #include <linux/buffer_head.h>
 #include <linux/list.h>
 #include "nilfs_fs.h"
-#include "nilfs_types.h"
 #include "btnode.h"
 #include "bmap.h"
 

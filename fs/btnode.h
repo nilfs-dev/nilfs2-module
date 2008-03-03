@@ -31,7 +31,6 @@
 #include <linux/spinlock.h>
 #include <linux/radix-tree.h>
 
-#include "nilfs_types.h"
 #include "kern_feature.h"
 #include "debug.h"
 

@@ -30,7 +30,6 @@
 #include <linux/fs.h>
 #include <linux/bitops.h>
 #include "nilfs_fs.h"
-#include "nilfs_types.h"
 
 
 #define NILFS_DAT_GFP	NILFS_MDT_GFP

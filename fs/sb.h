@@ -26,8 +26,6 @@
 #ifndef _NILFS_SB
 #define _NILFS_SB
 
-#include "nilfs_types.h"
-
 /*
  * Mount options
  */

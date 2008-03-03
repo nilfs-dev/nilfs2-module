@@ -27,7 +27,6 @@
 #include <linux/string.h>
 #include <linux/errno.h>
 #include "nilfs.h"	/* XXX: nilfs_error() */
-#include "nilfs_types.h"
 #include "sb.h"
 #include "mdt.h"
 #include "dat.h"
