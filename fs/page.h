@@ -135,20 +135,6 @@ static inline void nilfs_clear_page_dirty(struct page *page, int bits)
 		__nilfs_clear_page_dirty(page);
 }
 
-static inline void
-nilfs_link_buffers(struct page *page, struct buffer_head *head)
-{
-	struct buffer_head *bh, *tail;
-
-	bh = head;
-	do {
-		tail = bh;
-		bh = bh->b_this_page;
-	} while (bh);
-	tail->b_this_page = head;
-	attach_page_buffers(page, head);
-}
-
 /* buffer_busy copied from fs/buffer.c */
 static inline int nilfs_buffer_busy(struct buffer_head *bh)
 {
