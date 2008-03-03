@@ -109,22 +109,22 @@ nilfs_dat_rest_groups_in_desc_block(const struct inode *dat,
 		     max - curr + 1);
 }
 
-static inline nilfs_blkoff_t
+static inline unsigned long
 nilfs_dat_desc_blkoff(const struct inode *dat, unsigned long group)
 {
 	return nilfs_dat_desc_block(dat, group) *
 		nilfs_dat_blocks_per_desc_block(dat);
 }
 
-static inline nilfs_blkoff_t
+static inline unsigned long
 nilfs_dat_bitmap_blkoff(const struct inode *dat, unsigned long group)
 {
 	return nilfs_dat_desc_blkoff(dat, group) + 1 +
-		((nilfs_blkoff_t)nilfs_dat_desc_offset(dat, group)) *
+		nilfs_dat_desc_offset(dat, group) *
 		nilfs_dat_blocks_per_group(dat);
 }
 
-static inline nilfs_blkoff_t
+static inline unsigned long
 nilfs_dat_entry_blkoff(const struct inode *dat, __u64 vblocknr)
 {
 	return nilfs_dat_bitmap_blkoff(dat, nilfs_dat_group(dat, vblocknr)) +

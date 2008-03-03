@@ -31,7 +31,7 @@
 #include "kern_feature.h"
 
 extern struct buffer_head *nilfs_bread_slow(struct buffer_head *);
-extern struct buffer_head *nilfs_get_page_block(struct page *, nilfs_blkoff_t,
+extern struct buffer_head *nilfs_get_page_block(struct page *, unsigned long,
 						pgoff_t, int);
 
 extern void nilfs_pages_init(void);

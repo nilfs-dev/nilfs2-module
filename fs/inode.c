@@ -702,7 +702,7 @@ void nilfs_update_inode(struct inode *inode, struct buffer_head *ibh)
 
 void nilfs_truncate(struct inode *inode)
 {
-	nilfs_blkoff_t blkoff;
+	unsigned long blkoff;
 	unsigned int blocksize;
 	struct nilfs_transaction_info ti;
 	struct super_block *sb = inode->i_sb;

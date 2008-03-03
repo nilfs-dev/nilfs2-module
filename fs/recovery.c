@@ -62,7 +62,7 @@ struct nilfs_recovery_block {
 				   belongs to */
 	sector_t blocknr;	/* block number */
 	__u64 vblocknr;		/* virtual block number */
-	nilfs_blkoff_t blkoff;	/* File offset of the data block (per block) */
+	unsigned long blkoff;	/* File offset of the data block (per block) */
 	struct list_head list;
 };
 

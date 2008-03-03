@@ -73,11 +73,11 @@ struct buffer_head *nilfs_bread_slow(struct buffer_head *bh)
 /* end copied functions from fs/buffer.c */
 
 struct buffer_head *
-nilfs_get_page_block(struct page *page, nilfs_blkoff_t block, pgoff_t index,
+nilfs_get_page_block(struct page *page, unsigned long block, pgoff_t index,
 		     int blkbits)
 
 {
-	nilfs_blkoff_t first_block;
+	unsigned long first_block;
 	struct buffer_head *bh;
 
 	BUG_ON(!PageLocked(page));
@@ -93,7 +93,7 @@ nilfs_get_page_block(struct page *page, nilfs_blkoff_t block, pgoff_t index,
 		nilfs_link_buffers(page, head);
 	}
 
-	first_block = (nilfs_blkoff_t)index << (PAGE_CACHE_SHIFT - blkbits);
+	first_block = (unsigned long)index << (PAGE_CACHE_SHIFT - blkbits);
 	bh = nilfs_page_get_nth_block(page, block - first_block);
 
 	touch_buffer(bh);

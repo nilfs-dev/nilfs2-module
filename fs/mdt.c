@@ -57,7 +57,7 @@ void nilfs_mdt_mark_buffer_dirty(struct buffer_head *bh)
 #endif
 
 static int
-nilfs_mdt_insert_new_block(struct inode *inode, nilfs_blkoff_t block,
+nilfs_mdt_insert_new_block(struct inode *inode, unsigned long block,
 			   struct buffer_head *bh,
 			   nilfs_mdt_init_block_t *init_block)
 {
@@ -96,7 +96,7 @@ nilfs_mdt_insert_new_block(struct inode *inode, nilfs_blkoff_t block,
 }
 
 static struct buffer_head *
-nilfs_mdt_get_page_block(struct inode *inode, nilfs_blkoff_t blkoff)
+nilfs_mdt_get_page_block(struct inode *inode, unsigned long blkoff)
 {
 	int blkbits = inode->i_blkbits;
 	pgoff_t index = blkoff >> (PAGE_CACHE_SHIFT - blkbits);
@@ -170,7 +170,7 @@ nilfs_mdt_put_page_block(struct inode *inode, struct buffer_head *bh)
  *
  * %-EROFS - Read only filesystem.
  */
-int nilfs_mdt_create_block(struct inode *inode, nilfs_blkoff_t block,
+int nilfs_mdt_create_block(struct inode *inode, unsigned long block,
 			   struct buffer_head **out_bh,
 			   nilfs_mdt_init_block_t *init_block)
 {
@@ -231,7 +231,7 @@ int nilfs_mdt_create_block(struct inode *inode, nilfs_blkoff_t block,
 }
 
 static int
-nilfs_mdt_submit_block(struct inode *inode, nilfs_blkoff_t blkoff,
+nilfs_mdt_submit_block(struct inode *inode, unsigned long blkoff,
 		       int mode, struct buffer_head **out_bh)
 {
 	struct buffer_head *bh;
@@ -313,11 +313,11 @@ nilfs_mdt_submit_block(struct inode *inode, nilfs_blkoff_t blkoff,
  *
  * %-EINVAL - bmap is broken. (the caller should call nilfs_error())
  */
-int nilfs_mdt_read_block(struct inode *inode, nilfs_blkoff_t block,
+int nilfs_mdt_read_block(struct inode *inode, unsigned long block,
 			 struct buffer_head **out_bh)
 {
 	struct buffer_head *first_bh, *bh;
-	nilfs_blkoff_t blkoff;
+	unsigned long blkoff;
 	int i, nr_ra_blocks = NILFS_MDT_MAX_RA_BLOCKS;
 	int err;
 
@@ -394,7 +394,7 @@ int nilfs_mdt_read_block(struct inode *inode, nilfs_blkoff_t block,
  *
  * %-EINVAL - bmap is broken. (the caller should call nilfs_error())
  */
-int nilfs_mdt_get_block(struct inode *inode, nilfs_blkoff_t block, int create,
+int nilfs_mdt_get_block(struct inode *inode, unsigned long block, int create,
 			nilfs_mdt_init_block_t *init_block,
 			struct buffer_head **out_bh)
 {
@@ -428,7 +428,7 @@ int nilfs_mdt_get_block(struct inode *inode, nilfs_blkoff_t block, int create,
  *
  * %-EINVAL - bmap is broken. (the caller should call nilfs_error())
  */
-int nilfs_mdt_delete_block(struct inode *inode, nilfs_blkoff_t block)
+int nilfs_mdt_delete_block(struct inode *inode, unsigned long block)
 {
 	struct nilfs_inode_info *ii = NILFS_I(inode);
 	int err;
@@ -458,7 +458,7 @@ int nilfs_mdt_delete_block(struct inode *inode, nilfs_blkoff_t block)
  *
  * %-EINVAL - bmap is broken. (the caller should call nilfs_error())
  */
-int nilfs_mdt_truncate_blocks(struct inode *inode, nilfs_blkoff_t block)
+int nilfs_mdt_truncate_blocks(struct inode *inode, unsigned long block)
 {
 	struct nilfs_inode_info *ii = NILFS_I(inode);
 	int err;
@@ -493,12 +493,12 @@ int nilfs_mdt_truncate_blocks(struct inode *inode, nilfs_blkoff_t block)
  *
  * %-ENOENT - page cache has no page addressed by the offset.
  */
-int nilfs_mdt_forget_block(struct inode *inode, nilfs_blkoff_t block)
+int nilfs_mdt_forget_block(struct inode *inode, unsigned long block)
 {
 	pgoff_t index = (pgoff_t)block >>
 		(PAGE_CACHE_SHIFT - inode->i_blkbits);
 	struct page *page;
-	nilfs_blkoff_t first_block;
+	unsigned long first_block;
 	int ret = 0;
 	int still_dirty;
 
@@ -510,7 +510,7 @@ int nilfs_mdt_forget_block(struct inode *inode, nilfs_blkoff_t block)
 
 	wait_on_page_writeback(page);
 
-	first_block = (nilfs_blkoff_t)index <<
+	first_block = (unsigned long)index <<
 		(PAGE_CACHE_SHIFT - inode->i_blkbits);
 	if (page_has_buffers(page)) {
 		struct buffer_head *bh;
@@ -558,7 +558,7 @@ int nilfs_mdt_forget_block(struct inode *inode, nilfs_blkoff_t block)
  *
  * %-EINVAL - bmap is broken. (the caller should call nilfs_error())
  */
-int nilfs_mdt_mark_block_dirty(struct inode *inode, nilfs_blkoff_t block)
+int nilfs_mdt_mark_block_dirty(struct inode *inode, unsigned long block)
 {
 	struct buffer_head *bh;
 	int err;

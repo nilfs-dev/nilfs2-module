@@ -83,16 +83,15 @@ typedef void (nilfs_mdt_init_block_t)(struct inode *, struct buffer_head *,
 /* Default GFP flags using highmem */
 #define NILFS_MDT_GFP      (__GFP_WAIT | __GFP_IO | __GFP_HIGHMEM)
 
-int nilfs_mdt_create_block(struct inode *, nilfs_blkoff_t,
+int nilfs_mdt_create_block(struct inode *, unsigned long,
 			   struct buffer_head **, nilfs_mdt_init_block_t *);
-int nilfs_mdt_read_block(struct inode *, nilfs_blkoff_t,
-			 struct buffer_head **);
-int nilfs_mdt_get_block(struct inode *, nilfs_blkoff_t, int,
+int nilfs_mdt_read_block(struct inode *, unsigned long, struct buffer_head **);
+int nilfs_mdt_get_block(struct inode *, unsigned long, int,
 			nilfs_mdt_init_block_t *, struct buffer_head **);
-int nilfs_mdt_delete_block(struct inode *, nilfs_blkoff_t);
-int nilfs_mdt_forget_block(struct inode *, nilfs_blkoff_t);
-int nilfs_mdt_truncate_blocks(struct inode *, nilfs_blkoff_t);
-int nilfs_mdt_mark_block_dirty(struct inode *, nilfs_blkoff_t);
+int nilfs_mdt_delete_block(struct inode *, unsigned long);
+int nilfs_mdt_forget_block(struct inode *, unsigned long);
+int nilfs_mdt_truncate_blocks(struct inode *, unsigned long);
+int nilfs_mdt_mark_block_dirty(struct inode *, unsigned long);
 int nilfs_mdt_fetch_dirty(struct inode *);
 
 struct inode *nilfs_mdt_new(struct the_nilfs *, struct super_block *, ino_t,

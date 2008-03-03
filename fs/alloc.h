@@ -62,7 +62,7 @@ nilfs_persistent_blocks_per_groups(struct inode *inode)
 		* nilfs_persistent_group_descs_per_block(inode) + 1;
 }
 
-static inline nilfs_blkoff_t
+static inline unsigned long
 nilfs_persistent_group_desc_blkoff(struct inode *inode, unsigned long group)
 {
 	unsigned long g =
@@ -72,7 +72,7 @@ nilfs_persistent_group_desc_blkoff(struct inode *inode, unsigned long group)
 		  NILFS_MDT(inode)->mi_entries_per_block + 1) + 1);
 }
 
-static inline nilfs_blkoff_t
+static inline unsigned long
 nilfs_persistent_group_bitmap_blkoff(struct inode *inode, unsigned long group)
 {
 	unsigned long group_offset =

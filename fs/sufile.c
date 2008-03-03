@@ -39,14 +39,14 @@ nilfs_sufile_segment_usages_per_block(const struct inode *sufile)
 	return (1UL << sufile->i_blkbits) / sizeof(struct nilfs_segment_usage);
 }
 
-static inline nilfs_blkoff_t
+static inline unsigned long
 nilfs_sufile_get_blkoff(const struct inode *sufile, __u64 segnum)
 {
 	__u64 t;
 
 	t = segnum + NILFS_SUFILE_FIRST_SEGMENT_USAGE_OFFSET;
 	do_div(t, nilfs_sufile_segment_usages_per_block(sufile));
-	return (nilfs_blkoff_t)t;
+	return (unsigned long)t;
 }
 
 static inline unsigned long
@@ -84,10 +84,8 @@ nilfs_sufile_block_get_segment_usage(const struct inode *sufile, __u64 segnum,
 		nilfs_sufile_get_offset(sufile, segnum);
 }
 
-static int nilfs_sufile_get_block(struct inode *sufile,
-				  nilfs_blkoff_t blkoff,
-				  int create,
-				  struct buffer_head **bhp)
+static int nilfs_sufile_get_block(struct inode *sufile, unsigned long blkoff,
+				  int create, struct buffer_head **bhp)
 {
 	struct buffer_head *bh;
 	int ret;

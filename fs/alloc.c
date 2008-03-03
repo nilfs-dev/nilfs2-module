@@ -76,7 +76,7 @@ int
 nilfs_persistent_get_group_desc_block(struct inode *inode, unsigned long group,
 				      struct buffer_head **desc_bhp)
 {
-	nilfs_blkoff_t blkoff =
+	unsigned long blkoff =
 		nilfs_persistent_group_desc_blkoff(inode, group);
 
 	return nilfs_mdt_get_block(inode, blkoff, 1,
@@ -88,7 +88,7 @@ nilfs_persistent_get_group_bitmap_block(struct inode *inode,
 					unsigned long group,
 					struct buffer_head **bitmap_bhp)
 {
-	nilfs_blkoff_t blkoff =
+	unsigned long blkoff =
 		nilfs_persistent_group_bitmap_blkoff(inode, group);
 
 	return nilfs_mdt_get_block(inode, blkoff, 1, NULL, bitmap_bhp);

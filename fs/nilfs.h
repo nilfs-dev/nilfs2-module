@@ -345,7 +345,7 @@ static inline loff_t nilfs_btree_max_bits(void)  /* interim definition */
 /* super.c */
 static inline loff_t nilfs_max_file_blkbits(void)
 {
-	return sizeof(nilfs_blkoff_t) * 8 /* CHAR_BIT */;
+	return sizeof(unsigned long /* block offset */) * 8 /* CHAR_BIT */;
 }
 
 static inline int nilfs_doing_gc(void)

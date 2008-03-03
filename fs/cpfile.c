@@ -40,7 +40,7 @@ nilfs_cpfile_checkpoints_per_block(const struct inode *cpfile)
 }
 
 /* block number from the beginning of the file */
-static inline nilfs_blkoff_t
+static inline unsigned long
 nilfs_cpfile_get_blkoff(const struct inode *cpfile, __u64 cno)
 {
 	__u64 tcno;
@@ -49,7 +49,7 @@ nilfs_cpfile_get_blkoff(const struct inode *cpfile, __u64 cno)
 	BUG_ON(cno == 0);
 	tcno = cno + NILFS_CPFILE_FIRST_CHECKPOINT_OFFSET - 1;
 	do_div(tcno, nilfs_cpfile_checkpoints_per_block(cpfile));
-	return (nilfs_blkoff_t)tcno;
+	return (unsigned long)tcno;
 }
 
 /* offset in block */
@@ -143,7 +143,7 @@ static void nilfs_cpfile_block_init(struct inode *cpfile,
 }
 
 static int nilfs_cpfile_get_block(struct inode *cpfile,
-				  nilfs_blkoff_t blkoff,
+				  unsigned long blkoff,
 				  int create,
 				  struct buffer_head **bhp)
 {
@@ -580,7 +580,7 @@ nilfs_cpfile_do_get_ssinfo(struct inode *cpfile, __u64 cno,
 	struct nilfs_cpfile_header *header;
 	struct nilfs_checkpoint *cp;
 	__u64 curr, next;
-	nilfs_blkoff_t curr_blkoff, next_blkoff;
+	unsigned long curr_blkoff, next_blkoff;
 	void *kaddr;
 	int n, ret;
 
@@ -716,7 +716,7 @@ static int nilfs_cpfile_set_snapshot(struct inode *cpfile, __u64 cno)
 	struct nilfs_checkpoint *cp;
 	struct nilfs_snapshot_list *list;
 	__u64 curr, prev;
-	nilfs_blkoff_t curr_blkoff, prev_blkoff;
+	unsigned long curr_blkoff, prev_blkoff;
 	void *kaddr;
 	int ret;
 
@@ -1083,7 +1083,7 @@ int nilfs_cpfile_get_snapshots(struct inode *cpfile,
 	struct nilfs_cpfile_header *header;
 	struct nilfs_checkpoint *cp;
 	__u64 curr, next;
-	nilfs_blkoff_t curr_blkoff, next_blkoff;
+	unsigned long curr_blkoff, next_blkoff;
 	void *kaddr;
 	unsigned long n;
 	int ret;

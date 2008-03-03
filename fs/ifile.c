@@ -107,7 +107,7 @@ static int nilfs_ifile_get_entry_block(struct inode *ifile, ino_t ino,
 				       struct buffer_head **entry_bhp)
 {
 	struct buffer_head *entry_bh = NULL;
-	nilfs_blkoff_t blkoff;
+	unsigned long blkoff;
 	unsigned long group;
 	int grpoff;
 	int ret;
@@ -339,7 +339,7 @@ int nilfs_ifile_delete_inode(struct inode *ifile, ino_t ino)
 int nilfs_ifile_get_inode_block(struct inode *ifile, ino_t ino,
 				struct buffer_head **out_bh)
 {
-	nilfs_blkoff_t block;
+	unsigned long block;
 	struct super_block *sb = ifile->i_sb;
 	unsigned long group;
 	int grpoff;
