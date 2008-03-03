@@ -63,23 +63,24 @@ nilfs_persistent_blocks_per_groups(struct inode *inode)
 }
 
 static inline nilfs_blkoff_t
-nilfs_persistent_group_desc_blkoff(struct inode *inode, nilfs_bgno_t group)
+nilfs_persistent_group_desc_blkoff(struct inode *inode, unsigned long group)
 {
-	sector_div(group, nilfs_persistent_group_descs_per_block(inode));
-	return group * (nilfs_persistent_group_descs_per_block(inode) *
+	unsigned long g =
+		group % nilfs_persistent_group_descs_per_block(inode);
+	return g * (nilfs_persistent_group_descs_per_block(inode) *
 		 (nilfs_persistent_entries_per_group(inode) /
 		  NILFS_MDT(inode)->mi_entries_per_block + 1) + 1);
 }
 
 static inline nilfs_blkoff_t
-nilfs_persistent_group_bitmap_blkoff(struct inode *inode, nilfs_bgno_t group)
+nilfs_persistent_group_bitmap_blkoff(struct inode *inode, unsigned long group)
 {
-	nilfs_bgno_t g = group;
+	unsigned long group_offset =
+		group / nilfs_persistent_group_descs_per_block(inode);
 
 	return nilfs_persistent_group_desc_blkoff(inode, group) + 1 +
-		sector_div(g, nilfs_persistent_group_descs_per_block(inode)) *
-		(nilfs_persistent_entries_per_group(inode) /
-		 NILFS_MDT(inode)->mi_entries_per_block + 1);
+		group_offset * (nilfs_persistent_entries_per_group(inode) /
+				NILFS_MDT(inode)->mi_entries_per_block + 1);
 }
 
 /**
@@ -121,15 +122,15 @@ nilfs_persistent_put_entry_block(const struct inode *inode,
 
 extern int nilfs_persistent_prepare_alloc_entry(struct inode *,
 						struct nilfs_persistent_req *,
-						nilfs_bgno_t *, int *);
+						unsigned long *, int *);
 extern void nilfs_persistent_abort_alloc_entry(struct inode *,
 					       struct nilfs_persistent_req *,
-					       nilfs_bgno_t, int);
+					       unsigned long, int);
 extern void nilfs_persistent_commit_alloc_entry(struct inode *,
 						struct nilfs_persistent_req *);
 extern int nilfs_persistent_prepare_free_entry(struct inode *,
 					       struct nilfs_persistent_req *,
-					       nilfs_bgno_t);
+					       unsigned long);
 extern void nilfs_persistent_abort_free_entry(struct inode *,
 					      struct nilfs_persistent_req *);
 extern char *
@@ -137,7 +138,7 @@ nilfs_persistent_get_group_bitmap_buffer(struct inode *,
 					 const struct buffer_head *);
 
 extern struct nilfs_persistent_group_desc *
-nilfs_persistent_get_group_desc(struct inode *, nilfs_bgno_t,
+nilfs_persistent_get_group_desc(struct inode *, unsigned long,
 				const struct buffer_head *);
 extern void
 nilfs_persistent_put_group_bitmap_buffer(struct inode *,

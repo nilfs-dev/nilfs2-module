@@ -31,7 +31,4 @@
 typedef sector_t nilfs_blkoff_t;       /* file block offset (interim type)
 					  As a similar type, linux-2.6.17 added
 					  blkcnt_t for inode's block count */
-
-typedef sector_t nilfs_bgno_t;	/* block group number */
-
 #endif	/* _NILFS_TYPES_H */

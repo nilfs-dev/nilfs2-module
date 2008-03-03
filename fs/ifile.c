@@ -70,7 +70,7 @@ nilfs_ifile_entry_block_init(struct inode *ifile, struct buffer_head *bh,
 static int nilfs_ifile_prepare_alloc_ino(struct inode *ifile,
 					 struct nilfs_persistent_req *req)
 {
-	nilfs_bgno_t group;
+	unsigned long group;
 	int target, ret, bsize;
 
 	bsize = nilfs_persistent_entries_per_group(ifile);
@@ -97,7 +97,7 @@ static void nilfs_ifile_abort_alloc_ino(struct inode *ifile,
 					struct nilfs_persistent_req *req)
 {
 	int bsize = nilfs_persistent_entries_per_group(ifile);
-	nilfs_bgno_t group = req->pr_ino / bsize;
+	unsigned long group = req->pr_ino / bsize;
 	int grpoff = req->pr_ino % bsize;
 
 	nilfs_persistent_abort_alloc_entry(ifile, req, group, grpoff);
@@ -108,7 +108,7 @@ static int nilfs_ifile_get_entry_block(struct inode *ifile, ino_t ino,
 {
 	struct buffer_head *entry_bh = NULL;
 	nilfs_blkoff_t blkoff;
-	nilfs_bgno_t group;
+	unsigned long group;
 	int grpoff;
 	int ret;
 
@@ -165,7 +165,7 @@ static inline int
 nilfs_ifile_prepare_free_ino(struct inode *ifile,
 			     struct nilfs_persistent_req *req)
 {
-	nilfs_bgno_t group =
+	unsigned long group =
 		req->pr_ino / nilfs_persistent_entries_per_group(ifile);
 
 	return nilfs_persistent_prepare_free_entry(ifile, req, group);
@@ -198,7 +198,7 @@ static void nilfs_ifile_commit_free_ino(struct inode *ifile,
 					struct nilfs_persistent_req *req)
 {
 	struct nilfs_persistent_group_desc *desc;
-	nilfs_bgno_t group;
+	unsigned long group;
 	char *bitmap_buffer;
 	int grpoff;
 
@@ -341,7 +341,7 @@ int nilfs_ifile_get_inode_block(struct inode *ifile, ino_t ino,
 {
 	nilfs_blkoff_t block;
 	struct super_block *sb = ifile->i_sb;
-	nilfs_bgno_t group;
+	unsigned long group;
 	int grpoff;
 	int err;
 

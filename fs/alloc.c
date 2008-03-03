@@ -25,17 +25,15 @@
 #include "alloc.h"
 
 static inline unsigned long
-nilfs_persistent_desc_offset(struct inode *inode, nilfs_bgno_t group)
+nilfs_persistent_desc_offset(struct inode *inode, unsigned long group)
 {
-	return sector_div(group,
-			  nilfs_persistent_group_descs_per_block(inode));
+	return group / nilfs_persistent_group_descs_per_block(inode);
 }
 
 
 struct nilfs_persistent_group_desc *
-nilfs_persistent_get_group_desc(struct inode *inode,
-			 nilfs_bgno_t group,
-			 const struct buffer_head *desc_bh)
+nilfs_persistent_get_group_desc(struct inode *inode, unsigned long group,
+				const struct buffer_head *desc_bh)
 {
 	void *kaddr = kmap(desc_bh->b_page);
 
@@ -75,7 +73,7 @@ nilfs_persistent_put_group_bitmap_buffer(struct inode *inode,
 }
 
 int
-nilfs_persistent_get_group_desc_block(struct inode *inode, nilfs_bgno_t group,
+nilfs_persistent_get_group_desc_block(struct inode *inode, unsigned long group,
 				      struct buffer_head **desc_bhp)
 {
 	nilfs_blkoff_t blkoff =
@@ -87,7 +85,7 @@ nilfs_persistent_get_group_desc_block(struct inode *inode, nilfs_bgno_t group,
 
 static int
 nilfs_persistent_get_group_bitmap_block(struct inode *inode,
-					nilfs_bgno_t group,
+					unsigned long group,
 					struct buffer_head **bitmap_bhp)
 {
 	nilfs_blkoff_t blkoff =
@@ -98,7 +96,7 @@ nilfs_persistent_get_group_bitmap_block(struct inode *inode,
 
 static int
 nilfs_persistent_group_find_available_slot(struct inode *inode,
-					   nilfs_bgno_t group,
+					   unsigned long group,
 					   unsigned long target,
 					   unsigned char *bitmap,
 					   int bsize)
@@ -144,11 +142,11 @@ nilfs_persistent_group_find_available_slot(struct inode *inode,
 
 int nilfs_persistent_prepare_alloc_entry(struct inode *inode,
 					 struct nilfs_persistent_req *req,
-					 nilfs_bgno_t *group_p, int *target_p)
+					 unsigned long *group_p, int *target_p)
 {
 	struct buffer_head *desc_bh, *bitmap_bh;
 	struct nilfs_persistent_group_desc *desc;
-	nilfs_bgno_t group;
+	unsigned long group;
 	unsigned long ngroups;
 	char *start;
 	int pos, target, ret, bsize;
@@ -222,7 +220,7 @@ void nilfs_persistent_commit_alloc_entry(struct inode *inode,
 
 void nilfs_persistent_abort_alloc_entry(struct inode *inode,
 					struct nilfs_persistent_req *req,
-					nilfs_bgno_t group, int grpoff)
+					unsigned long group, int grpoff)
 {
 	struct nilfs_persistent_group_desc *desc;
 	char *bitmap_buffer;
@@ -253,7 +251,7 @@ void nilfs_persistent_abort_alloc_entry(struct inode *inode,
 
 int nilfs_persistent_prepare_free_entry(struct inode *inode,
 					struct nilfs_persistent_req *req,
-					nilfs_bgno_t group)
+					unsigned long group)
 {
 	struct buffer_head *desc_bh, *bitmap_bh;
 	int ret;
