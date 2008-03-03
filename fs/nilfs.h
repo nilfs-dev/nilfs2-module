@@ -246,6 +246,7 @@ extern int nilfs_setattr(struct dentry *, struct iattr *);
 extern int
 nilfs_load_inode_block_nolock(struct nilfs_sb_info *, struct inode *,
 			      struct buffer_head **);
+extern int nilfs_inode_dirty(struct inode *);
 
 /* super.c */
 extern struct inode *nilfs_alloc_inode(struct super_block *);
@@ -291,21 +292,6 @@ nilfs_load_inode_block(struct nilfs_sb_info *sbi, struct inode *inode,
 	err = nilfs_load_inode_block_nolock(sbi, inode, pbh);
 	spin_unlock(&sbi->s_inode_lock);
 	return err;
-}
-
-static inline int nilfs_file_dirty(struct inode *inode)
-{
-	struct nilfs_inode_info *ii = NILFS_I(inode);
-	struct nilfs_sb_info *sbi = NILFS_SB(inode->i_sb);
-	int ret = 0;
-
-	if (!list_empty(&ii->i_dirty)) {
-		spin_lock(&sbi->s_inode_lock);
-		ret = test_bit(NILFS_I_DIRTY, &ii->i_state) ||
-			test_bit(NILFS_I_BUSY, &ii->i_state);
-		spin_unlock(&sbi->s_inode_lock);
-	}
-	return ret;
 }
 
 /*

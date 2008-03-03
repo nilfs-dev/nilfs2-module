@@ -41,7 +41,7 @@ int nilfs_sync_file(struct file *file, struct dentry *dentry, int datasync)
 	struct inode *inode = dentry->d_inode;
 	int err;
 
-	if (!nilfs_file_dirty(inode)) {
+	if (!nilfs_inode_dirty(inode)) {
 		inode_debug(2, "called for non-dirty files (ino=%lu)\n",
 			    inode->i_ino);
 		return 0;
