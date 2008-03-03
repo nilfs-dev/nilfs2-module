@@ -282,16 +282,6 @@ void nilfs_clear_gcdat_inode(struct the_nilfs *);
 
 /* inode.c */
 static inline int
-nilfs_handle_bmap_error(int err, const char *fname, struct inode *inode,
-			struct super_block *sb)
-{
-	if (err == -EINVAL)
-		nilfs_error(sb, fname, "broken bmap (inode=%lu)\n",
-			    inode->i_ino);
-	return err;
-}
-
-static inline int
 nilfs_load_inode_block(struct nilfs_sb_info *sbi, struct inode *inode,
 		       struct buffer_head **pbh)
 {

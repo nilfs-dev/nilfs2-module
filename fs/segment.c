@@ -665,6 +665,17 @@ static int nilfs_segctor_add_file_block(struct nilfs_sc_info *sci,
 	return err;
 }
 
+static int nilfs_handle_bmap_error(int err, const char *fname,
+				   struct inode *inode, struct super_block *sb)
+{
+	if (err == -EINVAL) {
+		nilfs_error(sb, fname, "broken bmap (inode=%lu)\n",
+			    inode->i_ino);
+		err = -EIO;
+	}
+	return err;
+}
+
 /*
  * Callback functions that enumerate, mark, and collect dirty blocks
  */

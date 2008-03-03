@@ -72,16 +72,14 @@ int nilfs_get_block(struct inode *inode, sector_t blkoff,
 		struct nilfs_transaction_info ti;
 
 		bh_result->b_blocknr = 0;
-		ret = nilfs_transaction_begin(inode->i_sb, &ti, 1);
-		if (unlikely(ret))
+		err = nilfs_transaction_begin(inode->i_sb, &ti, 1);
+		if (unlikely(err))
 			goto out;
-		ret = nilfs_bmap_insert(ii->i_bmap, (unsigned long)blkoff,
+		err = nilfs_bmap_insert(ii->i_bmap, (unsigned long)blkoff,
 					(unsigned long)bh_result);
-		nilfs_transaction_end(inode->i_sb, !ret);
-		/* How can we recover dirtied btree, if inserted block is
-		   abandoned without being dirtied ?? */
-		if (unlikely(ret != 0)) {
-			if (ret == -EEXIST) {
+		nilfs_transaction_end(inode->i_sb, !err);
+		if (unlikely(err != 0)) {
+			if (err == -EEXIST) {
 				/*
 				 * The get_block() function could be called
 				 * from multiple callers for an inode.
@@ -96,9 +94,12 @@ int nilfs_get_block(struct inode *inode, sector_t blkoff,
 				       inode->i_ino,
 				       (unsigned long long)blkoff);
 				BUG();
+			} else if (err == -EINVAL) {
+				nilfs_error(inode->i_sb, __func__,
+					    "broken bmap (inode=%lu)\n",
+					    inode->i_ino);
+				err = -EIO;
 			}
-			err = nilfs_handle_bmap_error(ret, __func__,
-						      inode, inode->i_sb);
 			goto out;
 		}
 		/* Error handling should be detailed */
