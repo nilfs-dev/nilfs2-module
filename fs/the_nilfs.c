@@ -35,7 +35,7 @@
 #include "segbuf.h"
 
 void nilfs_set_last_segment(struct the_nilfs *nilfs,
-			    sector_t start_blocknr, u64 seq, nilfs_cno_t cno)
+			    sector_t start_blocknr, u64 seq, __u64 cno)
 {
 	spin_lock(&nilfs->ns_last_segment_lock);
 	nilfs->ns_last_pseg = start_blocknr;
@@ -508,7 +508,7 @@ int nilfs_near_disk_full(struct the_nilfs *nilfs)
 	return ret;
 }
 
-int nilfs_checkpoint_is_mounted(struct the_nilfs *nilfs, nilfs_cno_t cno,
+int nilfs_checkpoint_is_mounted(struct the_nilfs *nilfs, __u64 cno,
 				int snapshot_mount)
 {
 	struct nilfs_sb_info *sbi;

@@ -118,7 +118,7 @@ struct the_nilfs {
 	nilfs_segnum_t		ns_segnum;
 	nilfs_segnum_t		ns_nextnum;
 	unsigned long		ns_pseg_offset;
-	nilfs_cno_t		ns_cno;
+	__u64			ns_cno;
 	time_t			ns_ctime;
 	time_t			ns_nongc_ctime;
 	atomic_t		ns_ndirtyblks;
@@ -131,7 +131,7 @@ struct the_nilfs {
 	spinlock_t		ns_last_segment_lock;
 	sector_t		ns_last_pseg;
 	u64			ns_last_seq;
-	nilfs_cno_t		ns_last_cno;
+	__u64			ns_last_cno;
 	unsigned long		ns_free_segments_count;
 
 	struct rw_semaphore	ns_segctor_sem;
@@ -188,14 +188,14 @@ THE_NILFS_FNS(LOADED, loaded)
 THE_NILFS_FNS(DISCONTINUED, discontinued)
 THE_NILFS_FNS(COND_NONGC_WRITE, cond_nongc_write)
 
-void nilfs_set_last_segment(struct the_nilfs *, sector_t, u64, nilfs_cno_t);
+void nilfs_set_last_segment(struct the_nilfs *, sector_t, u64, __u64);
 struct the_nilfs *alloc_nilfs(struct block_device *);
 void put_nilfs(struct the_nilfs *);
 int init_nilfs(struct the_nilfs *, struct nilfs_sb_info *, char *);
 int load_nilfs(struct the_nilfs *, struct nilfs_sb_info *);
 int nilfs_count_free_blocks(struct the_nilfs *, sector_t *);
 void nilfs_dispose_used_segments(struct the_nilfs *);
-int nilfs_checkpoint_is_mounted(struct the_nilfs *, nilfs_cno_t, int);
+int nilfs_checkpoint_is_mounted(struct the_nilfs *, __u64, int);
 int nilfs_near_disk_full(struct the_nilfs *);
 
 
@@ -277,9 +277,9 @@ static inline void nilfs_shift_to_next_segment(struct the_nilfs *nilfs)
 	nilfs->ns_seg_seq++;
 }
 
-static inline nilfs_cno_t nilfs_last_cno(struct the_nilfs *nilfs)
+static inline __u64 nilfs_last_cno(struct the_nilfs *nilfs)
 {
-	nilfs_cno_t cno;
+	__u64 cno;
 
 	spin_lock(&nilfs->ns_last_segment_lock);
 	cno = nilfs->ns_last_cno;

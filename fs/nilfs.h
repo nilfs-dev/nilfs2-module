@@ -56,7 +56,7 @@ struct nilfs_inode_info {
 	__u64 i_xattr;	/* sector_t ??? */
 	__u32 i_dtime;
 	__u32 i_dir_start_lookup;
-	nilfs_cno_t	i_cno;		/* check point number for GC inode */
+	__u64 i_cno;		/* check point number for GC inode */
 	struct nilfs_btnode_cache i_btnode_cache;
 	struct list_head i_dirty;	/* List for connecting dirty files */
 
@@ -263,7 +263,7 @@ extern int nilfs_store_magic_and_option(struct super_block *,
 extern void nilfs_update_last_segment(struct nilfs_sb_info *, int);
 extern int nilfs_sync_super(struct nilfs_sb_info *);
 extern int nilfs_commit_super(struct nilfs_sb_info *, int);
-extern int nilfs_attach_checkpoint(struct nilfs_sb_info *, nilfs_cno_t);
+extern int nilfs_attach_checkpoint(struct nilfs_sb_info *, __u64);
 extern void nilfs_detach_checkpoint(struct nilfs_sb_info *);
 
 /* gcinode.c */
@@ -272,7 +272,7 @@ int nilfs_gccache_add_node(struct inode *, sector_t, nilfs_sector_t);
 int nilfs_init_gcinode(struct the_nilfs *);
 void nilfs_destroy_gcinode(struct the_nilfs *);
 void nilfs_clear_gcinode(struct inode *);
-struct inode *nilfs_gc_iget(struct the_nilfs *, ino_t, nilfs_cno_t);
+struct inode *nilfs_gc_iget(struct the_nilfs *, ino_t, __u64);
 void nilfs_remove_all_gcinode(struct the_nilfs *);
 
 /* gcdat.c */
@@ -363,7 +363,7 @@ static inline struct inode *nilfs_dat_inode(const struct the_nilfs *nilfs)
 	return nilfs_doing_gc() ? nilfs->ns_gc_dat : nilfs->ns_dat;
 }
 
-static inline nilfs_cno_t
+static inline __u64
 nilfs_get_checkpoint_number(struct nilfs_sb_info *sbi)
 {
 	return sbi->s_snapshot_cno ? : nilfs_last_cno(sbi->s_nilfs);

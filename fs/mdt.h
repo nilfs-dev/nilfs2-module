@@ -134,7 +134,7 @@ nilfs_mdt_set_entry_size(struct inode *inode, unsigned entry_size)
 	NILFS_MDT(inode)->mi_entry_size = entry_size;
 }
 
-static inline nilfs_cno_t nilfs_mdt_cno(struct inode *inode)
+static inline __u64 nilfs_mdt_cno(struct inode *inode)
 {
 	return NILFS_MDT(inode)->mi_nilfs->ns_cno;
 }

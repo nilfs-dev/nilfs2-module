@@ -48,7 +48,7 @@
 struct nilfs_recovery_info {
 	int			ri_need_recovery;
 	sector_t		ri_super_root;
-	nilfs_cno_t		ri_cno;
+	__u64			ri_cno;
 
 	sector_t		ri_lsegs_start;
 	sector_t		ri_lsegs_end;

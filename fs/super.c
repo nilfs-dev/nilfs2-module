@@ -415,7 +415,7 @@ static int nilfs_sync_fs(struct super_block *sb, int wait)
 
 #define BIT_FULL(flags, mask)     (((flags) & (mask)) == (mask))
 
-int nilfs_attach_checkpoint(struct nilfs_sb_info *sbi, nilfs_cno_t cno)
+int nilfs_attach_checkpoint(struct nilfs_sb_info *sbi, __u64 cno)
 {
 	struct the_nilfs *nilfs = sbi->s_nilfs;
 	struct nilfs_checkpoint *raw_cp;
@@ -825,7 +825,7 @@ nilfs_fill_super(struct super_block *sb, void *data, int silent,
 {
 	struct nilfs_sb_info *sbi;
 	struct inode *root;
-	nilfs_cno_t cno;
+	__u64 cno;
 	int err;
 
 	nilfs_debug(1, "start(silent=%d)\n", silent);
@@ -1063,7 +1063,7 @@ static int nilfs_remount(struct super_block *sb, int *flags, char *data)
 
 struct nilfs_super_data {
 	struct block_device *bdev;
-	nilfs_cno_t cno;
+	__u64 cno;
 	int flags;
 };
 

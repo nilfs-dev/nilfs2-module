@@ -199,7 +199,7 @@ void nilfs_destroy_gcinode(struct the_nilfs *nilfs)
 }
 
 static struct inode *alloc_gcinode(struct the_nilfs *nilfs, ino_t ino,
-				   nilfs_cno_t cno, unsigned long hv)
+				   __u64 cno, unsigned long hv)
 {
 	struct inode *inode = nilfs_mdt_new_common(nilfs, NULL, ino, GFP_NOFS);
 	struct nilfs_inode_info *ii;
@@ -225,7 +225,7 @@ static struct inode *alloc_gcinode(struct the_nilfs *nilfs, ino_t ino,
 	return inode;
 }
 
-static unsigned long ihash(ino_t ino, nilfs_cno_t cno)
+static unsigned long ihash(ino_t ino, __u64 cno)
 {
 	return hash_long((unsigned long)((ino << 2) + cno),
 			 NILFS_GCINODE_HASH_BITS);
@@ -240,8 +240,7 @@ static unsigned long ihash(ino_t ino, nilfs_cno_t cno)
  * Return Value: On success, inode pointer
  * On error, NULL
  */
-struct inode *nilfs_gc_iget(struct the_nilfs *nilfs, ino_t ino,
-			    nilfs_cno_t cno)
+struct inode *nilfs_gc_iget(struct the_nilfs *nilfs, ino_t ino, __u64 cno)
 {
 	struct hlist_head *head;
 	struct hlist_node *node;

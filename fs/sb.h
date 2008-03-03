@@ -33,7 +33,7 @@
  */
 struct nilfs_mount_options {
 	unsigned long mount_opt;
-	nilfs_cno_t snapshot_cno;
+	__u64 snapshot_cno;
 };
 
 /*
@@ -41,7 +41,7 @@ struct nilfs_mount_options {
  */
 struct nilfs_sb_info {
 	/* Snapshot status */
-	nilfs_cno_t s_snapshot_cno;	/* Checkpoint number */
+	__u64 s_snapshot_cno;		/* Checkpoint number */
 	atomic_t s_inodes_count;
 	atomic_t s_blocks_count;	/* Reserved (might be deleted) */
 

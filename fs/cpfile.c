@@ -41,9 +41,9 @@ nilfs_cpfile_checkpoints_per_block(const struct inode *cpfile)
 
 /* block number from the beginning of the file */
 static inline nilfs_blkoff_t
-nilfs_cpfile_get_blkoff(const struct inode *cpfile, nilfs_cno_t cno)
+nilfs_cpfile_get_blkoff(const struct inode *cpfile, __u64 cno)
 {
-	nilfs_cno_t tcno;
+	__u64 tcno;
 
 	/* checkpoint number 0 is invalid */
 	BUG_ON(cno == 0);
@@ -54,9 +54,9 @@ nilfs_cpfile_get_blkoff(const struct inode *cpfile, nilfs_cno_t cno)
 
 /* offset in block */
 static inline unsigned long
-nilfs_cpfile_get_offset(const struct inode *cpfile, nilfs_cno_t cno)
+nilfs_cpfile_get_offset(const struct inode *cpfile, __u64 cno)
 {
-	nilfs_cno_t tcno;
+	__u64 tcno;
 
 	tcno = cno + NILFS_CPFILE_FIRST_CHECKPOINT_OFFSET - 1;
 	return do_div(tcno, nilfs_cpfile_checkpoints_per_block(cpfile));
@@ -64,17 +64,17 @@ nilfs_cpfile_get_offset(const struct inode *cpfile, nilfs_cno_t cno)
 
 static inline unsigned long
 nilfs_cpfile_checkpoints_in_block(const struct inode *cpfile,
-				  nilfs_cno_t curr,
-				  nilfs_cno_t max)
+				  __u64 curr,
+				  __u64 max)
 {
-	return min_t(nilfs_cno_t,
+	return min_t(__u64,
 		     nilfs_cpfile_checkpoints_per_block(cpfile) -
 		     nilfs_cpfile_get_offset(cpfile, curr),
 		     max - curr);
 }
 
 static inline int nilfs_cpfile_is_in_first(const struct inode *cpfile,
-					   nilfs_cno_t cno)
+					   __u64 cno)
 {
 	return nilfs_cpfile_get_blkoff(cpfile, cno) == 0;
 }
@@ -120,7 +120,7 @@ nilfs_cpfile_block_get_header(const struct inode *cpfile,
 
 static inline struct nilfs_checkpoint *
 nilfs_cpfile_block_get_checkpoint(const struct inode *cpfile,
-				  nilfs_cno_t cno,
+				  __u64 cno,
 				  struct buffer_head *bh,
 				  void *kaddr)
 {
@@ -174,7 +174,7 @@ static inline int nilfs_cpfile_get_header_block(struct inode *cpfile,
 }
 
 static inline int nilfs_cpfile_get_checkpoint_block(struct inode *cpfile,
-						    nilfs_cno_t cno,
+						    __u64 cno,
 						    int create,
 						    struct buffer_head **bhp)
 {
@@ -185,7 +185,7 @@ static inline int nilfs_cpfile_get_checkpoint_block(struct inode *cpfile,
 }
 
 static inline int nilfs_cpfile_delete_checkpoint_block(struct inode *cpfile,
-						       nilfs_cno_t cno)
+						       __u64 cno)
 {
 	return nilfs_mdt_delete_block(cpfile,
 				      nilfs_cpfile_get_blkoff(cpfile, cno));
@@ -265,7 +265,7 @@ nilfs_cpfile_header_sub_snapshots(const struct inode *cpfile,
  * %-ENOENT - No such checkpoint.
  */
 int nilfs_cpfile_get_checkpoint(struct inode *cpfile,
-				nilfs_cno_t cno,
+				__u64 cno,
 				int create,
 				struct nilfs_checkpoint **cpp,
 				struct buffer_head **bhp)
@@ -338,7 +338,7 @@ int nilfs_cpfile_get_checkpoint(struct inode *cpfile,
  * a previous call to nilfs_cpfile_get_checkpoint() with @cno.
  */
 void nilfs_cpfile_put_checkpoint(struct inode *cpfile,
-				 nilfs_cno_t cno,
+				 __u64 cno,
 				 struct buffer_head *bh)
 {
 	/* XXX: must check cno */
@@ -366,13 +366,13 @@ void nilfs_cpfile_put_checkpoint(struct inode *cpfile,
  * %-EINVAL - invalid checkpoints.
  */
 int nilfs_cpfile_delete_checkpoints(struct inode *cpfile,
-				    nilfs_cno_t start,
-				    nilfs_cno_t end)
+				    __u64 start,
+				    __u64 end)
 {
 	struct buffer_head *header_bh, *cp_bh;
 	struct nilfs_cpfile_header *header;
 	struct nilfs_checkpoint *cp;
-	nilfs_cno_t cno;
+	__u64 cno;
 	void *kaddr;
 	unsigned long tnicps;
 	int ret, ncps, nicps, count, i;
@@ -477,7 +477,7 @@ int nilfs_cpfile_delete_checkpoints(struct inode *cpfile,
  * %-ENOMEM - Insufficient amount of memory available.
  */
 int nilfs_cpfile_get_checkpoints(struct inode *cpfile,
-				 nilfs_cno_t cno,
+				 __u64 cno,
 				 struct nilfs_checkpoint *cps,
 				 unsigned long *size)
 {
@@ -532,7 +532,7 @@ static void nilfs_cpfile_checkpoint_to_cpinfo(struct inode *cpfile,
 }
 
 static ssize_t
-nilfs_cpfile_do_get_cpinfo(struct inode *cpfile, nilfs_cno_t cno,
+nilfs_cpfile_do_get_cpinfo(struct inode *cpfile, __u64 cno,
 			   struct nilfs_cpinfo *ci, size_t nci)
 {
 	struct nilfs_checkpoint *cp;
@@ -573,13 +573,13 @@ nilfs_cpfile_do_get_cpinfo(struct inode *cpfile, nilfs_cno_t cno,
 }
 
 static ssize_t
-nilfs_cpfile_do_get_ssinfo(struct inode *cpfile, nilfs_cno_t cno,
+nilfs_cpfile_do_get_ssinfo(struct inode *cpfile, __u64 cno,
 			   struct nilfs_cpinfo *ci, size_t nci)
 {
 	struct buffer_head *bh;
 	struct nilfs_cpfile_header *header;
 	struct nilfs_checkpoint *cp;
-	nilfs_cno_t curr, next;
+	__u64 curr, next;
 	nilfs_blkoff_t curr_blkoff, next_blkoff;
 	void *kaddr;
 	int n, ret;
@@ -646,7 +646,7 @@ nilfs_cpfile_do_get_ssinfo(struct inode *cpfile, nilfs_cno_t cno,
  * @nci:
  */
 ssize_t nilfs_cpfile_get_cpinfo(struct inode *cpfile,
-				nilfs_cno_t cno, int mode,
+				__u64 cno, int mode,
 				struct nilfs_cpinfo *ci, size_t nci)
 {
 	switch (mode) {
@@ -664,7 +664,7 @@ ssize_t nilfs_cpfile_get_cpinfo(struct inode *cpfile,
  * @cpfile:
  * @cno:
  */
-int nilfs_cpfile_delete_checkpoint(struct inode *cpfile, nilfs_cno_t cno)
+int nilfs_cpfile_delete_checkpoint(struct inode *cpfile, __u64 cno)
 {
 	struct nilfs_cpinfo ci;
 	ssize_t nci;
@@ -691,7 +691,7 @@ int nilfs_cpfile_delete_checkpoint(struct inode *cpfile, nilfs_cno_t cno)
 
 static struct nilfs_snapshot_list *
 nilfs_cpfile_block_get_snapshot_list(const struct inode *cpfile,
-				     nilfs_cno_t cno,
+				     __u64 cno,
 				     struct buffer_head *bh,
 				     void *kaddr)
 {
@@ -709,13 +709,13 @@ nilfs_cpfile_block_get_snapshot_list(const struct inode *cpfile,
 	return list;
 }
 
-static int nilfs_cpfile_set_snapshot(struct inode *cpfile, nilfs_cno_t cno)
+static int nilfs_cpfile_set_snapshot(struct inode *cpfile, __u64 cno)
 {
 	struct buffer_head *header_bh, *curr_bh, *prev_bh, *cp_bh;
 	struct nilfs_cpfile_header *header;
 	struct nilfs_checkpoint *cp;
 	struct nilfs_snapshot_list *list;
-	nilfs_cno_t curr, prev;
+	__u64 curr, prev;
 	nilfs_blkoff_t curr_blkoff, prev_blkoff;
 	void *kaddr;
 	int ret;
@@ -826,13 +826,13 @@ static int nilfs_cpfile_set_snapshot(struct inode *cpfile, nilfs_cno_t cno)
 	return ret;
 }
 
-static int nilfs_cpfile_clear_snapshot(struct inode *cpfile, nilfs_cno_t cno)
+static int nilfs_cpfile_clear_snapshot(struct inode *cpfile, __u64 cno)
 {
 	struct buffer_head *header_bh, *next_bh, *prev_bh, *cp_bh;
 	struct nilfs_cpfile_header *header;
 	struct nilfs_checkpoint *cp;
 	struct nilfs_snapshot_list *list;
-	nilfs_cno_t next, prev;
+	__u64 next, prev;
 	void *kaddr;
 	int ret;
 
@@ -944,7 +944,7 @@ static int nilfs_cpfile_clear_snapshot(struct inode *cpfile, nilfs_cno_t cno)
  *
  * %-ENOENT - No such checkpoint.
  */
-int nilfs_cpfile_is_snapshot(struct inode *cpfile, nilfs_cno_t cno)
+int nilfs_cpfile_is_snapshot(struct inode *cpfile, __u64 cno)
 {
 	struct buffer_head *bh;
 	struct nilfs_checkpoint *cp;
@@ -985,7 +985,7 @@ int nilfs_cpfile_is_snapshot(struct inode *cpfile, nilfs_cno_t cno)
  *
  * %-ENOENT - No such checkpoint.
  */
-int nilfs_cpfile_change_cpmode(struct inode *cpfile, nilfs_cno_t cno, int mode)
+int nilfs_cpfile_change_cpmode(struct inode *cpfile, __u64 cno, int mode)
 {
 	struct the_nilfs *nilfs;
 	int ret;
@@ -1075,14 +1075,14 @@ int nilfs_cpfile_get_stat(struct inode *cpfile, struct nilfs_cpstat *cpstat)
  * %-ENOMEM - Insufficient amount of memory available.
  */
 int nilfs_cpfile_get_snapshots(struct inode *cpfile,
-			       nilfs_cno_t *snapshots,
+			       __u64 *snapshots,
 			       unsigned long *size,
-			       nilfs_cno_t *cno)
+			       __u64 *cno)
 {
 	struct buffer_head *bh;
 	struct nilfs_cpfile_header *header;
 	struct nilfs_checkpoint *cp;
-	nilfs_cno_t curr, next;
+	__u64 curr, next;
 	nilfs_blkoff_t curr_blkoff, next_blkoff;
 	void *kaddr;
 	unsigned long n;

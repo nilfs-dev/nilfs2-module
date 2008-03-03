@@ -2465,7 +2465,7 @@ static int nilfs_segctor_check_in_files(struct nilfs_sc_info *sci,
 					struct nilfs_sb_info *sbi)
 {
 	struct nilfs_inode_info *ii, *n;
-	nilfs_cno_t cno = sbi->s_nilfs->ns_cno;
+	__u64 cno = sbi->s_nilfs->ns_cno;
 
 	spin_lock(&sbi->s_inode_lock);
  retry:
@@ -2511,7 +2511,7 @@ static void nilfs_segctor_check_out_files(struct nilfs_sc_info *sci,
 {
 	struct nilfs_transaction_info *ti = current->journal_info;
 	struct nilfs_inode_info *ii, *n;
-	nilfs_cno_t cno = sbi->s_nilfs->ns_cno;
+	__u64 cno = sbi->s_nilfs->ns_cno;
 
 	spin_lock(&sbi->s_inode_lock);
 	list_for_each_entry_safe(ii, n, &sci->sc_dirty_files, i_dirty) {

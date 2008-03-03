@@ -125,13 +125,13 @@ nilfs_ioctl_delete_checkpoint(struct inode *inode, struct file *filp,
 {
 	struct inode *cpfile;
 	struct nilfs_transaction_info ti;
-	nilfs_cno_t cno;
+	__u64 cno;
 	int ret;
 
 	if (!capable(CAP_SYS_ADMIN))
 		return -EPERM;
 
-	if (copy_from_user(&cno, (nilfs_cno_t __user *)arg, sizeof(cno)))
+	if (copy_from_user(&cno, (__u64 __user *)arg, sizeof(cno)))
 		return -EFAULT;
 
 	cpfile = NILFS_SB(inode->i_sb)->s_nilfs->ns_cpfile;
@@ -408,7 +408,7 @@ nilfs_ioctl_do_move_blocks(struct the_nilfs *nilfs, int index, int flags,
 	struct inode *inode;
 	struct nilfs_vdesc *vdescs;
 	ino_t ino;
-	nilfs_cno_t cno;
+	__u64 cno;
 	int i, j, n, ret;
 
 	vdescs = (struct nilfs_vdesc *)buf;
@@ -694,17 +694,17 @@ static int nilfs_ioctl_timedwait(struct inode *inode, struct file *filp,
 static int nilfs_ioctl_sync(struct inode *inode, struct file *filp,
 			    unsigned int cmd, unsigned long arg)
 {
-	nilfs_cno_t cno;
+	__u64 cno;
 	int ret;
 
 	ret = nilfs_construct_segment(inode->i_sb);
 	if (ret < 0)
 		return ret;
 
-	if ((nilfs_cno_t __user *)arg == NULL)
+	if ((__u64 __user *)arg == NULL)
 		return 0;
 	cno = NILFS_SB(inode->i_sb)->s_nilfs->ns_cno - 1;
-	if (copy_to_user((nilfs_cno_t __user *)arg, &cno, sizeof(cno)))
+	if (copy_to_user((__u64 __user *)arg, &cno, sizeof(cno)))
 		return -EFAULT;
 	return 0;
 }
@@ -713,17 +713,17 @@ static int nilfs_ioctl_sync(struct inode *inode, struct file *filp,
 static int nilfs_ioctl_sync(struct inode *inode, struct file *filp,
 			    unsigned int cmd, unsigned long arg)
 {
-	nilfs_cno_t cno;
+	__u64 cno;
 	int ret;
 
 	unlock_kernel();
 	ret = nilfs_construct_segment(inode->i_sb);
 	if (ret < 0)
 		goto out;
-	if ((nilfs_cno_t __user *)arg == NULL)
+	if ((__u64 __user *)arg == NULL)
 		goto out;
 	cno = NILFS_SB(inode->i_sb)->s_nilfs->ns_cno - 1;
-	if (copy_to_user((nilfs_cno_t __user *)arg, &cno, sizeof(cno)))
+	if (copy_to_user((__u64 __user *)arg, &cno, sizeof(cno)))
 		ret = -EFAULT;
  out:
 	lock_kernel();
@@ -844,7 +844,7 @@ nilfs_compat_ioctl_change_cpmode(struct inode *inode, struct file *filp,
 	ucpmode = compat_alloc_user_space(sizeof(struct nilfs_cpmode));
 	ucpmode32 = compat_ptr(arg);
 	if (copy_in_user(&ucpmode->cm_cno, &ucpmode32->cm_cno,
-			 sizeof(nilfs_cno_t)) ||
+			 sizeof(__u64)) ||
 	    get_user(mode, &ucpmode32->cm_mode) ||
 	    put_user(mode, &ucpmode->cm_mode))
 		return -EFAULT;

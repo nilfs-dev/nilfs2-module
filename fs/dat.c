@@ -33,8 +33,8 @@
 #include "dat.h"
 
 
-#define NILFS_CNO_MIN	((nilfs_cno_t)1)
-#define NILFS_CNO_MAX	(~(nilfs_cno_t)0)
+#define NILFS_CNO_MIN	((__u64)1)
+#define NILFS_CNO_MAX	(~(__u64)0)
 
 static inline unsigned long
 nilfs_dat_groups_per_desc_block(const struct inode *dat)
@@ -189,7 +189,7 @@ nilfs_dat_group_desc_sub_entries(struct inode *dat,
 	return nfrees;
 }
 
-static inline nilfs_cno_t
+static inline __u64
 nilfs_dat_entry_get_start(const struct inode *dat,
 			  const struct nilfs_dat_entry *entry)
 {
@@ -198,12 +198,12 @@ nilfs_dat_entry_get_start(const struct inode *dat,
 
 static inline void nilfs_dat_entry_set_start(const struct inode *dat,
 					     struct nilfs_dat_entry *entry,
-					     nilfs_cno_t start)
+					     __u64 start)
 {
 	entry->de_start = cpu_to_le64(start);
 }
 
-static inline nilfs_cno_t
+static inline __u64
 nilfs_dat_entry_get_end(const struct inode *dat,
 			const struct nilfs_dat_entry *entry)
 {
@@ -212,7 +212,7 @@ nilfs_dat_entry_get_end(const struct inode *dat,
 
 static inline void nilfs_dat_entry_set_end(const struct inode *dat,
 					   struct nilfs_dat_entry *entry,
-					   nilfs_cno_t end)
+					   __u64 end)
 {
 	entry->de_end = cpu_to_le64(end);
 }
@@ -779,7 +779,7 @@ void nilfs_dat_abort_start(struct inode *dat, struct nilfs_dat_req *req)
 int nilfs_dat_prepare_end(struct inode *dat, struct nilfs_dat_req *req)
 {
 	struct nilfs_dat_entry *entry;
-	nilfs_cno_t start;
+	__u64 start;
 	sector_t blocknr;
 	void *entry_kaddr;
 	int ret;
@@ -816,7 +816,7 @@ int nilfs_dat_prepare_end(struct inode *dat, struct nilfs_dat_req *req)
 void nilfs_dat_commit_end(struct inode *dat, struct nilfs_dat_req *req)
 {
 	struct nilfs_dat_entry *entry;
-	nilfs_cno_t start, end;
+	__u64 start, end;
 	sector_t blocknr;
 	void *entry_kaddr;
 
@@ -845,7 +845,7 @@ void nilfs_dat_commit_end(struct inode *dat, struct nilfs_dat_req *req)
 void nilfs_dat_commit_end_dead(struct inode *dat, struct nilfs_dat_req *req)
 {
 	struct nilfs_dat_entry *entry;
-	nilfs_cno_t start;
+	__u64 start;
 	sector_t blocknr;
 	void *entry_kaddr;
 
@@ -871,7 +871,7 @@ void nilfs_dat_commit_end_dead(struct inode *dat, struct nilfs_dat_req *req)
 void nilfs_dat_abort_end(struct inode *dat, struct nilfs_dat_req *req)
 {
 	struct nilfs_dat_entry *entry;
-	nilfs_cno_t start;
+	__u64 start;
 	sector_t blocknr;
 	void *entry_kaddr;
 

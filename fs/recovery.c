@@ -899,7 +899,7 @@ int nilfs_search_super_root(struct the_nilfs *nilfs, struct nilfs_sb_info *sbi,
 	sector_t seg_start, seg_end; /* range of full segment (block number) */
 	u64 seg_seq;
 	nilfs_segnum_t segnum, nextnum = 0;
-	nilfs_cno_t cno;
+	__u64 cno;
 	struct nilfs_segment_entry *ent;
 	LIST_HEAD(segments);
 	int empty_seg = 0, scan_newer = 0;
