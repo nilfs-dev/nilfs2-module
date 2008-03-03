@@ -115,8 +115,8 @@ struct the_nilfs {
 	 * The writable FS-instance is sole during a lifetime of the_nilfs.
 	 */
 	u64			ns_seg_seq;
-	nilfs_segnum_t		ns_segnum;
-	nilfs_segnum_t		ns_nextnum;
+	__u64			ns_segnum;
+	__u64			ns_nextnum;
 	unsigned long		ns_pseg_offset;
 	__u64			ns_cno;
 	time_t			ns_ctime;
@@ -236,7 +236,7 @@ nilfs_detach_writer(struct the_nilfs *nilfs, struct nilfs_sb_info *sbi)
 }
 
 static inline void
-nilfs_get_segment_range(struct the_nilfs *nilfs, nilfs_segnum_t segnum,
+nilfs_get_segment_range(struct the_nilfs *nilfs, __u64 segnum,
 			sector_t *seg_start, sector_t *seg_end)
 {
 	*seg_start = (sector_t)nilfs->ns_blocks_per_segment * segnum;
@@ -246,13 +246,13 @@ nilfs_get_segment_range(struct the_nilfs *nilfs, nilfs_segnum_t segnum,
 }
 
 static inline sector_t
-nilfs_get_segment_start_blocknr(struct the_nilfs *nilfs, nilfs_segnum_t segnum)
+nilfs_get_segment_start_blocknr(struct the_nilfs *nilfs, __u64 segnum)
 {
 	return (segnum == 0) ? nilfs->ns_first_data_block :
 		(sector_t)nilfs->ns_blocks_per_segment * segnum;
 }
 
-static inline nilfs_segnum_t
+static inline __u64
 nilfs_get_segnum_of_block(struct the_nilfs *nilfs, sector_t blocknr)
 {
 	sector_t segnum = blocknr;

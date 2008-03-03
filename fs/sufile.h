@@ -48,23 +48,23 @@ static inline unsigned long nilfs_sufile_get_nrsvsegs(struct inode *sufile)
 	return max_t(unsigned long, nrsvsegs, NILFS_MIN_NRSVSEGS);
 }
 
-int nilfs_sufile_alloc(struct inode *, nilfs_segnum_t *);
-int nilfs_sufile_cancel_free(struct inode *, nilfs_segnum_t);
-int nilfs_sufile_freev(struct inode *, nilfs_segnum_t *, size_t);
-int nilfs_sufile_free(struct inode *, nilfs_segnum_t);
-int nilfs_sufile_get_segment_usage(struct inode *, nilfs_segnum_t,
+int nilfs_sufile_alloc(struct inode *, __u64 *);
+int nilfs_sufile_cancel_free(struct inode *, __u64);
+int nilfs_sufile_freev(struct inode *, __u64 *, size_t);
+int nilfs_sufile_free(struct inode *, __u64);
+int nilfs_sufile_get_segment_usage(struct inode *, __u64,
 				   struct nilfs_segment_usage **,
 				   struct buffer_head **);
-void nilfs_sufile_put_segment_usage(struct inode *, nilfs_segnum_t,
+void nilfs_sufile_put_segment_usage(struct inode *, __u64,
 				    struct buffer_head *);
 int nilfs_sufile_get_stat(struct inode *, struct nilfs_sustat *);
 int nilfs_sufile_get_ncleansegs(struct inode *, unsigned long *);
 int nilfs_sufile_get_ndirtysegs(struct inode *, unsigned long *);
-int nilfs_sufile_set_error(struct inode *, nilfs_segnum_t);
-ssize_t nilfs_sufile_get_segment_usages(struct inode *, nilfs_segnum_t,
+int nilfs_sufile_set_error(struct inode *, __u64);
+ssize_t nilfs_sufile_get_segment_usages(struct inode *, __u64,
 					struct nilfs_segment_usage *, size_t);
-ssize_t nilfs_sufile_get_suinfo(struct inode *, nilfs_segnum_t,
-				struct nilfs_suinfo *, size_t);
+ssize_t nilfs_sufile_get_suinfo(struct inode *, __u64, struct nilfs_suinfo *,
+				size_t);
 
 
 #endif	/* _NILFS_SUFILE_H */

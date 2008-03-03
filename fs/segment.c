@@ -1638,7 +1638,7 @@ static int nilfs_segctor_terminate_segment(struct nilfs_sc_info *sci,
 	return 0;
 }
 
-static int nilfs_touch_segusage(struct inode *sufile, nilfs_segnum_t segnum)
+static int nilfs_touch_segusage(struct inode *sufile, __u64 segnum)
 {
 	struct buffer_head *bh_su;
 	struct nilfs_segment_usage *raw_su;
@@ -1658,7 +1658,7 @@ static int nilfs_segctor_begin_construction(struct nilfs_sc_info *sci,
 {
 	struct nilfs_segment_buffer *segbuf, *n;
 	struct inode *sufile = nilfs->ns_sufile;
-	nilfs_segnum_t nextnum;
+	__u64 nextnum;
 	int err;
 
 	if (list_empty(&sci->sc_segbufs)) {
@@ -1712,7 +1712,7 @@ static int nilfs_segctor_extend_segments(struct nilfs_sc_info *sci,
 {
 	struct nilfs_segment_buffer *segbuf, *prev, *n;
 	struct inode *sufile = nilfs->ns_sufile;
-	nilfs_segnum_t nextnextnum;
+	__u64 nextnextnum;
 	LIST_HEAD(list);
 	int err, ret, i;
 
@@ -2843,14 +2843,13 @@ void nilfs_flush_segment(struct nilfs_sb_info *sbi, ino_t ino)
 }
 
 int nilfs_segctor_add_segments_to_be_freed(struct nilfs_sc_info *sci,
-					   nilfs_segnum_t *segnum,
-					   size_t nsegs)
+					   __u64 *segnum, size_t nsegs)
 {
 	struct nilfs_segment_entry *ent;
 	struct the_nilfs *nilfs = sci->sc_sbi->s_nilfs;
 	struct inode *sufile = nilfs->ns_sufile;
 	LIST_HEAD(list);
-	nilfs_segnum_t *pnum;
+	__u64 *pnum;
 	const char *flag_name;
 	size_t i;
 	int err, err2 = 0;

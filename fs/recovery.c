@@ -432,7 +432,7 @@ static int nilfs_prepare_segment_for_recovery(struct the_nilfs *nilfs,
 	struct list_head *head = &ri->ri_used_segments;
 	struct nilfs_segment_entry *ent, *n;
 	struct inode *sufile = nilfs->ns_sufile;
-	nilfs_segnum_t segnum[4];
+	__u64 segnum[4];
 	int err;
 	int i;
 
@@ -653,7 +653,7 @@ static int nilfs_do_roll_forward(struct the_nilfs *nilfs,
 	sector_t seg_start, seg_end;  /* Starting/ending DBN of full segment */
 	unsigned long nsalvaged_blocks = 0;
 	u64 seg_seq;
-	nilfs_segnum_t segnum, nextnum = 0;
+	__u64 segnum, nextnum = 0;
 	int empty_seg = 0;
 	int err = 0, ret;
 	LIST_HEAD(dsync_blocks);  /* list of data blocks to be recovered */
@@ -898,7 +898,7 @@ int nilfs_search_super_root(struct the_nilfs *nilfs, struct nilfs_sb_info *sbi,
 	sector_t pseg_start, pseg_end, sr_pseg_start = 0;
 	sector_t seg_start, seg_end; /* range of full segment (block number) */
 	u64 seg_seq;
-	nilfs_segnum_t segnum, nextnum = 0;
+	__u64 segnum, nextnum = 0;
 	__u64 cno;
 	struct nilfs_segment_entry *ent;
 	LIST_HEAD(segments);

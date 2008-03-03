@@ -56,8 +56,8 @@ struct nilfs_recovery_info {
 	struct list_head	ri_used_segments;
 	sector_t		ri_pseg_start;
 	u64			ri_seq;
-	nilfs_segnum_t		ri_segnum;
-	nilfs_segnum_t		ri_nextnum;
+	__u64			ri_segnum;
+	__u64			ri_nextnum;
 };
 
 /* ri_need_recovery */
@@ -261,7 +261,7 @@ extern void nilfs_flush_segment(struct nilfs_sb_info *, ino_t);
 extern int nilfs_clean_segments(struct super_block *, unsigned long);
 
 extern int nilfs_segctor_add_segments_to_be_freed(struct nilfs_sc_info *,
-						  nilfs_segnum_t *, size_t);
+						  __u64 *, size_t);
 extern void nilfs_segctor_clear_segments_to_be_freed(struct nilfs_sc_info *);
 
 extern int nilfs_attach_segment_constructor(struct nilfs_sb_info *,

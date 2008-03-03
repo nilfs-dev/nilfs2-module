@@ -32,7 +32,7 @@
 #include "sufile.h"
 
 struct nilfs_segment_entry {
-	nilfs_segnum_t		segnum;
+	__u64			segnum;
 
 #define NILFS_SLH_FREED		0x0001	/* The segment was freed provisonally.
 					   It must be cancelled if
@@ -48,7 +48,7 @@ struct nilfs_segment_entry {
 void nilfs_dispose_segment_list(struct list_head *);
 
 static inline struct nilfs_segment_entry *
-nilfs_alloc_segment_entry(nilfs_segnum_t segnum)
+nilfs_alloc_segment_entry(__u64 segnum)
 {
 	struct nilfs_segment_entry *ent = kmalloc(sizeof(*ent), GFP_NOFS);
 

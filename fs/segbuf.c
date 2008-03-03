@@ -97,9 +97,8 @@ void nilfs_segbuf_free(struct nilfs_segment_buffer *segbuf)
 	kmem_cache_free(nilfs_segbuf_cachep, segbuf);
 }
 
-int nilfs_segbuf_map(struct nilfs_segment_buffer *segbuf,
-		     nilfs_segnum_t segnum, unsigned long offset,
-		     struct the_nilfs *nilfs)
+int nilfs_segbuf_map(struct nilfs_segment_buffer *segbuf, __u64 segnum,
+		     unsigned long offset, struct the_nilfs *nilfs)
 {
 	struct nilfs_segment_entry *ent;
 
@@ -125,8 +124,7 @@ int nilfs_segbuf_map(struct nilfs_segment_buffer *segbuf,
 }
 
 void nilfs_segbuf_set_next_segnum(struct nilfs_segment_buffer *segbuf,
-				  nilfs_segnum_t nextnum,
-				  struct the_nilfs *nilfs)
+				  __u64 nextnum, struct the_nilfs *nilfs)
 {
 	segbuf->sb_nextnum = nextnum;
 	segbuf->sb_sum.next = nilfs_get_segment_start_blocknr(nilfs, nextnum);

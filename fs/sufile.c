@@ -40,9 +40,9 @@ nilfs_sufile_segment_usages_per_block(const struct inode *sufile)
 }
 
 static inline nilfs_blkoff_t
-nilfs_sufile_get_blkoff(const struct inode *sufile, nilfs_segnum_t segnum)
+nilfs_sufile_get_blkoff(const struct inode *sufile, __u64 segnum)
 {
-	nilfs_segnum_t t;
+	__u64 t;
 
 	t = segnum + NILFS_SUFILE_FIRST_SEGMENT_USAGE_OFFSET;
 	do_div(t, nilfs_sufile_segment_usages_per_block(sufile));
@@ -50,18 +50,17 @@ nilfs_sufile_get_blkoff(const struct inode *sufile, nilfs_segnum_t segnum)
 }
 
 static inline unsigned long
-nilfs_sufile_get_offset(const struct inode *sufile, nilfs_segnum_t segnum)
+nilfs_sufile_get_offset(const struct inode *sufile, __u64 segnum)
 {
-	nilfs_segnum_t t;
+	__u64 t;
 
 	t = segnum + NILFS_SUFILE_FIRST_SEGMENT_USAGE_OFFSET;
 	return do_div(t, nilfs_sufile_segment_usages_per_block(sufile));
 }
 
 static inline unsigned long
-nilfs_sufile_segment_usages_in_block(const struct inode *sufile,
-				     nilfs_segnum_t curr,
-				     nilfs_segnum_t max)
+nilfs_sufile_segment_usages_in_block(const struct inode *sufile, __u64 curr,
+				     __u64 max)
 {
 	return min_t(unsigned long,
 		     nilfs_sufile_segment_usages_per_block(sufile) -
@@ -78,10 +77,8 @@ nilfs_sufile_block_get_header(const struct inode *sufile,
 }
 
 static inline struct nilfs_segment_usage *
-nilfs_sufile_block_get_segment_usage(const struct inode *sufile,
-				     nilfs_segnum_t segnum,
-				     struct buffer_head *bh,
-				     void *kaddr)
+nilfs_sufile_block_get_segment_usage(const struct inode *sufile, __u64 segnum,
+				     struct buffer_head *bh, void *kaddr)
 {
 	return (struct nilfs_segment_usage *)(kaddr + bh_offset(bh)) +
 		nilfs_sufile_get_offset(sufile, segnum);
@@ -118,10 +115,8 @@ static inline int nilfs_sufile_get_header_block(struct inode *sufile,
 }
 
 static inline int
-nilfs_sufile_get_segment_usage_block(struct inode *sufile,
-				     nilfs_segnum_t segnum,
-				     int create,
-				     struct buffer_head **bhp)
+nilfs_sufile_get_segment_usage_block(struct inode *sufile, __u64 segnum,
+				     int create, struct buffer_head **bhp)
 {
 	return nilfs_sufile_get_block(sufile,
 				      nilfs_sufile_get_blkoff(sufile, segnum),
@@ -146,13 +141,13 @@ nilfs_sufile_get_segment_usage_block(struct inode *sufile,
  *
  * %-ENOSPC - No clean segment left.
  */
-int nilfs_sufile_alloc(struct inode *sufile, nilfs_segnum_t *segnump)
+int nilfs_sufile_alloc(struct inode *sufile, __u64 *segnump)
 {
 	struct buffer_head *header_bh, *su_bh;
 	struct the_nilfs *nilfs;
 	struct nilfs_sufile_header *header;
 	struct nilfs_segment_usage *su;
-	nilfs_segnum_t segnum, maxsegnum, last_alloc;
+	__u64 segnum, maxsegnum, last_alloc;
 	void *kaddr;
 	unsigned long nsegments, ncleansegs, nsus;
 	int ret, i, j;
@@ -246,7 +241,7 @@ int nilfs_sufile_alloc(struct inode *sufile, nilfs_segnum_t *segnump)
  *
  * %-ENOMEM - Insufficient amount of memory available.
  */
-int nilfs_sufile_cancel_free(struct inode *sufile, nilfs_segnum_t segnum)
+int nilfs_sufile_cancel_free(struct inode *sufile, __u64 segnum)
 {
 	struct buffer_head *header_bh, *su_bh;
 	struct the_nilfs *nilfs;
@@ -319,8 +314,7 @@ int nilfs_sufile_cancel_free(struct inode *sufile, nilfs_segnum_t segnum)
  * %-ENOMEM - Insufficient amount of memory available.
  */
 #define NILFS_SUFILE_FREEV_PREALLOC	16
-int nilfs_sufile_freev(struct inode *sufile,
-		       nilfs_segnum_t *segnum, size_t nsegs)
+int nilfs_sufile_freev(struct inode *sufile, __u64 *segnum, size_t nsegs)
 {
 	struct buffer_head *header_bh, **su_bh,
 		*su_bh_prealloc[NILFS_SUFILE_FREEV_PREALLOC];
@@ -401,7 +395,7 @@ int nilfs_sufile_freev(struct inode *sufile,
  * @sufile:
  * @segnum:
  */
-int nilfs_sufile_free(struct inode *sufile, nilfs_segnum_t segnum)
+int nilfs_sufile_free(struct inode *sufile, __u64 segnum)
 {
 	return nilfs_sufile_freev(sufile, &segnum, 1);
 }
@@ -427,8 +421,7 @@ int nilfs_sufile_free(struct inode *sufile, nilfs_segnum_t segnum)
  *
  * %-EINVAL - Invalid segment usage number.
  */
-int nilfs_sufile_get_segment_usage(struct inode *sufile,
-				   nilfs_segnum_t segnum,
+int nilfs_sufile_get_segment_usage(struct inode *sufile, __u64 segnum,
 				   struct nilfs_segment_usage **sup,
 				   struct buffer_head **bhp)
 {
@@ -473,8 +466,7 @@ int nilfs_sufile_get_segment_usage(struct inode *sufile,
  * specified by @segnum. @bh must be the buffer head which have been returned
  * by a previous call to nilfs_sufile_get_segment_usage() with @segnum.
  */
-void nilfs_sufile_put_segment_usage(struct inode *sufile,
-				    nilfs_segnum_t segnum,
+void nilfs_sufile_put_segment_usage(struct inode *sufile, __u64 segnum,
 				    struct buffer_head *bh)
 {
 	/* XXX: must check segnum */
@@ -599,7 +591,7 @@ int nilfs_sufile_get_ndirtysegs(struct inode *sufile, unsigned long *nsegsp)
  *
  * %-ENOMEM - Insufficient amount of memory available.
  */
-int nilfs_sufile_set_error(struct inode *sufile, nilfs_segnum_t segnum)
+int nilfs_sufile_set_error(struct inode *sufile, __u64 segnum)
 {
 	struct buffer_head *header_bh, *su_bh;
 	struct nilfs_segment_usage *su;
@@ -664,8 +656,7 @@ int nilfs_sufile_set_error(struct inode *sufile, nilfs_segnum_t segnum)
  *
  * %-ENOMEM - Insufficient amount of memory available.
  */
-ssize_t nilfs_sufile_get_segment_usages(struct inode *sufile,
-					nilfs_segnum_t segnum,
+ssize_t nilfs_sufile_get_segment_usages(struct inode *sufile, __u64 segnum,
 					struct nilfs_segment_usage *sus,
 					size_t size)
 {
@@ -728,7 +719,7 @@ ssize_t nilfs_sufile_get_segment_usages(struct inode *sufile,
  *
  * %-ENOMEM - Insufficient amount of memory available.
  */
-ssize_t nilfs_sufile_get_suinfo(struct inode *sufile, nilfs_segnum_t segnum,
+ssize_t nilfs_sufile_get_suinfo(struct inode *sufile, __u64 segnum,
 				struct nilfs_suinfo *si, size_t nsi)
 {
 	struct buffer_head *su_bh;

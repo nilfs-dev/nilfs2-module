@@ -87,8 +87,8 @@ struct nilfs_segment_buffer {
 
 	/* Segment information */
 	struct nilfs_segsum_info sb_sum;
-	nilfs_segnum_t		sb_segnum;
-	nilfs_segnum_t		sb_nextnum;
+	__u64			sb_segnum;
+	__u64			sb_nextnum;
 	sector_t		sb_fseg_start, sb_fseg_end;
 	sector_t		sb_pseg_start;
 	unsigned		sb_rest_blocks;
@@ -129,10 +129,10 @@ int __init nilfs_init_segbuf_cache(void);
 void nilfs_destroy_segbuf_cache(void);
 struct nilfs_segment_buffer *nilfs_segbuf_new(struct super_block *);
 void nilfs_segbuf_free(struct nilfs_segment_buffer *);
-int nilfs_segbuf_map(struct nilfs_segment_buffer *, nilfs_segnum_t,
-		     unsigned long, struct the_nilfs *);
-void nilfs_segbuf_set_next_segnum(struct nilfs_segment_buffer *,
-				  nilfs_segnum_t, struct the_nilfs *);
+int nilfs_segbuf_map(struct nilfs_segment_buffer *, __u64, unsigned long,
+		     struct the_nilfs *);
+void nilfs_segbuf_set_next_segnum(struct nilfs_segment_buffer *, __u64,
+				  struct the_nilfs *);
 int nilfs_segbuf_reset(struct nilfs_segment_buffer *, unsigned, time_t);
 int nilfs_segbuf_extend_segsum(struct nilfs_segment_buffer *);
 int nilfs_segbuf_extend_payload(struct nilfs_segment_buffer *,

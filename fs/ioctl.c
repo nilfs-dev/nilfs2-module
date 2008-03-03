@@ -556,10 +556,10 @@ nilfs_ioctl_do_free_segments(struct the_nilfs *nilfs, int index, int flags,
 			     void *buf, size_t size, size_t nmembs)
 {
 	struct nilfs_sb_info *sbi;
-	nilfs_segnum_t *segnums;
+	__u64 *segnums;
 	int ret;
 
-	segnums = (nilfs_segnum_t *)buf;
+	segnums = (__u64 *)buf;
 
 	sbi = nilfs_get_writer(nilfs);
 	ret = nilfs_segctor_add_segments_to_be_freed(
