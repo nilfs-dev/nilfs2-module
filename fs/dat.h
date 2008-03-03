@@ -45,7 +45,7 @@
  * @dr_entry_bh: buffer head of the buffer containing translation entries
  */
 struct nilfs_dat_req {
-	nilfs_sector_t dr_vblocknr;
+	__u64 dr_vblocknr;
 	struct buffer_head *dr_desc_bh;
 	struct buffer_head *dr_bitmap_bh;
 	struct buffer_head *dr_entry_bh;
@@ -72,7 +72,7 @@ nilfs_dat_entries_per_group(const struct inode *dat)
 }
 
 
-int nilfs_dat_translate(struct inode *, nilfs_sector_t, sector_t *);
+int nilfs_dat_translate(struct inode *, __u64, sector_t *);
 
 int nilfs_dat_prepare_alloc(struct inode *, struct nilfs_dat_req *);
 void nilfs_dat_commit_alloc(struct inode *, struct nilfs_dat_req *);
@@ -85,11 +85,11 @@ void nilfs_dat_commit_end(struct inode *, struct nilfs_dat_req *);
 void nilfs_dat_commit_end_dead(struct inode *, struct nilfs_dat_req *);
 void nilfs_dat_abort_end(struct inode *, struct nilfs_dat_req *);
 
-int nilfs_dat_alloc(struct inode *, nilfs_sector_t *);
+int nilfs_dat_alloc(struct inode *, __u64 *);
 
-int nilfs_dat_mark_dirty(struct inode *, nilfs_sector_t);
-int nilfs_dat_freev(struct inode *, nilfs_sector_t *, size_t);
-int nilfs_dat_move(struct inode *, nilfs_sector_t, sector_t);
+int nilfs_dat_mark_dirty(struct inode *, __u64);
+int nilfs_dat_freev(struct inode *, __u64 *, size_t);
+int nilfs_dat_move(struct inode *, __u64, sector_t);
 ssize_t nilfs_dat_get_vinfo(struct inode *, struct nilfs_vinfo *, size_t);
 
 #endif	/* _NILFS_DAT_H */

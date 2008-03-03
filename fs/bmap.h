@@ -50,7 +50,7 @@ struct nilfs_bmap;
  * @bpr_req:
  */
 union nilfs_bmap_ptr_req {
-	nilfs_sector_t bpr_ptr;
+	__u64 bpr_ptr;
 	struct nilfs_dat_req bpr_req;
 };
 
@@ -192,8 +192,8 @@ void nilfs_bmap_commit_gcdat(struct nilfs_bmap *, struct nilfs_bmap *);
  * Internal use only
  */
 
-int nilfs_bmap_move_v(const struct nilfs_bmap *, nilfs_sector_t, sector_t);
-int nilfs_bmap_mark_dirty(const struct nilfs_bmap *, nilfs_sector_t);
+int nilfs_bmap_move_v(const struct nilfs_bmap *, __u64, sector_t);
+int nilfs_bmap_mark_dirty(const struct nilfs_bmap *, __u64);
 
 
 __u64 nilfs_bmap_data_get_key(const struct nilfs_bmap *,

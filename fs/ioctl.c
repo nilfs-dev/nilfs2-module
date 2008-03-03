@@ -475,11 +475,11 @@ nilfs_ioctl_do_free_vblocknrs(struct the_nilfs *nilfs, int index, int flags,
 			      void *buf, size_t size, size_t nmembs)
 {
 	struct inode *dat;
-	nilfs_sector_t *vbns;
+	__u64 *vbns;
 	int ret;
 
 	dat = nilfs_dat_inode(nilfs);
-	vbns = (nilfs_sector_t *)buf;
+	vbns = (__u64 *)buf;
 
 	ret = nilfs_dat_freev(dat, vbns, nmembs);
 	if (ret < 0)

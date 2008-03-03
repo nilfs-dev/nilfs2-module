@@ -60,7 +60,7 @@ nilfs_dat_blocks_per_desc_block(const struct inode *dat)
 }
 
 static inline nilfs_bgno_t
-nilfs_dat_group(const struct inode *dat, nilfs_sector_t vblocknr)
+nilfs_dat_group(const struct inode *dat, __u64 vblocknr)
 {
 	nilfs_bgno_t group;
 
@@ -70,7 +70,7 @@ nilfs_dat_group(const struct inode *dat, nilfs_sector_t vblocknr)
 }
 
 static inline unsigned long
-nilfs_dat_group_offset(const struct inode *dat, nilfs_sector_t vblocknr)
+nilfs_dat_group_offset(const struct inode *dat, __u64 vblocknr)
 {
 	return do_div(vblocknr, nilfs_dat_entries_per_group(dat));
 }
@@ -95,7 +95,7 @@ nilfs_dat_entry_block(const struct inode *dat, unsigned long group_offset)
 }
 
 static inline unsigned long
-nilfs_dat_entry_offset(const struct inode *dat, nilfs_sector_t vblocknr)
+nilfs_dat_entry_offset(const struct inode *dat, __u64 vblocknr)
 {
 	return nilfs_dat_group_offset(dat, vblocknr) %
 		nilfs_dat_entries_per_block(dat);
@@ -127,7 +127,7 @@ nilfs_dat_bitmap_blkoff(const struct inode *dat, nilfs_bgno_t group)
 }
 
 static inline nilfs_blkoff_t
-nilfs_dat_entry_blkoff(const struct inode *dat, nilfs_sector_t vblocknr)
+nilfs_dat_entry_blkoff(const struct inode *dat, __u64 vblocknr)
 {
 	return nilfs_dat_bitmap_blkoff(dat, nilfs_dat_group(dat, vblocknr)) +
 		1 +
@@ -283,10 +283,9 @@ static inline int nilfs_dat_get_bitmap_block(struct inode *dat,
 				   create, nilfs_dat_bitmap_block_init, bhp);
 }
 
-static inline int nilfs_dat_get_entry_block(struct inode *dat,
-					    nilfs_sector_t vblocknr,
-					    int create,
-					    struct buffer_head **bhp)
+static inline int
+nilfs_dat_get_entry_block(struct inode *dat, __u64 vblocknr, int create,
+			  struct buffer_head **bhp)
 {
 	return nilfs_mdt_get_block(dat, nilfs_dat_entry_blkoff(dat, vblocknr),
 				   create, nilfs_dat_entry_block_init, bhp);
@@ -312,7 +311,7 @@ nilfs_dat_block_get_bitmap(const struct inode *dat,
 
 static inline struct nilfs_dat_entry *
 nilfs_dat_block_get_entry(const struct inode *dat,
-			  nilfs_sector_t vblocknr,
+			  __u64 vblocknr,
 			  const struct buffer_head *bh,
 			  void *kaddr)
 {
@@ -901,7 +900,7 @@ void nilfs_dat_abort_end(struct inode *dat, struct nilfs_dat_req *req)
  *
  * %-ENOMEM - Insufficient amount of memory available.
  */
-int nilfs_dat_mark_dirty(struct inode *dat, nilfs_sector_t vblocknr)
+int nilfs_dat_mark_dirty(struct inode *dat, __u64 vblocknr)
 {
 	struct nilfs_dat_req req;
 	int ret;
@@ -931,7 +930,7 @@ int nilfs_dat_mark_dirty(struct inode *dat, nilfs_sector_t vblocknr)
  *
  * %-ENOSPC - No virtual block number left.
  */
-int nilfs_dat_alloc(struct inode *dat, nilfs_sector_t *vblocknr)
+int nilfs_dat_alloc(struct inode *dat, __u64 *vblocknr)
 {
 	struct nilfs_dat_req req;
 	int ret;
@@ -945,11 +944,10 @@ int nilfs_dat_alloc(struct inode *dat, nilfs_sector_t *vblocknr)
 	return 0;
 }
 
-static inline int nilfs_dat_group_is_in(struct inode *dat,
-					unsigned long group,
-					nilfs_sector_t vblocknr)
+static inline int
+nilfs_dat_group_is_in(struct inode *dat, unsigned long group, __u64 vblocknr)
 {
-	nilfs_sector_t first, last;
+	__u64 first, last;
 
 	first = group * nilfs_dat_entries_per_group(dat);
 	last = first + nilfs_dat_entries_per_group(dat) - 1;
@@ -974,8 +972,7 @@ static inline int nilfs_dat_group_is_in(struct inode *dat,
  *
  * %-ENOENT - The virtual block number have not been allocated.
  */
-int nilfs_dat_freev(struct inode *dat, nilfs_sector_t *vblocknrs,
-		    size_t nitems)
+int nilfs_dat_freev(struct inode *dat, __u64 *vblocknrs, size_t nitems)
 {
 	struct buffer_head *desc_bh, *bitmap_bh;
 	struct nilfs_dat_group_desc *desc;
@@ -1050,9 +1047,7 @@ int nilfs_dat_freev(struct inode *dat, nilfs_sector_t *vblocknrs,
  *
  * %-ENOMEM - Insufficient amount of memory available.
  */
-int nilfs_dat_move(struct inode *dat,
-		   nilfs_sector_t vblocknr,
-		   sector_t blocknr)
+int nilfs_dat_move(struct inode *dat, __u64 vblocknr, sector_t blocknr)
 {
 	struct buffer_head *entry_bh;
 	struct nilfs_dat_entry *entry;
@@ -1105,9 +1100,7 @@ int nilfs_dat_move(struct inode *dat,
  *
  * %-ENOENT - A block number associated with @vblocknr does not exist.
  */
-int nilfs_dat_translate(struct inode *dat,
-			nilfs_sector_t vblocknr,
-			sector_t *blocknrp)
+int nilfs_dat_translate(struct inode *dat, __u64 vblocknr, sector_t *blocknrp)
 {
 	struct buffer_head *entry_bh;
 	struct nilfs_dat_entry *entry;
@@ -1180,7 +1173,7 @@ ssize_t nilfs_dat_get_vinfo(struct inode *dat,
 {
 	struct buffer_head *entry_bh;
 	struct nilfs_dat_entry *entry;
-	nilfs_sector_t first, last;
+	__u64 first, last;
 	void *kaddr;
 	unsigned long entries_per_block;
 	int i, j, n, ret;

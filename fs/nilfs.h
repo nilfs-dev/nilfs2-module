@@ -267,8 +267,8 @@ extern int nilfs_attach_checkpoint(struct nilfs_sb_info *, __u64);
 extern void nilfs_detach_checkpoint(struct nilfs_sb_info *);
 
 /* gcinode.c */
-int nilfs_gccache_add_data(struct inode *, sector_t, sector_t, nilfs_sector_t);
-int nilfs_gccache_add_node(struct inode *, sector_t, nilfs_sector_t);
+int nilfs_gccache_add_data(struct inode *, sector_t, sector_t, __u64);
+int nilfs_gccache_add_node(struct inode *, sector_t, __u64);
 int nilfs_init_gcinode(struct the_nilfs *);
 void nilfs_destroy_gcinode(struct the_nilfs *);
 void nilfs_clear_gcinode(struct inode *);
@@ -339,7 +339,7 @@ static inline void nilfs_cancel_file_dirty(struct inode *inode)
  */
 static inline loff_t nilfs_btree_max_bits(void)  /* interim definition */
 {
-	return sizeof(nilfs_sector_t) * 8 /* CHAR_BIT */;
+	return sizeof(__u64 /* vblocknr */) * 8 /* CHAR_BIT */;
 }
 
 /* super.c */

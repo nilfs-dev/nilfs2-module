@@ -58,12 +58,11 @@ enum {
 
 /* work structure for recovery */
 struct nilfs_recovery_block {
-	ino_t ino;                    /* Inode number of the file that this
-					 block belongs to */
-	sector_t blocknr;             /* block number */
-	nilfs_sector_t vblocknr;      /* virtual block number */
-	nilfs_blkoff_t blkoff;        /* File offset of the data block
-					 (per block) */
+	ino_t ino;		/* Inode number of the file that this block
+				   belongs to */
+	sector_t blocknr;	/* block number */
+	__u64 vblocknr;		/* virtual block number */
+	nilfs_blkoff_t blkoff;	/* File offset of the data block (per block) */
 	struct list_head list;
 };
 

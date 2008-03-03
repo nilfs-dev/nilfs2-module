@@ -94,7 +94,7 @@ struct nilfs_persistent_req {
 	struct buffer_head *pr_bitmap_bh;
 	struct buffer_head *pr_entry_bh;
 	union {
-		nilfs_sector_t pr_vblocknr;
+		__u64	pr_vblocknr;
 		ino_t	pr_ino;
 		__u64	pr_nslot;	/* for clear both vblocknr and ino */
 	} nr;

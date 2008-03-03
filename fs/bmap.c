@@ -662,8 +662,7 @@ static void nilfs_bmap_abort_end_v(struct nilfs_bmap *bmap,
 	nilfs_dat_abort_end(dat, &req->bpr_req);
 }
 
-int nilfs_bmap_move_v(const struct nilfs_bmap *bmap,
-		      nilfs_sector_t vblocknr,
+int nilfs_bmap_move_v(const struct nilfs_bmap *bmap, __u64 vblocknr,
 		      sector_t blocknr)
 {
 	struct the_nilfs *nilfs;
@@ -674,8 +673,7 @@ int nilfs_bmap_move_v(const struct nilfs_bmap *bmap,
 	return nilfs_dat_move(dat, vblocknr, blocknr);
 }
 
-int nilfs_bmap_mark_dirty(const struct nilfs_bmap *bmap,
-			  nilfs_sector_t vblocknr)
+int nilfs_bmap_mark_dirty(const struct nilfs_bmap *bmap, __u64 vblocknr)
 {
 	struct the_nilfs *nilfs;
 	struct inode *dat;

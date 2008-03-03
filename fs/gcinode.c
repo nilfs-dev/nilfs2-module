@@ -63,9 +63,8 @@ static struct address_space_operations def_gcinode_aops = {
  *
  * Note: pages should be removed by truncate_inode_pages().
  */
-int
-nilfs_gccache_add_data(struct inode *inode, sector_t offset,
-		       sector_t pbn, nilfs_sector_t vbn)
+int nilfs_gccache_add_data(struct inode *inode, sector_t offset, sector_t pbn,
+			   __u64 vbn)
 {
 	struct page *page = NULL;
 	struct buffer_head *bh;
@@ -139,8 +138,7 @@ failed:
  *
  * Note: pages should be removed by nilfs_btnode_delete_all().
  */
-int nilfs_gccache_add_node(struct inode *inode, sector_t pbn,
-			   nilfs_sector_t vbn)
+int nilfs_gccache_add_node(struct inode *inode, sector_t pbn, __u64 vbn)
 {
 	struct nilfs_btnode_cache *bc = &NILFS_I(inode)->i_btnode_cache;
 	struct buffer_head *bh;

@@ -43,8 +43,8 @@ struct nilfs_btnode_cache {
 };
 
 struct nilfs_btnode_chkey_ctxt {
-	nilfs_sector_t oldkey;
-	nilfs_sector_t newkey;
+	__u64 oldkey;
+	__u64 newkey;
 	struct buffer_head *bh;
 	struct buffer_head *newbh;
 };
@@ -58,7 +58,7 @@ nilfs_btnode_cache_init_once(struct nilfs_btnode_cache *btnc)
 
 void nilfs_btnode_cache_clear(struct nilfs_btnode_cache *);
 
-int __nilfs_btnode_get(struct nilfs_btnode_cache *, nilfs_sector_t, sector_t,
+int __nilfs_btnode_get(struct nilfs_btnode_cache *, __u64, sector_t,
 		       struct buffer_head **, int);
 void nilfs_btnode_delete(struct buffer_head *);
 

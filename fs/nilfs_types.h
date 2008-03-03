@@ -28,7 +28,6 @@
 
 #include <linux/types.h>
 
-typedef __u64 nilfs_sector_t;
 typedef sector_t nilfs_blkoff_t;       /* file block offset (interim type)
 					  As a similar type, linux-2.6.17 added
 					  blkcnt_t for inode's block count */

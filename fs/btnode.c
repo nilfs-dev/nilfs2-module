@@ -235,9 +235,9 @@ out_free:
 }
 
 /* page must be locked by caller */
-int __nilfs_btnode_get(struct nilfs_btnode_cache *btnc,
-		       nilfs_sector_t blocknr, sector_t pblocknr,
-		       struct buffer_head **result, int newblk)
+int __nilfs_btnode_get(struct nilfs_btnode_cache *btnc, __u64 blocknr,
+		       sector_t pblocknr, struct buffer_head **result,
+		       int newblk)
 {
 	struct page *page = NULL;
 	struct buffer_head *bh = NULL;
@@ -571,8 +571,7 @@ int nilfs_btnode_prepare_change_key(struct nilfs_btnode_cache *btnc,
 	int err;
 	struct buffer_head *obh, *nbh;
 	struct inode *inode = BTNC_I(btnc);
-	nilfs_sector_t oldkey = ctxt->oldkey;
-	nilfs_sector_t newkey = ctxt->newkey;
+	__u64 oldkey = ctxt->oldkey, newkey = ctxt->newkey;
 
 	if (oldkey == newkey) {
 		btnode_debug(3, "oldkey==newkey(%llu).\n",
@@ -669,8 +668,7 @@ void nilfs_btnode_commit_change_key(struct nilfs_btnode_cache *btnc,
 				    struct nilfs_btnode_chkey_ctxt *ctxt)
 {
 	struct buffer_head *obh, *nbh;
-	nilfs_sector_t oldkey = ctxt->oldkey;
-	nilfs_sector_t newkey = ctxt->newkey;
+	__u64 oldkey = ctxt->oldkey, newkey = ctxt->newkey;
 	struct page *opage;
 
 	if (oldkey == newkey) {
@@ -739,8 +737,7 @@ void nilfs_btnode_abort_change_key(struct nilfs_btnode_cache *btnc,
 				   struct nilfs_btnode_chkey_ctxt *ctxt)
 {
 	struct buffer_head *nbh;
-	nilfs_sector_t oldkey = ctxt->oldkey;
-	nilfs_sector_t newkey = ctxt->newkey;
+	__u64 oldkey = ctxt->oldkey, newkey = ctxt->newkey;
 
 	if (oldkey == newkey) {
 		btnode_debug(3, "oldkey==newkey(%llu).\n",
