@@ -75,7 +75,7 @@ nilfs_dat_group_offset(const struct inode *dat, __u64 vblocknr)
 	return do_div(vblocknr, nilfs_dat_entries_per_group(dat));
 }
 
-static inline nilfs_gdno_t
+static inline unsigned long
 nilfs_dat_desc_block(const struct inode *dat, nilfs_bgno_t group)
 {
 	sector_div(group, nilfs_dat_groups_per_desc_block(dat));
