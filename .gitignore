@@ -23,6 +23,7 @@ tags
 TAGS
 !.gitignore
 Module.symvers
+modules.order
 
 # CVS
 CVS

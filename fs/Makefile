@@ -93,6 +93,7 @@ unload:
 
 clean:
 	rm -f *.mod.c *.mod *.o *.ko .*.cmd .*.flags *.lst *~ .#*
+	rm -f modules.order Module.symvers
 	rm -rf .tmp_versions .$(obj-m:.o=)*
 
 endif
