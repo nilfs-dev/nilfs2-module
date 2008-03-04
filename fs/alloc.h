@@ -74,7 +74,7 @@ nilfs_persistent_group_desc_blkoff(struct inode *inode, unsigned long group)
 static inline unsigned long
 nilfs_persistent_group_bitmap_blkoff(struct inode *inode, unsigned long group)
 {
-	unsigned long group_offset =
+	unsigned long long group_offset =
 		group / nilfs_persistent_group_descs_per_block(inode);
 
 	return nilfs_persistent_group_desc_blkoff(inode, group) + 1 +
