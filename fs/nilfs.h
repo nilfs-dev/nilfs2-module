@@ -284,20 +284,7 @@ int nilfs_init_gcdat_inode(struct the_nilfs *);
 void nilfs_commit_gcdat_inode(struct the_nilfs *);
 void nilfs_clear_gcdat_inode(struct the_nilfs *);
 
-/*
- * Temporal definitions required for compiling
- */
-static inline loff_t nilfs_btree_max_bits(void)  /* interim definition */
-{
-	return sizeof(__u64 /* vblocknr */) * 8 /* CHAR_BIT */;
-}
-
 /* super.c */
-static inline loff_t nilfs_max_file_blkbits(void)
-{
-	return sizeof(unsigned long /* block offset */) * 8 /* CHAR_BIT */;
-}
-
 static inline int nilfs_doing_gc(void)
 {
 	return nilfs_test_transaction_flag(NILFS_TI_GC);

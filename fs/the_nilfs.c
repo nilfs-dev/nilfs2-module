@@ -290,15 +290,14 @@ int load_nilfs(struct the_nilfs *nilfs, struct nilfs_sb_info *sbi)
 	return err;
 }
 
-static loff_t nilfs_max_size(unsigned int bits)
+static unsigned long long nilfs_max_size(unsigned int blkbits)
 {
-	loff_t res;
-	int max_bits = bits + min((loff_t)nilfs_btree_max_bits(),
-				  nilfs_max_file_blkbits());
-	if (max_bits > sizeof(loff_t) * 8 /* CHAR_BITS */)
-		res = ~((loff_t) 0);
-	else
-		res = ((loff_t)1 << max_bits);
+	unsigned int max_bits;
+	unsigned long long res = MAX_LFS_FILESIZE; /* page cache limit */
+
+	max_bits = blkbits + NILFS_BMAP_KEY_BIT; /* bmap size limit */
+	if (max_bits < 64)
+		res = min_t(unsigned long long, res, (1ULL << max_bits) - 1);
 	return res;
 }
 

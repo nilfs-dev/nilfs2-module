@@ -125,6 +125,7 @@ struct nilfs_bmap_ptr_operations {
 
 #define NILFS_BMAP_SIZE		(NILFS_INODE_BMAP_SIZE * sizeof(__le64))
 #define NILFS_BMAP_CHAR_BIT	8	/* number of bits in char */
+#define NILFS_BMAP_KEY_BIT	(sizeof(unsigned long) * NILFS_BMAP_CHAR_BIT)
 #define NILFS_BMAP_NEW_PTR_INIT	\
 	(1UL << (sizeof(unsigned long) * NILFS_BMAP_CHAR_BIT - 1))
 
