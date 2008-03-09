@@ -30,16 +30,6 @@
 #include "page.h"
 #include "seglist.h"
 
-#ifdef NILFS_SR_BARRIER
-#define CHECK_PAYLOAD_ON_SR_SEARCH   0
-#define CHECK_HEADER_AND_TRAILER     1  /* Ensure completeness of each segment
-					   by checking a segment summary and
-					   a super root block. */
-#else
-#define CHECK_PAYLOAD_ON_SR_SEARCH   1  /* The segment is checked fully */
-#define CHECK_HEADER_AND_TRAILER     0
-#endif
-
 
 /*
  * Segment check result

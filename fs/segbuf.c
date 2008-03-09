@@ -441,10 +441,6 @@ int nilfs_segbuf_write(struct nilfs_segment_buffer *segbuf,
 
 	seg_debug(3, "submitting normal blocks (index=%d)\n", wi->end);
 	list_for_each_entry(bh, &segbuf->sb_payload_buffers, b_assoc_buffers) {
-#ifdef NILFS_SR_BARRIER
-		if (bh == wi->bh_sr)
-			break;
-#endif
 		res = nilfs_submit_bh(wi, bh, rw);
 		if (unlikely(res))
 			goto failed_bio;
@@ -455,47 +451,12 @@ int nilfs_segbuf_write(struct nilfs_segment_buffer *segbuf,
 		 * Last BIO is always sent through the following
 		 * submission.
 		 */
-#ifdef NILFS_SR_BARRIER
-		if (!wi->bh_sr)
-#endif
-			rw |= (1 << BIO_RW_SYNC);
-		res = nilfs_submit_seg_bio(wi, rw);
-		if (unlikely(res))
-			goto failed_bio;
-	}
-
-#ifdef NILFS_SR_BARRIER
-	bh = wi->bh_sr;
-	if (bh != NULL) {
-		struct nilfs_sb_info *sbi = NILFS_SB(wi->sb);
-
-		seg_debug(3, "submitting super root block (index=%d)\n",
-			  wi->end);
-
 		rw |= (1 << BIO_RW_SYNC);
-		if (nilfs_test_opt(sbi, BARRIER))
-			rw |= (1 << BIO_RW_BARRIER);
- retry_sr:
-		BUG_ON(wi->bio != NULL);
-		wi->nr_vecs = 1;
-		res = nilfs_submit_bh(wi, bh, 0);
-		if (unlikely(res))
-			goto failed_bio;
-
 		res = nilfs_submit_seg_bio(wi, rw);
-		if (res == -EOPNOTSUPP && (rw & (1 << BIO_RW_BARRIER))) {
-			nilfs_warning(wi->sb, __func__,
-				      "barrier-based sync failed. "
-				      "disabling barriers\n");
-			nilfs_clear_opt(sbi, BARRIER);
-			wi->end--;
-			rw &= ~(1 << BIO_RW_BARRIER);
-			goto retry_sr;
-		}
 		if (unlikely(res))
 			goto failed_bio;
 	}
-#endif /* NILFS_SR_BARRIER */
+
 	res = 0;
  out:
 	seg_debug(1 + !res, "submitted a segment "
