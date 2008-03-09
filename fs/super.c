@@ -272,7 +272,6 @@ int nilfs_sync_super(struct nilfs_sb_info *sbi)
 {
 	struct the_nilfs *nilfs = sbi->s_nilfs;
 	int err;
-#ifdef NILFS_SB_BARRIER
 	int barrier_done = 0;
 
 	if (nilfs_test_opt(sbi, BARRIER)) {
@@ -280,9 +279,7 @@ int nilfs_sync_super(struct nilfs_sb_info *sbi)
 		barrier_done = 1;
 	}
  retry:
-#endif
 	err = sync_dirty_buffer(nilfs->ns_sbh);
-#ifdef NILFS_SB_BARRIER
 	if (err == -EOPNOTSUPP && barrier_done) {
 		nilfs_warning(sbi->s_super, __func__,
 			      "barrier-based sync failed. "
@@ -292,7 +289,6 @@ int nilfs_sync_super(struct nilfs_sb_info *sbi)
 		clear_buffer_ordered(nilfs->ns_sbh);
 		goto retry;
 	}
-#endif
 	if (unlikely(err))
 		printk(KERN_ERR
 		       "NILFS: unable to write superblock (err=%d)\n", err);
