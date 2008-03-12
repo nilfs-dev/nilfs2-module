@@ -2,7 +2,7 @@
  * kern_feature.h - Kernel-version dependent features definition for NILFS
  *                  (would be removed in a future release)
  *
- * Copyright (C) 2006, 2007 Nippon Telegraph and Telephone Corporation.
+ * Copyright (C) 2006-2008 Nippon Telegraph and Telephone Corporation.
  *
  * This file is part of NILFS.
  *

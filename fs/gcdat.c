@@ -1,7 +1,7 @@
 /*
  * gcdat.c - NILFS shadow DAT inode for GC
  *
- * Copyright (C) 2005-2007 Nippon Telegraph and Telephone Corporation.
+ * Copyright (C) 2005-2008 Nippon Telegraph and Telephone Corporation.
  *
  * This file is part of NILFS.
  *

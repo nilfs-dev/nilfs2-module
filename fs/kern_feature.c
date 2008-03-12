@@ -2,7 +2,7 @@
  * kern_feature.c - kernel features to support past versions
  *                  (would be removed in a future release)
  *
- * Copyright (C) 2007 Nippon Telegraph and Telephone Corporation.
+ * Copyright (C) 2007, 2008 Nippon Telegraph and Telephone Corporation.
  *
  * This file is part of NILFS.
  *

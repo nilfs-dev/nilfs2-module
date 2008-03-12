@@ -2,7 +2,7 @@
  * seglist.h - expediential structure and routines to handle list of segments
  *             (would be removed in a future release)
  *
- * Copyright (C) 2005-2007 Nippon Telegraph and Telephone Corporation.
+ * Copyright (C) 2005-2008 Nippon Telegraph and Telephone Corporation.
  *
  * This file is part of NILFS.
  *

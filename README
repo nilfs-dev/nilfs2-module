@@ -1,5 +1,5 @@
 NILFS - A New Implementation of a Log-structured File System for Linux
-========================================================================
+	========================================================================
 
 What is NILFS?
 --------------
@@ -184,4 +184,4 @@ Good luck!
 
 -- The NILFS Development Team, NTT Laboratories
 
-Copyright (C) 2007 Nippon Telegraph and Telephone Corporation.
+Copyright (C) 2007, 2008 Nippon Telegraph and Telephone Corporation.
