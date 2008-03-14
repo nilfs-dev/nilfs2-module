@@ -48,6 +48,10 @@
 #include <linux/vfs.h>
 #include <linux/writeback.h>
 #include <linux/kobject.h>
+#include "kern_feature.h"
+#if HAVE_EXPORT_FS_H
+#include <linux/exportfs.h>
+#endif
 #include "nilfs.h"
 #include "mdt.h"
 #include "page.h"
@@ -568,6 +572,64 @@ static struct super_operations nilfs_sops = {
 	/* .show_options */
 };
 
+#if NEED_FH_TO_DENTRY
+static struct inode *
+nilfs_nfs_get_inode(struct super_block *sb, u64 ino, u32 generation)
+{
+	struct inode *inode;
+
+	if (ino < NILFS_FIRST_INO(sb) && ino != NILFS_ROOT_INO &&
+	    ino != NILFS_SKETCH_INO)
+		return ERR_PTR(-ESTALE);
+
+#if NEED_READ_INODE
+	inode = iget(sb, ino);
+	if (!inode)
+		return ERR_PTR(-ENOMEM);
+	if (is_bad_inode(inode)) {
+		iput(inode);
+		return ERR_PTR(-ESTALE);
+	}
+#else
+	inode = nilfs_iget(sb, ino);
+	if (IS_ERR(inode))
+		return ERR_CAST(inode);
+#endif
+	if (generation && inode->i_generation != generation) {
+		iput(inode);
+		return ERR_PTR(-ESTALE);
+	}
+
+	return inode;
+}
+
+static struct dentry *
+nilfs_fh_to_dentry(struct super_block *sb, struct fid *fid, int fh_len,
+		   int fh_type)
+{
+	return generic_fh_to_dentry(sb, fid, fh_len, fh_type,
+				    nilfs_nfs_get_inode);
+}
+
+static struct dentry *
+nilfs_fh_to_parent(struct super_block *sb, struct fid *fid, int fh_len,
+		   int fh_type)
+{
+	return generic_fh_to_parent(sb, fid, fh_len, fh_type,
+				    nilfs_nfs_get_inode);
+}
+
+static struct export_operations nilfs_export_ops = {
+	.fh_to_dentry = nilfs_fh_to_dentry,
+	.fh_to_parent = nilfs_fh_to_parent,
+	.get_parent = nilfs_get_parent,
+};
+#else /* NEED_FH_TO_DENTRY */
+static struct export_operations nilfs_export_ops = {
+	.get_parent = nilfs_get_parent,
+};
+#endif /* NEED_FH_TO_DENTRY */
+
 enum {
 	Opt_err_cont, Opt_err_panic, Opt_err_ro,
 	Opt_barrier, Opt_snapshot, Opt_order,
@@ -851,7 +913,7 @@ nilfs_fill_super(struct super_block *sb, void *data, int silent,
 	spin_lock_init(&sbi->s_next_gen_lock);
 
 	sb->s_op = &nilfs_sops;
-	sb->s_export_op = NULL; /* should be set to &nilfs_export_ops */
+	sb->s_export_op = &nilfs_export_ops;
 	sb->s_root = NULL;
 
 	if (!nilfs_loaded(nilfs)) {

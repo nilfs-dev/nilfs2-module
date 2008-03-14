@@ -57,6 +57,14 @@
 	(LINUX_VERSION_CODE < KERNEL_VERSION(2, 6, 25))
 #endif
 /*
+ * Two methods, fh_to_entry and fh_to_parent were added to export_operations
+ * in linux-2.6.24.
+ */
+#ifndef NEED_FH_TO_DENTRY
+# define NEED_FH_TO_DENTRY \
+	(LINUX_VERSION_CODE > KERNEL_VERSION(2, 6, 23))
+#endif
+/*
  * write_begin/write_end which are the replacement of
  * prepare_write/commit_write was introduced in linux-2.6.24.
  */
@@ -89,6 +97,13 @@
 #ifndef NEED_OLD_INIT_ONCE_ARGS
 # define NEED_OLD_INIT_ONCE_ARGS \
 	(LINUX_VERSION_CODE < KERNEL_VERSION(2, 6, 24))
+#endif
+/*
+ * Declarations for exportfs was moved to exportfs.h at linux-2.6.23.
+ */
+#ifndef HAVE_EXPORT_FS_H
+# define HAVE_EXPORT_FS_H \
+	(LINUX_VERSION_CODE > KERNEL_VERSION(2, 6, 22))
 #endif
 /*
  * radix_tree_preload() became available from kernel modules
