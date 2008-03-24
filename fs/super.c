@@ -403,8 +403,6 @@ static int nilfs_sync_fs(struct super_block *sb, int wait)
 	return err;
 }
 
-#define BIT_FULL(flags, mask)     (((flags) & (mask)) == (mask))
-
 int nilfs_attach_checkpoint(struct nilfs_sb_info *sbi, __u64 cno)
 {
 	struct the_nilfs *nilfs = sbi->s_nilfs;
