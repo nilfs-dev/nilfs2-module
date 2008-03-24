@@ -332,13 +332,6 @@ static void nilfs_put_super(struct super_block *sb)
 	struct the_nilfs *nilfs = sbi->s_nilfs;
 
 	nilfs_debug(1, "started\n");
-	/*
-	 * Nilfs_free_free_inode_list() may dirt the inode b-tree.
-	 * So, we call it before the last segment construction.
-	 * Although the inode_list is needed by nilfs_free_inode(),
-	 * we can safely dispose it here because no files are dirty
-	 * and no inodes will be freed in the last segment construction.
-	 */
 	nilfs_debug(2, "Deactivating segment constructor\n");
 	nilfs_detach_segment_constructor(sbi);
 
