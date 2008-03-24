@@ -266,7 +266,8 @@ void nilfs_update_last_segment(struct nilfs_sb_info *sbi, int update_cno)
 	sbp->s_last_cno = cpu_to_le64(nilfs->ns_last_cno);
 	spin_unlock(&nilfs->ns_last_segment_lock);
 
-	sbi->s_super->s_dirt = 1;
+	sbi->s_super->s_dirt = 1; /* must be set if delaying the call of
+				     nilfs_commit_super() */
 }
 
 int nilfs_sync_super(struct nilfs_sb_info *sbi)
@@ -317,9 +318,13 @@ int nilfs_commit_super(struct nilfs_sb_info *sbi, int sync)
 	}
 	sbp->s_free_blocks_count = cpu_to_le64(nfreeblocks);
 	sbp->s_wtime = cpu_to_le64(get_seconds());
+	sbp->s_sum = 0;
+	sbp->s_sum = nilfs_crc32(nilfs->ns_crc_seed, (unsigned char *)sbp,
+				 le16_to_cpu(sbp->s_bytes));
 	set_buffer_dirty(nilfs->ns_sbh);
 	if (sync)
 		err = nilfs_sync_super(sbi);
+
 	sbi->s_super->s_dirt = 0;
  failed:
 	return err;
