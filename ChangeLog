@@ -1,3 +1,26 @@
+nilfs-2.0.1  Mon Mar 24, 2008 JST
+
+	* add nfs support.
+	* fix arithmetic range overflow of alloc.h.
+	* fix gcc-4.2 warnings on 64-bit machines.
+	* make many changes to avoid scripts/checkpatch.pl errors and warnings
+	  due to violations of the Linux kernel coding style.  Most of them
+	  are lexical adjustments, but include some influential changes such
+	  as removal of typedefs.
+	* prevent premature writeback of super block.
+	* incorporate changes on nilfs_fs.h to prepare for future extensions.
+	* adjust mount-time revision check of disk format not to break
+	  forward compatibility among NILFS versions with a same major
+	  revision.
+	* extend the period of copyright notice to include 2008.
+	* use kthread_run() instead of kernel_thread().
+	* remove unused declarations and needless functions.
+	* integrate symlink.c into namei.c.
+	* remove expanded rcs keywords.
+	* remove comments to overwrite emacs mode.
+	* remove C99 style comments.
+	* add .gitignore.
+
 nilfs-2.0.0  Mon Feb 18, 2008 JST
 
 	* Removed fastcall specifiers to fix a compile-time error on kernel
