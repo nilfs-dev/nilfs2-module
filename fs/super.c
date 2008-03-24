@@ -267,7 +267,6 @@ void nilfs_update_last_segment(struct nilfs_sb_info *sbi, int update_cno)
 	spin_unlock(&nilfs->ns_last_segment_lock);
 
 	sbi->s_super->s_dirt = 1;
-	set_buffer_dirty(nilfs->ns_sbh);
 }
 
 int nilfs_sync_super(struct nilfs_sb_info *sbi)
