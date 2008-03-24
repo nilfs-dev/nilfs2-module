@@ -303,8 +303,7 @@ static int
 nilfs_store_disk_layout(struct the_nilfs *nilfs, struct super_block *sb,
 			struct nilfs_super_block *sbp)
 {
-	if (le32_to_cpu(sbp->s_rev_level) != NILFS_CURRENT_REV ||
-	    le16_to_cpu(sbp->s_minor_rev_level) != NILFS_MINOR_REV) {
+	if (le32_to_cpu(sbp->s_rev_level) != NILFS_CURRENT_REV) {
 		printk(KERN_ERR "NILFS: revision mismatch "
 		       "(superblock rev.=%d.%d, current rev.=%d.%d). "
 		       "Please check the version of mkfs.nilfs.\n",
