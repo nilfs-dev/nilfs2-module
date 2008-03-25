@@ -74,13 +74,13 @@ nilfs_dat_group_offset(const struct inode *dat, __u64 vblocknr)
 static inline unsigned long
 nilfs_dat_desc_block(const struct inode *dat, unsigned long group)
 {
-	return group % nilfs_dat_groups_per_desc_block(dat);
+	return group / nilfs_dat_groups_per_desc_block(dat);
 }
 
 static inline unsigned long
 nilfs_dat_desc_offset(const struct inode *dat, unsigned long group)
 {
-	return group / nilfs_dat_groups_per_desc_block(dat);
+	return group % nilfs_dat_groups_per_desc_block(dat);
 }
 
 static inline unsigned long
