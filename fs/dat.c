@@ -1103,29 +1103,6 @@ int nilfs_dat_translate(struct inode *dat, __u64 vblocknr, sector_t *blocknrp)
 	void *entry_kaddr;
 	int ret;
 
-#if 0
-#ifdef CONFIG_NILFS_DEBUG
-	struct buffer_head *bitmap_bh;
-	void *bitmap_kaddr;
-	unsigned char *bitmap;
-
-	ret = nilfs_dat_get_bitmap_block(dat, nilfs_dat_group(dat, vblocknr),
-					 0, &bitmap_bh);
-	if (ret < 0)
-		return ret;
-	bitmap_kaddr = kmap_atomic(bitmap_bh->b_page, KM_USER0);
-	bitmap = nilfs_dat_block_get_bitmap(dat, bitmap_bh, bitmap_kaddr);
-	if (!nilfs_dat_test_bit(nilfs_dat_group_offset(dat, vblocknr),
-				bitmap)) {
-		printk(KERN_CRIT
-		       "%s: virtual block number %llu not allocated\n",
-		       __func__, (unsigned long long)vblocknr);
-		BUG();
-	}
-	kunmap_atomic(bitmap_kaddr, KM_USER0);
-	brelse(bitmap_bh);
-#endif	/* CONFIG_NILFS_DEBUG */
-#endif
 	dat_debug(2, "called (vblocknr=%llu)\n", (unsigned long long)vblocknr);
 	ret = nilfs_dat_get_entry_block(dat, vblocknr, 0, &entry_bh);
 	if (ret < 0) {
