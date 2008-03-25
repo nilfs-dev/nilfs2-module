@@ -1,3 +1,12 @@
+nilfs-2.0.2  Wed Mar 26, 2008 JST
+
+	* fix mount failure of nilfs-2.0.1 for 2.0.0 filesystem.
+	  Thanks to Adrian Ulrich for his quick report.
+	* fix another mis conversion of sector_div() in alloc.[ch].
+	* replace PAGE_DEBUG() + BUG() pairs with PAGE_BUG() that prints
+	  some more information on the specified page also for no debug
+	  version.
+
 nilfs-2.0.1  Mon Mar 24, 2008 JST
 
 	* add nfs support.
