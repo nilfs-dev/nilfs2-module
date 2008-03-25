@@ -68,13 +68,11 @@ nilfs_mdt_insert_new_block(struct inode *inode, unsigned long block,
 	/* set_buffer_new(bh); */
 	bh->b_blocknr = 0;
 
-	ret = nilfs_bmap_insert(
-		ii->i_bmap, (unsigned long)block, (unsigned long)bh);
+	ret = nilfs_bmap_insert(ii->i_bmap, block, (unsigned long)bh);
 
 	mdt_debug(3, "nilfs_bmap_insert() returned %d"
-		  " (blkoff=%llu, blocknr=%llu)\n",
-		  ret, (unsigned long long)block,
-		  (unsigned long long)bh->b_blocknr);
+		  " (blkoff=%lu, blocknr=%llu)\n",
+		  ret, block, (unsigned long long)bh->b_blocknr);
 	if (unlikely(ret))
 		return ret;
 
@@ -121,8 +119,8 @@ nilfs_mdt_get_page_block(struct inode *inode, unsigned long blkoff)
 						   blkbits);
 			if (buffer_uptodate(obh)) {
 				mdt_debug(3, "hit orig cache. (ino=%lu, "
-					  "blkoff=%llu)\n", inode->i_ino,
-					  (unsigned long long)blkoff);
+					  "blkoff=%lu)\n", inode->i_ino,
+					  blkoff);
 				nilfs_copy_buffer(obh, bh);
 				if (buffer_dirty(obh)) {
 					/* Since all dirty buffers are copied
@@ -179,8 +177,7 @@ int nilfs_mdt_create_block(struct inode *inode, unsigned long block,
 	struct buffer_head *bh;
 	int err;
 
-	mdt_debug(3, "called (ino=%lu, blkoff=%llu)\n",
-		  inode->i_ino, (unsigned long long)block);
+	mdt_debug(3, "called (ino=%lu, blkoff=%lu)\n", inode->i_ino, block);
 
 	if (!sb) {
 		sbi = nilfs_get_writer(nilfs);
@@ -259,12 +256,11 @@ nilfs_mdt_submit_block(struct inode *inode, unsigned long blkoff,
 		goto out;
 	}
 	if (!buffer_mapped(bh)) { /* unused buffer */
-		ret = nilfs_bmap_lookup(NILFS_I(inode)->i_bmap,
-					(unsigned long)blkoff, &blknum);
-		mdt_debug(3, "lookup: blkoff=%llu -> blocknr=%lu "
+		ret = nilfs_bmap_lookup(NILFS_I(inode)->i_bmap, blkoff,
+					&blknum);
+		mdt_debug(3, "lookup: blkoff=%lu -> blocknr=%lu "
 			  "(ret=%d, ino=%lu)\n",
-			  (unsigned long long)blkoff, blknum, ret,
-			  inode->i_ino);
+			  blkoff, blknum, ret, inode->i_ino);
 		if (unlikely(ret)) {
 			unlock_buffer(bh);
 			goto failed_bh;
@@ -319,21 +315,20 @@ int nilfs_mdt_read_block(struct inode *inode, unsigned long block,
 	int i, nr_ra_blocks = NILFS_MDT_MAX_RA_BLOCKS;
 	int err;
 
-	mdt_debug(3, "called (ino=%lu, blkoff=%llu)\n",
-		  inode->i_ino, (unsigned long long)block);
+	mdt_debug(3, "called (ino=%lu, blkoff=%lu)\n", inode->i_ino, block);
 
 	err = nilfs_mdt_submit_block(inode, block, READ, &first_bh);
 	if (err == -EEXIST) { /* internal code */
-		mdt_debug(3, "hit cache (ino=%lu, blkoff=%llu)\n",
-			  inode->i_ino, (unsigned long long)block);
+		mdt_debug(3, "hit cache (ino=%lu, blkoff=%lu)\n",
+			  inode->i_ino, block);
 		goto out;
 	}
 	if (unlikely(err))
 		goto failed;
 
-	mdt_debug(2, "reading: blocknr=%llu (ino=%lu, blkoff=%llu)\n",
+	mdt_debug(2, "reading: blocknr=%llu (ino=%lu, blkoff=%lu)\n",
 		  (unsigned long long)first_bh->b_blocknr, inode->i_ino,
-		  (unsigned long long)block);
+		  block);
 
 	blkoff = block + 1;
 	for (i = 0; i < nr_ra_blocks; i++, blkoff++) {
@@ -341,14 +336,13 @@ int nilfs_mdt_read_block(struct inode *inode, unsigned long block,
 		if (likely(!err || err == -EEXIST)) {
 			if (!err)
 				mdt_debug(3, "requested readahead "
-					  "(ino=%lu, blkfoff=%llu)\n",
-					  inode->i_ino,
-					  (unsigned long long)blkoff);
+					  "(ino=%lu, blkoff=%lu)\n",
+					  inode->i_ino, blkoff);
 			brelse(bh);
 		} else if (err != -EBUSY) {
 			mdt_debug(3, "abort readahead due to an error "
-				  "(err=%d, ino=%lu, blkfoff=%llu)\n", err,
-				  inode->i_ino, (unsigned long long)blkoff);
+				  "(err=%d, ino=%lu, blkfoff=%lu)\n",
+				  err, inode->i_ino, blkoff);
 			break; /* abort readahead if bmap lookup failed */
 		}
 		if (!buffer_locked(first_bh))
@@ -431,9 +425,8 @@ int nilfs_mdt_delete_block(struct inode *inode, unsigned long block)
 	struct nilfs_inode_info *ii = NILFS_I(inode);
 	int err;
 
-	mdt_debug(3, "called (ino=%lu, blkoff=%llu)\n",
-		  inode->i_ino, (unsigned long long)block);
-	err = nilfs_bmap_delete(ii->i_bmap, (unsigned long)block);
+	mdt_debug(3, "called (ino=%lu, blkoff=%lu)\n", inode->i_ino, block);
+	err = nilfs_bmap_delete(ii->i_bmap, block);
 	if (likely(!err)) {
 		nilfs_mdt_mark_dirty(inode);
 		nilfs_mdt_forget_block(inode, block);
@@ -461,9 +454,8 @@ int nilfs_mdt_truncate_blocks(struct inode *inode, unsigned long block)
 	struct nilfs_inode_info *ii = NILFS_I(inode);
 	int err;
 
-	mdt_debug(3, "called (ino=%lu, blkoff=%llu)\n",
-		  inode->i_ino, (unsigned long long)block);
-	err = nilfs_bmap_truncate(ii->i_bmap, (unsigned long)block);
+	mdt_debug(3, "called (ino=%lu, blkoff=%lu)\n", inode->i_ino, block);
+	err = nilfs_bmap_truncate(ii->i_bmap, block);
 	if (likely(!err)) {
 #if 0  /* XXX: truncation of page cache should be delayed to avoid excessive
 	  page removals and insertions */
@@ -500,8 +492,7 @@ int nilfs_mdt_forget_block(struct inode *inode, unsigned long block)
 	int ret = 0;
 	int still_dirty;
 
-	mdt_debug(3, "called (ino=%lu, blkoff=%llu)\n",
-		  inode->i_ino, (unsigned long long)block);
+	mdt_debug(3, "called (ino=%lu, blkoff=%lu)\n", inode->i_ino, block);
 	page = find_lock_page(inode->i_mapping, index);
 	if (!page)
 		return -ENOENT;
