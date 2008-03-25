@@ -25,7 +25,7 @@
 static inline unsigned long
 nilfs_persistent_desc_offset(struct inode *inode, unsigned long group)
 {
-	return group / nilfs_persistent_group_descs_per_block(inode);
+	return group % nilfs_persistent_group_descs_per_block(inode);
 }
 
 
