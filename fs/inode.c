@@ -252,10 +252,8 @@ static int nilfs_prepare_write(struct file *file, struct page *page,
 	}
 #else
 	brelse(bh);
-	if (unlikely(page->mapping != mapping || page->index != offset)) {
-		PAGE_DEBUG(page, "page was truncated unexpectedly");
-		BUG();
-	}
+	if (unlikely(page->mapping != mapping || page->index != offset))
+		PAGE_BUG(page, "page was truncated unexpectedly");
 #endif
 	if (unlikely(err))
 		return err;

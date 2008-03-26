@@ -93,6 +93,8 @@ extern void nilfs_vinode_debug(const char *, int, struct inode *,
 	nilfs_page_debug(__func__, __LINE__, (page), (m), ## a)
 #define VINODE_DEBUG(inode, m, a...)  \
 	nilfs_vinode_debug(__func__, __LINE__, (inode), (m), ## a)
+#define PAGE_BUG(page, m, a...)  \
+	do { PAGE_DEBUG((page), (m), ## a); BUG(); } while (0)
 
 #define nilfs_dump_page_lru(lru_list, msg)  \
 	do {  \
@@ -112,6 +114,8 @@ extern void nilfs_vinode_debug(const char *, int, struct inode *,
 #define BH_DEBUG(bh, m, a...)  do {} while (0)
 #define PAGE_DEBUG(page, m, a...)  do {} while (0)
 #define VINODE_DEBUG(inode, m, a...)  do {} while (0)
+#define PAGE_BUG(page, m, a...)  nilfs_page_bug(page)
+
 #define nilfs_dump_page_lru(list, msg)  do {} while (0)
 #define nilfs_dump_chained_buffers(head, msg)  do {} while (0)
 #endif /* CONFIG_NILFS_DEBUG */

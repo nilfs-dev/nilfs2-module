@@ -163,14 +163,12 @@ static void nilfs_free_page(struct page *page)
 {
 #ifdef CONFIG_NILFS_DEBUG
 	/* Checks helpful for debugging purpose. */
-	if (unlikely(!list_empty(&page->lru))) {
-		PAGE_DEBUG(page, "page not isolated");
-		BUG();
-	}
-	if (unlikely(page_count(page) != 1)) {
-		PAGE_DEBUG(page, "wrong page count");
-		BUG();
-	}
+	if (unlikely(!list_empty(&page->lru)))
+		PAGE_BUG(page, "page not isolated");
+
+	if (unlikely(page_count(page) != 1))
+		PAGE_BUG(page, "wrong page count");
+
 	if (unlikely(PageDirty(page)))
 		PAGE_DEBUG(page, "dirty page");
 #endif
@@ -436,16 +434,14 @@ struct page *nilfs_alloc_buffer_page(struct block_device *bdev, int size,
 void nilfs_free_buffer_page(struct page *page)
 {
 	BUG_ON(!PageLocked(page));
-	if (page->mapping) {
-		PAGE_DEBUG(page, "freeing page with mapping");
-		BUG();
-	}
+	if (page->mapping)
+		PAGE_BUG(page, "freeing page with mapping");
+
 	if (unlikely(!page_has_buffers(page)))
 		PAGE_DEBUG(page, "freeing page without buffers");
-	else if (!try_to_free_buffers(page)) {
-		PAGE_DEBUG(page, "failed to free page");
-		BUG();
-	}
+	else if (!try_to_free_buffers(page))
+		PAGE_BUG(page, "failed to free page");
+
 	nilfs_free_page(page);
 }
 
@@ -616,6 +612,43 @@ unsigned nilfs_page_count_clean_buffers(struct page *page,
 			nc++;
 	}
 	return nc;
+}
+
+void nilfs_page_bug(struct page *page)
+{
+	struct address_space *m;
+	unsigned long ino = 0;
+
+	if (unlikely(!page)) {
+		printk(KERN_CRIT "PAGE_BUG(NULL)\n");
+		BUG();
+	}
+
+	m = page->mapping;
+	if (m) {
+		struct inode *inode = NILFS_AS_I(m);
+		if (inode != NULL)
+			ino = inode->i_ino;
+	}
+	printk(KERN_CRIT "PAGE_BUG(%p): cnt=%d index#=%llu flags=0x%lx "
+	       "mapping=%p ino=%lu",
+	       page, atomic_read(&page->_count),
+	       (unsigned long long)page->index, page->flags, m, ino);
+
+	if (page_has_buffers(page)) {
+		struct buffer_head *bh, *head;
+		int i = 0;
+
+		bh = head = page_buffers(page);
+		do {
+			printk(KERN_CRIT
+			       " BH[%d] %p: cnt=%d block#=%llu state=0x%lx\n",
+			       i++, bh, atomic_read(&bh->b_count),
+			       (unsigned long long)bh->b_blocknr, bh->b_state);
+			bh = bh->b_this_page;
+		} while (bh != head);
+	}
+	BUG();
 }
 
 #if !HAVE_CLEAR_PAGE_DIRTY

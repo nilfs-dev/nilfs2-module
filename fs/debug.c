@@ -699,15 +699,12 @@ int nilfs_releasepage(struct page *page, gfp_t gfp_mask)
 		if (inode->i_sb && !(inode->i_sb->s_flags & MS_ACTIVE))
 			verbose = 1;
 	}
-	if (unlikely(!PagePrivate(page))) {
-		PAGE_DEBUG(page, "no buffers");
-		BUG(); /* releasepage is always called for pages with the
-			  private flag */
-	}
-	if (buffer_nilfs_allocated(page_buffers(page))) {
-		PAGE_DEBUG(page, "nilfs allocated page");
-		BUG();
-	}
+	if (unlikely(!PagePrivate(page)))
+		PAGE_BUG(page, "no buffers");
+
+	if (buffer_nilfs_allocated(page_buffers(page)))
+		PAGE_BUG(page, "nilfs allocated page");
+
 	/*
 	 * Note that non-busy buffer heads may be discarded though the
 	 * try_to_free_buffers() call.  This may happen when the page is not

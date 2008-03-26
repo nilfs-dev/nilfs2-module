@@ -48,10 +48,9 @@ repeat:
 		struct page *page = pages[i], *dpage;
 
 		lock_page(page);
-		if (unlikely(!PageDirty(page))) {
-			PAGE_DEBUG(page, "inconsistent dirty state");
-			BUG();
-		}
+		if (unlikely(!PageDirty(page)))
+			PAGE_BUG(page, "inconsistent dirty state");
+
 		dpage = grab_cache_page(dst, page->index);
 		if (unlikely(!dpage)) {
 			/* No empty page is added to the page cache */
@@ -59,10 +58,9 @@ repeat:
 			unlock_page(page);
 			goto failed;
 		}
-		if (unlikely(!page_has_buffers(page))) {
-			PAGE_DEBUG(page, "found empty page in dat page cache");
-			BUG();
-		}
+		if (unlikely(!page_has_buffers(page)))
+			PAGE_BUG(page, "found empty page in dat page cache");
+
 		nilfs_copy_buffer_page(page, dpage, 1);
 		__set_page_dirty_nobuffers(dpage);
 

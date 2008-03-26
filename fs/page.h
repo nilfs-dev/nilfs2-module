@@ -53,6 +53,8 @@ extern void nilfs_copy_buffer(struct buffer_head *, struct buffer_head *);
 extern int nilfs_page_buffers_clean(struct page *);
 extern unsigned nilfs_page_count_clean_buffers(struct page *, unsigned,
 					       unsigned);
+extern void nilfs_page_bug(struct page *);
+
 #if HAVE_CLEAR_PAGE_DIRTY
 #define __nilfs_clear_page_dirty(page)  test_clear_page_dirty(page)
 #else
