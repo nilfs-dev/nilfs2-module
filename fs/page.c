@@ -631,7 +631,7 @@ void nilfs_page_bug(struct page *page)
 			ino = inode->i_ino;
 	}
 	printk(KERN_CRIT "PAGE_BUG(%p): cnt=%d index#=%llu flags=0x%lx "
-	       "mapping=%p ino=%lu",
+	       "mapping=%p ino=%lu\n",
 	       page, atomic_read(&page->_count),
 	       (unsigned long long)page->index, page->flags, m, ino);
 
