@@ -621,7 +621,7 @@ void nilfs_page_bug(struct page *page)
 
 	if (unlikely(!page)) {
 		printk(KERN_CRIT "PAGE_BUG(NULL)\n");
-		BUG();
+		return;
 	}
 
 	m = page->mapping;
@@ -648,7 +648,6 @@ void nilfs_page_bug(struct page *page)
 			bh = bh->b_this_page;
 		} while (bh != head);
 	}
-	BUG();
 }
 
 #if !HAVE_CLEAR_PAGE_DIRTY

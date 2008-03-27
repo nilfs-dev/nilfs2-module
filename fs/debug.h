@@ -114,7 +114,7 @@ extern void nilfs_vinode_debug(const char *, int, struct inode *,
 #define BH_DEBUG(bh, m, a...)  do {} while (0)
 #define PAGE_DEBUG(page, m, a...)  do {} while (0)
 #define VINODE_DEBUG(inode, m, a...)  do {} while (0)
-#define PAGE_BUG(page, m, a...)  nilfs_page_bug(page)
+#define PAGE_BUG(page, m, a...)  do { nilfs_page_bug(page); BUG(); } while (0)
 
 #define nilfs_dump_page_lru(list, msg)  do {} while (0)
 #define nilfs_dump_chained_buffers(head, msg)  do {} while (0)
