@@ -130,7 +130,6 @@ enum {
  */
 enum {
 	BH_Prepare_Dirty = BH_PrivateStart,
-	BH_NILFS_Freeze,
 	BH_NILFS_Allocated,
 	BH_NILFS_Node,
 	BH_NILFS_Volatile,
@@ -138,8 +137,6 @@ enum {
 
 BUFFER_FNS(Prepare_Dirty, prepare_dirty)	/* prepare-dirty flag */
 TAS_BUFFER_FNS(Prepare_Dirty, prepare_dirty)	/* prepare-dirty flag */
-BUFFER_FNS(NILFS_Freeze, nilfs_freeze)		/* must freeze during
-						   writeback */
 BUFFER_FNS(NILFS_Allocated, nilfs_allocated)	/* nilfs private buffers */
 BUFFER_FNS(NILFS_Node, nilfs_node)		/* nilfs node buffers */
 BUFFER_FNS(NILFS_Volatile, nilfs_volatile)

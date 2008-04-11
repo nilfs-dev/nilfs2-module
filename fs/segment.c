@@ -805,7 +805,7 @@ nilfs_segctor_scan_dirty_data_buffers(struct nilfs_sc_info *sci,
 	struct page *pages[SC_N_PAGEVEC];
 	unsigned int i, n, ndirties;
 	pgoff_t index = 0;
-	int err = 0, can_copy = !S_ISDIR(inode->i_mode);
+	int err = 0;
 
 	seg_debug(3, "called (ino=%lu)\n", inode->i_ino);
  repeat:
@@ -847,17 +847,6 @@ nilfs_segctor_scan_dirty_data_buffers(struct nilfs_sc_info *sci,
 			bh = bh->b_this_page;
 		} while (bh != head);
 
-		if (can_copy) {
-			/* Decide whether to copy buffer or not.
-			   This must be done after a writeback flag
-			   is set on the page */
-			if (page_mapped(page)) {
-				nilfs_set_page_to_be_frozen(page);
-				ClearPageChecked(page);
-			} else if (PageChecked(page)) {
-				nilfs_set_page_to_be_frozen(page);
-			}
-		}
  skip_page:
 		page_cache_release(page);
 	}
@@ -1995,6 +1984,20 @@ nilfs_copy_replace_page_buffers(struct page *page, struct list_head *out)
 	return 0;
 }
 
+static int nilfs_test_page_to_be_frozen(struct page *page)
+{
+	struct address_space *mapping = page->mapping;
+
+	if (!mapping || !mapping->host || S_ISDIR(mapping->host->i_mode))
+		return 0;
+
+	if (page_mapped(page)) {
+		ClearPageChecked(page);
+		return 1;
+	}
+	return PageChecked(page);
+}
+
 static int nilfs_begin_page_io(struct page *page, struct list_head *out)
 {
 	if (!page || PageWriteback(page))
@@ -2004,7 +2007,7 @@ static int nilfs_begin_page_io(struct page *page, struct list_head *out)
 	lock_page(page);
 	nilfs_set_page_writeback(page);
 
-	if (nilfs_page_to_be_frozen(page)) {
+	if (nilfs_test_page_to_be_frozen(page)) {
 		int err = nilfs_copy_replace_page_buffers(page, out);
 		if (unlikely(err))
 			return err;
@@ -2153,10 +2156,9 @@ static void nilfs_clear_copied_buffers(struct list_head *list, int err)
 		} while ((bh = bh->b_this_page) != head);
 
 		if (!err) {
-			if (nilfs_page_buffers_clean(page)) {
-				nilfs_clear_page_to_be_frozen(page);
+			if (nilfs_page_buffers_clean(page))
 				__nilfs_clear_page_dirty(page);
-			}
+
 			ClearPageError(page);
 		} else if (err < 0)
 			SetPageError(page);

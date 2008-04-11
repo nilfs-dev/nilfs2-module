@@ -76,21 +76,6 @@ nilfs_page_get_nth_block(struct page *page, unsigned int count)
 	return bh;
 }
 
-static inline int nilfs_page_to_be_frozen(struct page *page)
-{
-	return buffer_nilfs_freeze(page_buffers(page));
-}
-
-static inline void nilfs_set_page_to_be_frozen(struct page *page)
-{
-	set_buffer_nilfs_freeze(page_buffers(page));
-}
-
-static inline void nilfs_clear_page_to_be_frozen(struct page *page)
-{
-	clear_buffer_nilfs_freeze(page_buffers(page));
-}
-
 static inline void nilfs_set_page_writeback(struct page *page)
 {
 	if (buffer_nilfs_allocated(page_buffers(page))) {
