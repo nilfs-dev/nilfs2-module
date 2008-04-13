@@ -539,7 +539,7 @@ void nilfs_copy_buffer_page(struct page *src, struct page *dst, int copy_dirty)
 	}
 
 	if (copy_dirty)
-		mask |= (1UL << BH_Dirty) | (1UL << BH_Prepare_Dirty);
+		mask |= (1UL << BH_Dirty);
 
 	dbh = dbufs = page_buffers(dst);
 	do {
@@ -569,32 +569,18 @@ void nilfs_copy_buffer_page(struct page *src, struct page *dst, int copy_dirty)
  *
  * nilfs_page_buffers_clean() returns zero if the page has dirty buffers.
  * Otherwise, it returns non-zero value.
- * For the btnode page, the prepare-dirty state flag for written buffers
- * cleared here, and return values are:
- *	00(b): page state unchanged (remains dirty or prepare-dirty)
- *	01(b): page state will be changed from dirty to clean
- *	10(b): page state will be changed from prepare-dirty to dirty
- *	11(b): page state will be changed from prepare-dirty to clean
  */
 int nilfs_page_buffers_clean(struct page *page)
 {
 	struct buffer_head *bh, *head;
-	int d = 0, pd = 0, pc = 0;
 
 	bh = head = page_buffers(page);
 	do {
-		int _d = buffer_dirty(bh), _p = buffer_prepare_dirty(bh);
-		d |= _d;
-		pd |= _p & _d;
-		if (_p & !_d) {
-			/* Note: buffer's prepare_dirty bit is cleared here */
-			clear_buffer_prepare_dirty(bh);
-			pc = 1;
-		}
+		if (buffer_dirty(bh))
+			return 0;
 		bh = bh->b_this_page;
 	} while (bh != head);
-	return (!pd & pc) << NILFS_PAGECACHE_TAG_PDIRTY |
-		!d << PAGECACHE_TAG_DIRTY;
+	return 1;
 }
 
 unsigned nilfs_page_count_clean_buffers(struct page *page,

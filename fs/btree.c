@@ -1722,9 +1722,8 @@ static int nilfs_btree_propagate_p(struct nilfs_btree *btree,
 				   struct buffer_head *bh)
 {
 	while ((++level < nilfs_btree_height(btree) - 1) &&
-	       !buffer_dirty(path[level].bp_bh) &&
-	       !buffer_prepare_dirty(path[level].bp_bh))
-		nilfs_btnode_mark_prepare_dirty(path[level].bp_bh);
+	       !buffer_dirty(path[level].bp_bh))
+		nilfs_btnode_mark_dirty(path[level].bp_bh);
 
 	return 0;
 }
@@ -1815,8 +1814,7 @@ static int nilfs_btree_prepare_propagate_v(struct nilfs_btree *btree,
 			return ret;
 	}
 	while ((++level < nilfs_btree_height(btree) - 1) &&
-	       !buffer_dirty(path[level].bp_bh) &&
-	       !buffer_prepare_dirty(path[level].bp_bh)) {
+	       !buffer_dirty(path[level].bp_bh)) {
 
 		BUG_ON(buffer_nilfs_volatile(path[level].bp_bh));
 		ret = nilfs_btree_prepare_update_v(btree, path, level);
@@ -2008,8 +2006,6 @@ static void nilfs_btree_lookup_dirty_buffers(struct nilfs_bmap *bmap,
 	nilfs_btnode_read_lock(btcache);
 	nilfs_btree_lookup_dirty_buffers_tag(btree, btcache, lists,
 					     PAGECACHE_TAG_DIRTY);
-	nilfs_btree_lookup_dirty_buffers_tag(btree, btcache, lists,
-					     NILFS_PAGECACHE_TAG_PDIRTY);
 	nilfs_btnode_read_unlock(btcache);
 
 	for (level = NILFS_BTREE_LEVEL_NODE_MIN;

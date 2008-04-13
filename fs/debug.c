@@ -324,7 +324,6 @@ static int snprint_bh_state(char *b, int size, struct buffer_head *bh)
 	TEST_BH_STATE(bh, eopnotsupp, ENOTSUPP, b, size, n, len);
 
 	/* nilfs private */
-	TEST_BH_STATE(bh, prepare_dirty, Prepare_Dirty, b, size, n, len);
 	TEST_BH_STATE(bh, nilfs_allocated, Allocated, b, size, n, len);
 	TEST_BH_STATE(bh, nilfs_node, Node, b, size, n, len);
 	TEST_BH_STATE(bh, nilfs_volatile, Volatile, b, size, n, len);
@@ -812,8 +811,6 @@ void nilfs_check_btnode_cache(const char *fname, int line,
 
 	if (tag == PAGECACHE_TAG_DIRTY)
 		page_type = "dirty";
-	else if (tag == NILFS_PAGECACHE_TAG_PDIRTY)
-		page_type = "pdirty";
 	else
 		page_type = "leaking";
 

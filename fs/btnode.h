@@ -32,8 +32,6 @@
 #include "kern_feature.h"
 #include "debug.h"
 
-#define	NILFS_PAGECACHE_TAG_PDIRTY	PAGECACHE_TAG_WRITEBACK
-
 struct nilfs_btnode_cache {
 	struct radix_tree_root page_tree;
 	rwlock_t tree_lock;
@@ -100,15 +98,8 @@ unsigned nilfs_btnode_find_get_pages(struct nilfs_btnode_cache *,
 unsigned nilfs_btnode_find_get_pages_tag(struct nilfs_btnode_cache *,
 					 struct page **, pgoff_t *,
 					 unsigned int, int);
-
-void __nilfs_btnode_mark_dirty(struct buffer_head *, int);
-
-#define nilfs_btnode_mark_dirty(bh) \
-	__nilfs_btnode_mark_dirty(bh, PAGECACHE_TAG_DIRTY)
-#define nilfs_btnode_mark_prepare_dirty(bh) \
-	__nilfs_btnode_mark_dirty(bh, NILFS_PAGECACHE_TAG_PDIRTY)
-
-void nilfs_btnode_page_clear_dirty(struct page *, int);
+void nilfs_btnode_mark_dirty(struct buffer_head *);
+void nilfs_btnode_page_clear_dirty(struct page *);
 int nilfs_btnode_invalidate_page(struct page *, int);
 int nilfs_btnode_prepare_change_key(struct nilfs_btnode_cache *,
 				    struct nilfs_btnode_chkey_ctxt *);
@@ -116,32 +107,10 @@ void nilfs_btnode_commit_change_key(struct nilfs_btnode_cache *,
 				    struct nilfs_btnode_chkey_ctxt *);
 void nilfs_btnode_abort_change_key(struct nilfs_btnode_cache *,
 				   struct nilfs_btnode_chkey_ctxt *);
-int nilfs_btnode_do_copy_dirty_pages(struct nilfs_btnode_cache *,
-				     struct nilfs_btnode_cache *, int);
-void nilfs_btnode_do_clear_dirty_pages(struct nilfs_btnode_cache *, int);
+int nilfs_btnode_copy_dirty_pages(struct nilfs_btnode_cache *,
+				  struct nilfs_btnode_cache *);
+void nilfs_btnode_clear_dirty_pages(struct nilfs_btnode_cache *);
 void nilfs_btnode_copy_cache(struct nilfs_btnode_cache *,
 			     struct nilfs_btnode_cache *);
-
-static inline int
-nilfs_btnode_copy_dirty_pages(struct nilfs_btnode_cache *src,
-			      struct nilfs_btnode_cache *dst)
-{
-	int err;
-
-	err = nilfs_btnode_do_copy_dirty_pages(src, dst, PAGECACHE_TAG_DIRTY);
-	if (unlikely(err))
-		return err;
-
-	err = nilfs_btnode_do_copy_dirty_pages(src, dst,
-					       NILFS_PAGECACHE_TAG_PDIRTY);
-	return err;
-}
-
-static inline void
-nilfs_btnode_clear_dirty_pages(struct nilfs_btnode_cache *btnc)
-{
-	nilfs_btnode_do_clear_dirty_pages(btnc, NILFS_PAGECACHE_TAG_PDIRTY);
-	nilfs_btnode_do_clear_dirty_pages(btnc, PAGECACHE_TAG_DIRTY);
-}
 
 #endif	/* _NILFS_BTNODE_H */

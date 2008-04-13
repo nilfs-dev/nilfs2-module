@@ -129,14 +129,11 @@ enum {
  * Extended buffer state bits
  */
 enum {
-	BH_Prepare_Dirty = BH_PrivateStart,
-	BH_NILFS_Allocated,
+	BH_NILFS_Allocated = BH_PrivateStart,
 	BH_NILFS_Node,
 	BH_NILFS_Volatile,
 };
 
-BUFFER_FNS(Prepare_Dirty, prepare_dirty)	/* prepare-dirty flag */
-TAS_BUFFER_FNS(Prepare_Dirty, prepare_dirty)	/* prepare-dirty flag */
 BUFFER_FNS(NILFS_Allocated, nilfs_allocated)	/* nilfs private buffers */
 BUFFER_FNS(NILFS_Node, nilfs_node)		/* nilfs node buffers */
 BUFFER_FNS(NILFS_Volatile, nilfs_volatile)
@@ -144,28 +141,6 @@ BUFFER_FNS(NILFS_Volatile, nilfs_volatile)
 #define NILFS_BUFFER_INHERENT_BITS  \
 	((1UL << BH_Uptodate) | (1UL << BH_Mapped) | (1UL << BH_NILFS_Node) | \
 	 (1UL << BH_NILFS_Volatile) | (1UL << BH_NILFS_Allocated))
-
-/*
- * State of btnode buffers and pages:
- *    Buffer-dirty:    BH-dirty & !BH-pdirty
- *    Buffer-pdirty:   BH-dirty & BH-pdirty
- *    Page-dirty:      PageFlag-dirty & TAG-dirty
- *    Page-pdirty:     PageFlag-dirty & TAG-pdirty
- *
- *  - The pdirty-page has pdirty-buffers or clean-buffers, and has no
- *    dirty-buffers.
- *  - The dirty-page has at least one dirty buffer.  It can include
- *    pdirty-buffers or clean-buffers.
- */
-static inline int nilfs_btnode_buffer_dirty(struct buffer_head *bh)
-{
-	return buffer_dirty(bh) && !buffer_prepare_dirty(bh);
-}
-
-static inline int nilfs_btnode_buffer_prepare_dirty(struct buffer_head *bh)
-{
-	return buffer_dirty(bh) && buffer_prepare_dirty(bh);
-}
 
 /*
  * debug primitives

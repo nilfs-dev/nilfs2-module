@@ -102,20 +102,11 @@ static inline void nilfs_end_page_writeback(struct page *page)
 		end_page_writeback(page);
 }
 
-/**
- * nilfs_clear_page_dirty - clear dirty bits on page and tag on radix-tree
- * @page: page to be cleared
- * @bits: integer to specify which dirty flag should be cleared:
- *	1 << PAGECACHE_TAG_DIRTY: dirty
- *	1 << NILFS_PAGECACHE_TAG_PDIRTY: prepare dirty
- */
-static inline void nilfs_clear_page_dirty(struct page *page, int bits)
+static inline void nilfs_clear_page_dirty(struct page *page)
 {
-	/*
-	 * Page index must be fixed before calling this function.
-	 */
+	/* Page index must be fixed before calling this function. */
 	if (buffer_nilfs_node(page_buffers(page)))
-		nilfs_btnode_page_clear_dirty(page, bits);
+		nilfs_btnode_page_clear_dirty(page);
 	else
 		__nilfs_clear_page_dirty(page);
 }

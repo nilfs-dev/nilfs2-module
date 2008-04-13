@@ -198,10 +198,7 @@ repeat:
 						     "for index %lu\n",
 						     opage, index);
 					lock_page(opage);
-					/*
-					 * dirty or pdirty pages do not appear
-					 * here.
-					 */
+					/* Dirty page does not appear here */
 					BUG_ON(PageDirty(opage));
 					nilfs_copy_buffer_page(opage, page, 0);
 					unlock_page(opage);
@@ -305,103 +302,52 @@ out_nopage:
 }
 
 static void __nilfs_btnode_set_page_dirty(struct nilfs_btnode_cache *btnc,
-					  struct page *page, int tag,
-					  int upgrade_tag)
+					  struct page *page)
+
 {
-	if (!TestSetPageDirty(page)) {
-		/* set page-dirty or page-pdirty for a clean page */
-		nilfs_btnode_write_lock(btnc);
-		radix_tree_tag_set(&btnc->page_tree, page->index, tag);
-		nilfs_btnode_write_unlock(btnc);
-	} else if (upgrade_tag) {
-		/* upgrade page dirty state from page-dirty to page-pdirty */
-		nilfs_btnode_write_lock(btnc);
-		radix_tree_tag_clear(&btnc->page_tree, page->index,
-				     NILFS_PAGECACHE_TAG_PDIRTY);
-		radix_tree_tag_set(&btnc->page_tree, page->index,
-				   PAGECACHE_TAG_DIRTY);
-		nilfs_btnode_write_unlock(btnc);
-	}
+	if (TestSetPageDirty(page))
+		return;
+	nilfs_btnode_write_lock(btnc);
+	radix_tree_tag_set(&btnc->page_tree, page->index, PAGECACHE_TAG_DIRTY);
+	nilfs_btnode_write_unlock(btnc);
 }
 
 /**
- * __nilfs_btnode_mark_dirty() - mark buffer dirty and set page state
+ * nilfs_btnode_mark_dirty() - mark buffer dirty and set page state
  * @bh: buffer head
- * @tag: dirty state to be set
  *
- * The caller must check state of buffer head @bh previously.  Although
- * the page dirty state is automatically upgraded from pdirty to dirty,
- * the transition from buffer-pdirty to buffer-dirty is *not* supported.
- *
- * To set buffer-dirty, the caller must confirm @bh is not dirty.
- * To set buffer-pdirty, @bh must not be dirty nor pdirty.
+ * The caller must check state of buffer head @bh previously.
  */
-void __nilfs_btnode_mark_dirty(struct buffer_head *bh, int tag)
+void nilfs_btnode_mark_dirty(struct buffer_head *bh)
 {
-	struct buffer_head *b;
 	struct page *page = bh->b_page;
-	struct nilfs_btnode_cache *btnc;
-	int upgrade_tag = 0;
 
 	lock_page(page);
-	if (test_set_buffer_dirty(bh))
-		goto out_unlock;
-	btnode_debug(3, "marked dirty on bh %p (tag=%d)\n", bh, tag);
-	if (tag == NILFS_PAGECACHE_TAG_PDIRTY &&
-	    test_set_buffer_prepare_dirty(bh))
-		goto out_unlock;
-
-	if (tag == PAGECACHE_TAG_DIRTY && PageDirty(page)) {
-		/* check whether the rest of the buffers are not dirty */
-		b = bh;
-		while ((b = b->b_this_page) != bh)
-			if (nilfs_btnode_buffer_dirty(b))
-				goto found_dirty_buffer;
-		upgrade_tag = 1;
+	if (!test_set_buffer_dirty(bh)) {
+		btnode_debug(3, "marked dirty on bh %p\n", bh);
+		__nilfs_btnode_set_page_dirty(PAGE_BTNC(page), page);
 	}
-
- found_dirty_buffer:
-	btnc = PAGE_BTNC(page);
-	__nilfs_btnode_set_page_dirty(btnc, page, tag, upgrade_tag);
-
- out_unlock:
 	unlock_page(page);
 }
 
 /**
- * nilfs_btnode_page_clear_dirty - clear dirty bits on page and tag on radix-tree
+ * nilfs_btnode_page_clear_dirty - clear page dirty state
  * @page: page to be cleared
- * @bits: bitmap to specify which dirty flag should be cleared:
- *	00(b): page state unchanged (remains dirty or prepare-dirty)
- *	01(b): page state will be changed from dirty to clean
- *	10(b): page state will be changed from prepare-dirty to dirty
- *	11(b): page state will be changed from prepare-dirty to clean
  */
-void nilfs_btnode_page_clear_dirty(struct page *page, int bits)
+void nilfs_btnode_page_clear_dirty(struct page *page)
 {
 	struct nilfs_btnode_cache *btnc;
-	pgoff_t index;
 
-	BUG_ON(!bits);
-	if (!page->mapping && (bits & 1 << PAGECACHE_TAG_DIRTY)) {
+	if (!page->mapping) {
 		ClearPageDirty(page);
 		return;
 	}
 	btnc = PAGE_BTNC(page);
-
 	nilfs_btnode_write_lock(btnc);
-	index = page_index(page);
-	if (bits & 1 << PAGECACHE_TAG_DIRTY) {
+	if (TestClearPageDirty(page))
 		/* may be called twice for the same page with DIRTY bit */
-		if (TestClearPageDirty(page))
-			radix_tree_tag_clear(&btnc->page_tree, index,
-					     PAGECACHE_TAG_DIRTY);
-	} else /* the PDIRTY bit must be set here */
-		radix_tree_tag_set(&btnc->page_tree, index,
-				   PAGECACHE_TAG_DIRTY);
-	if (bits & 1 << NILFS_PAGECACHE_TAG_PDIRTY)
-		radix_tree_tag_clear(&btnc->page_tree, index,
-				     NILFS_PAGECACHE_TAG_PDIRTY);
+		radix_tree_tag_clear(&btnc->page_tree, page_index(page),
+				     PAGECACHE_TAG_DIRTY);
 	nilfs_btnode_write_unlock(btnc);
 }
 
@@ -500,14 +446,11 @@ static int nilfs_btnode_delete_page(struct page *page, int force)
 static void nilfs_btnode_delete_bh(struct buffer_head *bh)
 {
 	struct page *page = bh->b_page;
-	int bits;
 
 	clear_buffer_dirty(bh);
 	clear_buffer_nilfs_volatile(bh);
-	bits = nilfs_page_buffers_clean(page);
-	if (bits != 0)
-		nilfs_btnode_page_clear_dirty(page, bits);
-
+	if (nilfs_page_buffers_clean(page))
+		nilfs_btnode_page_clear_dirty(page);
 	clear_buffer_uptodate(bh);
 	clear_buffer_mapped(bh);
 	bh->b_blocknr = 0;
@@ -682,18 +625,11 @@ void nilfs_btnode_commit_change_key(struct nilfs_btnode_cache *btnc,
 				 (unsigned long long)newkey);
 
 		lock_page(opage);
-		if (!test_set_buffer_dirty(obh)) {
-			/* virtual block, will be prepare-dirty */
-			if (unlikely(test_set_buffer_prepare_dirty(obh)))
-				BUG();
-			if (unlikely(TestSetPageDirty(opage)))
-				BUG();
-		}
+		if (!test_set_buffer_dirty(obh) && TestSetPageDirty(opage))
+			BUG();
 		nilfs_btnode_write_lock(btnc);
 		radix_tree_delete(&btnc->page_tree, oldkey);
 		radix_tree_tag_set(&btnc->page_tree, newkey,
-				   buffer_prepare_dirty(obh) ?
-				   NILFS_PAGECACHE_TAG_PDIRTY :
 				   PAGECACHE_TAG_DIRTY);
 		nilfs_btnode_write_unlock(btnc);
 		unlock_page(opage);
@@ -709,10 +645,7 @@ void nilfs_btnode_commit_change_key(struct nilfs_btnode_cache *btnc,
 		 * shrinker checks a reference counter of the buffer
 		 * together with the state.
 		 */
-		if (nilfs_btnode_buffer_dirty(obh))
-			nilfs_btnode_mark_dirty(nbh);	/* before copy */
-		else
-			nilfs_btnode_mark_prepare_dirty(nbh);
+		nilfs_btnode_mark_dirty(nbh);
 
 		nbh->b_blocknr = newkey;
 		ctxt->bh = nbh;
@@ -748,8 +681,7 @@ void nilfs_btnode_abort_change_key(struct nilfs_btnode_cache *btnc,
 	}
 }
 
-void nilfs_btnode_do_clear_dirty_pages(struct nilfs_btnode_cache *btnc,
-				       int tag)
+void nilfs_btnode_clear_dirty_pages(struct nilfs_btnode_cache *btnc)
 {
 	struct page *pages[NILFS_BTNODE_GANG_SIZE], *page;
 	pgoff_t offset;
@@ -758,21 +690,18 @@ void nilfs_btnode_do_clear_dirty_pages(struct nilfs_btnode_cache *btnc,
 	int ncleaned = 0, ndeleted = 0;
 	struct buffer_head *bh, *head;
 
-	btnode_debug(3, "btnc %p tag %d\n", btnc, tag);
+	btnode_debug(3, "btnc %p\n", btnc);
  repeat:
 	n = nilfs_btnode_find_get_pages_tag(btnc, pages, &index,
-					    NILFS_BTNODE_GANG_SIZE, tag);
+					    NILFS_BTNODE_GANG_SIZE,
+					    PAGECACHE_TAG_DIRTY);
 	if (!n) {
-		btnode_debug(3, "cleared %d dirty pages and deleted %d pages "
-			     "for tag=%d\n",
-			     ncleaned, ndeleted, tag);
+		btnode_debug(3, "cleared %d dirty pages and deleted %d pages\n",
+			     ncleaned, ndeleted);
 		return;
 	}
 
 	for (i = 0; i < n; i++) {
-		/* The pdirty-tag and dirty-tag are designed exclusive.
-		   So, the following process will not be called twice
-		   for a same btnode page */
 		page = pages[i];
 		lock_page(page);
 		offset = page_index(page);
@@ -787,7 +716,8 @@ void nilfs_btnode_do_clear_dirty_pages(struct nilfs_btnode_cache *btnc,
 
 		nilfs_btnode_write_lock(btnc);
 		if (TestClearPageDirty(page))
-			radix_tree_tag_clear(&btnc->page_tree, offset, tag);
+			radix_tree_tag_clear(&btnc->page_tree, offset,
+					     PAGECACHE_TAG_DIRTY);
 		nilfs_btnode_write_unlock(btnc);
 
 		ncleaned++;
@@ -801,9 +731,8 @@ void nilfs_btnode_do_clear_dirty_pages(struct nilfs_btnode_cache *btnc,
 	goto repeat;
 }
 
-int nilfs_btnode_do_copy_dirty_pages(struct nilfs_btnode_cache *src,
-				     struct nilfs_btnode_cache *dst,
-				     int tag)
+int nilfs_btnode_copy_dirty_pages(struct nilfs_btnode_cache *src,
+				  struct nilfs_btnode_cache *dst)
 {
 	struct page *pages[NILFS_BTNODE_GANG_SIZE];
 	pgoff_t index = 0;
@@ -813,16 +742,14 @@ int nilfs_btnode_do_copy_dirty_pages(struct nilfs_btnode_cache *src,
 	btnode_debug(3, "src %p dst %p\n", src, dst);
 repeat:
 	n = nilfs_btnode_find_get_pages_tag(src, pages, &index,
-					    NILFS_BTNODE_GANG_SIZE, tag);
+					    NILFS_BTNODE_GANG_SIZE,
+					    PAGECACHE_TAG_DIRTY);
 	if (!n)
 		return 0;
 
 	for (i = 0; i < n; i++) {
 		struct page *page = pages[i], *dpage;
 
-		/* The pdirty-tag and dirty-tag are designed exclusive.
-		   So, the following process will not be called twice
-		   for a same btnode page */
 		lock_page(page);
 		/* do not search original dat cache */
 		err = nilfs_btnode_get_page(dst, page->index, &dpage, 0);
@@ -833,7 +760,7 @@ repeat:
 		lock_page(dpage);
 
 		if (PageDirty(page))
-			__nilfs_btnode_set_page_dirty(dst, dpage, tag, 0);
+			__nilfs_btnode_set_page_dirty(dst, dpage);
 		btnode_debug(3, "cp: orig: page %p idx %lu, "
 			     "gc: page %p idx %lu.\n",
 			     page, page->index, dpage, dpage->index);

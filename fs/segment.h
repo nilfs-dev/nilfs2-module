@@ -120,6 +120,7 @@ struct nilfs_collection_stage {
  * @sc_cleaning_segments: List of segments to be freed through construction
  * @sc_copied_buffers: List of copied buffers (buffer heads) to freeze data
  * @sc_segbufs: List of segment buffers
+ * @sc_segbuf_nblocks: Number of available blocks in segment buffers.
  * @sc_curseg: Current segment buffer
  * @sc_super_root: Pointer to the super root buffer
  * @sc_stage: Collection stage
@@ -160,6 +161,7 @@ struct nilfs_sc_info {
 
 	/* Segment buffers */
 	struct list_head	sc_segbufs;
+	unsigned long		sc_segbuf_nblocks;
 	struct nilfs_segment_buffer *sc_curseg;
 	struct buffer_head     *sc_super_root;
 

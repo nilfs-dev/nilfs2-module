@@ -582,7 +582,7 @@ static int nilfs_collect_file_node(struct nilfs_sc_info *sci,
 {
 	int err;
 
-	/* BUG_ON(!nilfs_btnode_buffer_dirty(bh)); */
+	/* BUG_ON(!buffer_dirty(bh)); */
 	/* excluded by scan_dirty_node_buffers() */
 	err = nilfs_bmap_propagate(NILFS_I(inode)->i_bmap, bh);
 	if (unlikely(err < 0))
@@ -794,20 +794,20 @@ static int nilfs_prepare_data_page(struct inode *inode, struct page *page)
 	return err;
 }
 
-static int
-nilfs_segctor_scan_dirty_data_buffers(struct nilfs_sc_info *sci,
-				      struct inode *inode,
-				      int (*collect)(struct nilfs_sc_info *,
-						     struct buffer_head *,
-						     struct inode *))
+static int nilfs_lookup_dirty_data_buffers(struct inode *inode,
+					   struct list_head *listp,
+					   struct nilfs_sc_info *sci)
 {
+	struct nilfs_segment_buffer *segbuf = sci->sc_curseg;
 	struct address_space *mapping = inode->i_mapping;
 	struct page *pages[SC_N_PAGEVEC];
-	unsigned int i, n, ndirties;
+	unsigned i, n, ndirties = 0, nlimit;
 	pgoff_t index = 0;
 	int err = 0;
 
 	seg_debug(3, "called (ino=%lu)\n", inode->i_ino);
+	nlimit = sci->sc_segbuf_nblocks -
+		(sci->sc_nblk_this_inc + segbuf->sb_sum.nblocks);
  repeat:
 	n = find_get_pages_tag(mapping, &index, PAGECACHE_TAG_DIRTY,
 			       SC_N_PAGEVEC, pages);
@@ -829,19 +829,14 @@ nilfs_segctor_scan_dirty_data_buffers(struct nilfs_sc_info *sci,
 		}
 
 		bh = head = page_buffers(page);
-		ndirties = 0;
 		do {
 			if (buffer_dirty(bh)) {
-				get_bh(bh);
-				err = collect(sci, bh, inode);
-				put_bh(bh);
-				if (unlikely(err)) {
-					if (!ndirties || err != -E2BIG)
-						goto skip_page;
+				if (ndirties > nlimit) {
+					err = -E2BIG;
 					break;
-					/* each blocks in a mmapped
-					   page should be copied */
 				}
+				get_bh(bh);
+				list_add_tail(&bh->b_assoc_buffers, listp);
 				ndirties++;
 			}
 			bh = bh->b_this_page;
@@ -852,25 +847,18 @@ nilfs_segctor_scan_dirty_data_buffers(struct nilfs_sc_info *sci,
 	}
 	if (!err)
 		goto repeat;
-
 	seg_debug(3, "failed (err=%d, ino=%lu)\n", err, inode->i_ino);
 	return err;
 }
 
-static int
-nilfs_segctor_scan_dirty_node_buffers(struct nilfs_sc_info *sci,
-				      struct inode *inode,
-				      int (*collect)(struct nilfs_sc_info *,
-						     struct buffer_head *,
-						     struct inode *))
+static void nilfs_lookup_dirty_node_buffers(struct inode *inode,
+					    struct list_head *listp)
 {
 	struct nilfs_inode_info *ii = NILFS_I(inode);
 	struct page *pages[SC_N_PAGEVEC];
 	struct buffer_head *bh, *head;
 	unsigned int i, n;
 	pgoff_t index = 0;
-	LIST_HEAD(node_buffers);
-	int err = 0;
 
 	seg_debug(3, "called (ino=%lu)\n", inode->i_ino);
 
@@ -879,61 +867,21 @@ nilfs_segctor_scan_dirty_node_buffers(struct nilfs_sc_info *sci,
 					    pages, &index, SC_N_PAGEVEC,
 					    PAGECACHE_TAG_DIRTY);
 	if (!n)
-		goto end_lookup;
+		return;
 
 	for (i = 0; i < n; i++) {
 		bh = head = page_buffers(pages[i]);
 		do {
-			if (nilfs_btnode_buffer_dirty(bh)) {
+			if (buffer_dirty(bh)) {
 				get_bh(bh);
-				list_add_tail(&bh->b_assoc_buffers,
-					      &node_buffers);
+				list_add_tail(&bh->b_assoc_buffers, listp);
 			}
-		} while ((bh = bh->b_this_page) != head);
+			bh = bh->b_this_page;
+		} while (bh != head);
+
 		page_cache_release(pages[i]);
 	}
 	goto repeat;
-
- end_lookup:
-	list_for_each_entry_safe(bh, head, &node_buffers, b_assoc_buffers) {
-		list_del_init(&bh->b_assoc_buffers);
-		if (likely(!err))
-			err = collect(sci, bh, inode);
-		brelse(bh);
-	}
-	seg_debug(3, "done (err=%d, ino=%lu)\n", err, inode->i_ino);
-	return err;
-}
-
-static int
-nilfs_segctor_scan_dirty_bmap_buffers(struct nilfs_sc_info *sci,
-				      struct inode *inode,
-				      int (*collect)(struct nilfs_sc_info *,
-						     struct buffer_head *,
-						     struct inode *))
-{
-	struct nilfs_inode_info *ii = NILFS_I(inode);
-	struct buffer_head *bh, *n;
-	LIST_HEAD(node_buffers);
-	int err = 0;
-
-	nilfs_bmap_lookup_dirty_buffers(ii->i_bmap, &node_buffers);
-	list_for_each_entry_safe(bh, n, &node_buffers, b_assoc_buffers) {
-		list_del_init(&bh->b_assoc_buffers);
-		err = collect(sci, bh, inode);
-		brelse(bh);
-		if (unlikely(err)) {
-			while (!list_empty(&node_buffers)) {
-				bh = list_entry(node_buffers.next,
-						struct buffer_head,
-						b_assoc_buffers);
-				list_del_init(&bh->b_assoc_buffers);
-				brelse(bh);
-			}
-			break;
-		}
-	}
-	return err;
 }
 
 static void nilfs_dispose_list(struct nilfs_sb_info *sbi,
@@ -1271,31 +1219,82 @@ static void nilfs_segctor_commit_free_segments(struct nilfs_sc_info *sci)
 	nilfs_dispose_segment_list(&sci->sc_cleaning_segments);
 }
 
+static int nilfs_segctor_apply_buffers(struct nilfs_sc_info *sci,
+				       struct inode *inode,
+				       struct list_head *listp,
+				       int (*collect)(struct nilfs_sc_info *,
+						      struct buffer_head *,
+						      struct inode *))
+{
+	struct buffer_head *bh, *n;
+	int err = 0;
+
+	if (collect) {
+		list_for_each_entry_safe(bh, n, listp, b_assoc_buffers) {
+			list_del_init(&bh->b_assoc_buffers);
+			err = collect(sci, bh, inode);
+			brelse(bh);
+			if (unlikely(err))
+				goto dispose_buffers;
+		}
+		return 0;
+	}
+
+ dispose_buffers:
+	while (!list_empty(listp)) {
+		bh = list_entry(listp->next, struct buffer_head,
+				b_assoc_buffers);
+		list_del_init(&bh->b_assoc_buffers);
+		brelse(bh);
+	}
+	return err;
+}
+
 static int nilfs_segctor_scan_file(struct nilfs_sc_info *sci,
 				   struct inode *inode,
 				   struct nilfs_sc_operations *sc_ops)
 {
-	int err = 0;
+	LIST_HEAD(data_buffers);
+	LIST_HEAD(node_buffers);
+	int err, err2;
 
 	seg_debug(3, "called (ino=%lu, main_stage=%d)\n",
 		  inode->i_ino, sci->sc_stage.main);
 
 	if (sci->sc_stage.sub == SC_SUB_DATA) {
-		err = nilfs_segctor_scan_dirty_data_buffers(
-			sci, inode, sc_ops->collect_data);
-		if (unlikely(err))
+		err = nilfs_lookup_dirty_data_buffers(inode, &data_buffers,
+						      sci);
+		if (err) {
+			err2 = nilfs_segctor_apply_buffers(
+				sci, inode, &data_buffers,
+				err == -E2BIG ? sc_ops->collect_data : NULL);
+			if (err == -E2BIG)
+				err = err2;
 			goto break_or_fail;
+		}
+	}
+	nilfs_lookup_dirty_node_buffers(inode, &node_buffers);
 
+	if (sci->sc_stage.sub == SC_SUB_DATA) {
+		err = nilfs_segctor_apply_buffers(
+			sci, inode, &data_buffers, sc_ops->collect_data);
+		if (unlikely(err)) {
+			/* dispose node list */
+			nilfs_segctor_apply_buffers(
+				sci, inode, &node_buffers, NULL);
+			goto break_or_fail;
+		}
 		sci->sc_stage.sub++;
 	}
-	/* sci->sc_stage.sub == SC_SUB_NODE */
-	err = nilfs_segctor_scan_dirty_node_buffers(
-		sci, inode, sc_ops->collect_node);
+	/* sci->sc_state.sub == SC_SUB_NODE */
+	err = nilfs_segctor_apply_buffers(
+		sci, inode, &node_buffers, sc_ops->collect_node);
 	if (unlikely(err))
 		goto break_or_fail;
 
-	err = nilfs_segctor_scan_dirty_bmap_buffers(
-		sci, inode, sc_ops->collect_bmap);
+	nilfs_bmap_lookup_dirty_buffers(NILFS_I(inode)->i_bmap, &node_buffers);
+	err = nilfs_segctor_apply_buffers(
+		sci, inode, &node_buffers, sc_ops->collect_bmap);
 	if (unlikely(err))
 		goto break_or_fail;
 
@@ -1304,6 +1303,23 @@ static int nilfs_segctor_scan_file(struct nilfs_sc_info *sci,
 
  break_or_fail:
 	seg_debug(3, "done (err=%d, sub-stage=%d)\n", err, sci->sc_stage.sub);
+	return err;
+}
+
+static int nilfs_segctor_scan_file_dsync(struct nilfs_sc_info *sci,
+					 struct inode *inode)
+{
+	LIST_HEAD(data_buffers);
+	int err, err2;
+
+	err = nilfs_lookup_dirty_data_buffers(inode, &data_buffers, sci);
+	err2 = nilfs_segctor_apply_buffers(sci, inode, &data_buffers,
+					   (!err || err == -E2BIG) ?
+					   nilfs_collect_file_data : NULL);
+	if (err == -E2BIG)
+		err = err2;
+	if (!err)
+		nilfs_segctor_end_finfo(sci, inode);
 	return err;
 }
 
@@ -1472,11 +1488,10 @@ static int nilfs_segctor_collect_blocks(struct nilfs_sc_info *sci, int mode)
 		ii = sci->sc_stage.dirty_file_ptr;
 		if (!test_bit(NILFS_I_BUSY, &ii->i_state))
 			break;
-		err = nilfs_segctor_scan_dirty_data_buffers(
-			sci, &ii->vfs_inode, nilfs_collect_file_data);
+
+		err = nilfs_segctor_scan_file_dsync(sci, &ii->vfs_inode);
 		if (unlikely(err))
 			break;
-		nilfs_segctor_end_finfo(sci, &ii->vfs_inode);
 		sci->sc_stage.dirty_file_ptr = NULL;
 		sci->sc_curseg->sb_sum.flags |= NILFS_SS_LOGEND;
 		SC_STAGE_SKIP_TO(&sci->sc_stage, SC_MAIN_DONE);
@@ -1560,6 +1575,7 @@ static int nilfs_segctor_begin_construction(struct nilfs_sc_info *sci,
 		nilfs_shift_to_next_segment(nilfs);
 		err = nilfs_segbuf_map(segbuf, nilfs->ns_segnum, 0, nilfs);
 	}
+	sci->sc_segbuf_nblocks = segbuf->sb_rest_blocks;
 
 	err = nilfs_touch_segusage(sufile, segbuf->sb_segnum);
 	if (unlikely(err))
@@ -1616,6 +1632,8 @@ static int nilfs_segctor_extend_segments(struct nilfs_sc_info *sci,
 		err = nilfs_segbuf_map(segbuf, prev->sb_nextnum, 0, nilfs);
 		if (unlikely(err))
 			goto failed_segbuf;
+
+		sci->sc_segbuf_nblocks += segbuf->sb_rest_blocks;
 
 		/* allocate the next next full segment */
 		err = nilfs_sufile_alloc(sufile, &nextnextnum);
@@ -1770,6 +1788,7 @@ static void nilfs_segctor_truncate_segments(struct nilfs_sc_info *sci,
 	list_for_each_entry_safe_continue(segbuf, n, &sci->sc_segbufs,
 					  sb_list) {
 		list_del_init(&segbuf->sb_list);
+		sci->sc_segbuf_nblocks -= segbuf->sb_rest_blocks;
 		ret = nilfs_sufile_free(sufile, segbuf->sb_nextnum);
 		BUG_ON(ret);
 		nilfs_segbuf_free(segbuf);
@@ -2108,8 +2127,6 @@ static int nilfs_page_has_uncleared_buffer(struct page *page)
 
 static void nilfs_end_page_io(struct page *page, int err)
 {
-	int bits;
-
 	if (!page)
 		return;
 	if (buffer_nilfs_node(page_buffers(page)) &&
@@ -2123,9 +2140,8 @@ static void nilfs_end_page_io(struct page *page, int err)
 	if (err < 0)
 		SetPageError(page);
 	else if (!err) {
-		bits = nilfs_page_buffers_clean(page);
-		if (bits != 0)
-			nilfs_clear_page_dirty(page, bits);
+		if (nilfs_page_buffers_clean(page))
+			nilfs_clear_page_dirty(page);
 		ClearPageError(page);
 	}
 	unlock_page(page);
