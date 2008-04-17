@@ -39,7 +39,7 @@ Prerequisites
 
 Make sure you have all the following installed:
 
-- Linux 2.6.11~2.6.24
+- Linux 2.6.11~2.6.25
   The kernel should be used on the build machine, and it should be
   compiled from the source.  The source tree which was used to build 
   the kernel is also required.
