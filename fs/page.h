@@ -102,13 +102,21 @@ static inline void nilfs_end_page_writeback(struct page *page)
 		end_page_writeback(page);
 }
 
-static inline void nilfs_clear_page_dirty(struct page *page)
+static inline void nilfs_clear_page_dirty_for_io(struct page *page)
 {
 	/* Page index must be fixed before calling this function. */
 	if (buffer_nilfs_node(page_buffers(page)))
 		nilfs_btnode_page_clear_dirty(page);
 	else
-		__nilfs_clear_page_dirty(page);
+		clear_page_dirty_for_io(page);
+}
+
+static inline void nilfs_redirty_page(struct page *page)
+{
+	if (buffer_nilfs_node(page_buffers(page)))
+		nilfs_btnode_set_page_dirty(page);
+	else
+		__set_page_dirty_nobuffers(page);
 }
 
 /* buffer_busy copied from fs/buffer.c */

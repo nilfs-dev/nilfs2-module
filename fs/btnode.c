@@ -312,6 +312,12 @@ static void __nilfs_btnode_set_page_dirty(struct nilfs_btnode_cache *btnc,
 	nilfs_btnode_write_unlock(btnc);
 }
 
+void nilfs_btnode_set_page_dirty(struct page *page)
+
+{
+	__nilfs_btnode_set_page_dirty(PAGE_BTNC(page), page);
+}
+
 /**
  * nilfs_btnode_mark_dirty() - mark buffer dirty and set page state
  * @bh: buffer head
@@ -325,7 +331,7 @@ void nilfs_btnode_mark_dirty(struct buffer_head *bh)
 	lock_page(page);
 	if (!test_set_buffer_dirty(bh)) {
 		btnode_debug(3, "marked dirty on bh %p\n", bh);
-		__nilfs_btnode_set_page_dirty(PAGE_BTNC(page), page);
+		nilfs_btnode_set_page_dirty(page);
 	}
 	unlock_page(page);
 }

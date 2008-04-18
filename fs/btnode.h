@@ -99,6 +99,7 @@ unsigned nilfs_btnode_find_get_pages_tag(struct nilfs_btnode_cache *,
 					 struct page **, pgoff_t *,
 					 unsigned int, int);
 void nilfs_btnode_mark_dirty(struct buffer_head *);
+void nilfs_btnode_set_page_dirty(struct page *);
 void nilfs_btnode_page_clear_dirty(struct page *);
 int nilfs_btnode_invalidate_page(struct page *, int);
 int nilfs_btnode_prepare_change_key(struct nilfs_btnode_cache *,

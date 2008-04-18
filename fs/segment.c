@@ -1998,6 +1998,7 @@ nilfs_copy_replace_page_buffers(struct page *page, struct list_head *out)
 
 	nilfs_page_add_to_lru(clone_page, 1);
 	nilfs_set_page_writeback(clone_page);
+	unlock_page(clone_page);
 	page_cache_release(clone_page);
 
 	return 0;
@@ -2023,8 +2024,11 @@ static int nilfs_begin_page_io(struct page *page, struct list_head *out)
 		/* For split b-tree node pages, this function may be called
 		   twice.  We ignore the 2nd or later calls by this check. */
 		return 0;
+
 	lock_page(page);
+	nilfs_clear_page_dirty_for_io(page);
 	nilfs_set_page_writeback(page);
+	unlock_page(page);
 
 	if (nilfs_test_page_to_be_frozen(page)) {
 		int err = nilfs_copy_replace_page_buffers(page, out);
@@ -2051,7 +2055,9 @@ static int nilfs_segctor_prepare_write(struct nilfs_sc_info *sci,
 			if (bh->b_page != bd_page) {
 				if (bd_page) {
 					lock_page(bd_page);
+					clear_page_dirty_for_io(bd_page);
 					set_page_writeback(bd_page);
+					unlock_page(bd_page);
 				}
 				bd_page = bh->b_page;
 			}
@@ -2062,7 +2068,9 @@ static int nilfs_segctor_prepare_write(struct nilfs_sc_info *sci,
 			if (bh == sci->sc_super_root) {
 				if (bh->b_page != bd_page) {
 					lock_page(bd_page);
+					clear_page_dirty_for_io(bd_page);
 					set_page_writeback(bd_page);
+					unlock_page(bd_page);
 					bd_page = bh->b_page;
 				}
 				break;
@@ -2079,7 +2087,9 @@ static int nilfs_segctor_prepare_write(struct nilfs_sc_info *sci,
 	}
 	if (bd_page) {
 		lock_page(bd_page);
+		clear_page_dirty_for_io(bd_page);
 		set_page_writeback(bd_page);
+		unlock_page(bd_page);
 	}
 	err = nilfs_begin_page_io(fs_page, list);
 	if (unlikely(err))
@@ -2124,11 +2134,25 @@ static int nilfs_page_has_uncleared_buffer(struct page *page)
 	return 0;
 }
 
+static void __nilfs_end_page_io(struct page *page, int err)
+{
+	/* BUG_ON(err > 0); */
+	if (!err) {
+		if (!nilfs_page_buffers_clean(page))
+			nilfs_redirty_page(page);
+		ClearPageError(page);
+	} else {
+		nilfs_redirty_page(page);
+		SetPageError(page);
+	}
+	nilfs_end_page_writeback(page);
+}
 
 static void nilfs_end_page_io(struct page *page, int err)
 {
 	if (!page)
 		return;
+
 	if (buffer_nilfs_node(page_buffers(page)) &&
 	    nilfs_page_has_uncleared_buffer(page))
 		/* For b-tree node pages, this function may be called twice
@@ -2137,15 +2161,7 @@ static void nilfs_end_page_io(struct page *page, int err)
 		   buffers in a split btnode page. */
 		return;
 
-	if (err < 0)
-		SetPageError(page);
-	else if (!err) {
-		if (nilfs_page_buffers_clean(page))
-			nilfs_clear_page_dirty(page);
-		ClearPageError(page);
-	}
-	unlock_page(page);
-	nilfs_end_page_writeback(page);
+	__nilfs_end_page_io(page, err);
 }
 
 static void nilfs_clear_copied_buffers(struct list_head *list, int err)
@@ -2171,16 +2187,7 @@ static void nilfs_clear_copied_buffers(struct list_head *list, int err)
 			}
 		} while ((bh = bh->b_this_page) != head);
 
-		if (!err) {
-			if (nilfs_page_buffers_clean(page))
-				__nilfs_clear_page_dirty(page);
-
-			ClearPageError(page);
-		} else if (err < 0)
-			SetPageError(page);
-
-		unlock_page(page);
-		end_page_writeback(page);
+		__nilfs_end_page_io(page, err);
 		page_cache_release(page);
 	}
 }
@@ -2198,10 +2205,8 @@ static void nilfs_segctor_abort_write(struct nilfs_sc_info *sci,
 		list_for_each_entry(bh, &segbuf->sb_segsum_buffers,
 				    b_assoc_buffers) {
 			if (bh->b_page != bd_page) {
-				if (bd_page) {
-					unlock_page(bd_page);
+				if (bd_page)
 					end_page_writeback(bd_page);
-				}
 				bd_page = bh->b_page;
 			}
 		}
@@ -2210,7 +2215,6 @@ static void nilfs_segctor_abort_write(struct nilfs_sc_info *sci,
 				    b_assoc_buffers) {
 			if (bh == sci->sc_super_root) {
 				if (bh->b_page != bd_page) {
-					unlock_page(bd_page);
 					end_page_writeback(bd_page);
 					bd_page = bh->b_page;
 				}
@@ -2224,10 +2228,9 @@ static void nilfs_segctor_abort_write(struct nilfs_sc_info *sci,
 			}
 		}
 	}
-	if (bd_page) {
-		unlock_page(bd_page);
+	if (bd_page)
 		end_page_writeback(bd_page);
-	}
+
 	nilfs_end_page_io(fs_page, err);
  done:
 	nilfs_clear_copied_buffers(&sci->sc_copied_buffers, err);
@@ -2275,10 +2278,8 @@ static void nilfs_segctor_complete_write(struct nilfs_sc_info *sci)
 			set_buffer_uptodate(bh);
 			clear_buffer_dirty(bh);
 			if (bh->b_page != bd_page) {
-				if (bd_page) {
-					unlock_page(bd_page);
+				if (bd_page)
 					end_page_writeback(bd_page);
-				}
 				bd_page = bh->b_page;
 			}
 		}
@@ -2300,7 +2301,6 @@ static void nilfs_segctor_complete_write(struct nilfs_sc_info *sci)
 			clear_buffer_nilfs_volatile(bh);
 			if (bh == sci->sc_super_root) {
 				if (bh->b_page != bd_page) {
-					unlock_page(bd_page);
 					end_page_writeback(bd_page);
 					bd_page = bh->b_page;
 				}
@@ -2328,10 +2328,9 @@ static void nilfs_segctor_complete_write(struct nilfs_sc_info *sci)
 	 * Since pages may continue over multiple segment buffers,
 	 * end of the last page must be checked outside of the loop.
 	 */
-	if (bd_page) {
-		unlock_page(bd_page);
+	if (bd_page)
 		end_page_writeback(bd_page);
-	}
+
 	nilfs_end_page_io(fs_page, 0);
 
 	nilfs_clear_copied_buffers(&sci->sc_copied_buffers, 0);
