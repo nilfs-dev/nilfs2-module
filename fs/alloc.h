@@ -29,10 +29,6 @@
 #include <linux/bitops.h>
 
 
-struct nilfs_persistent_group_desc {
-	__le32 pg_nfrees;
-};
-
 #define NILFS_PERSISTENT_CHAR_BIT	8
 
 #define nilfs_persistent_set_bit_atomic		ext2_set_bit_atomic
