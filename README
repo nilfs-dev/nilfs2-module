@@ -4,7 +4,7 @@ NILFS - A New Implementation of a Log-structured File System for Linux
 What is NILFS?
 --------------
 
-NILFS is a new implementation of a log-structured file system for 
+NILFS is a new implementation of a log-structured file system for the
 Linux 2.6 operating system.  Conventional features of a log-structured
 file systems (LFS) are high write performance and fast recovery
 time.  In addition, LFS prevents data write operations from overwriting
@@ -18,123 +18,189 @@ managed by a B-tree structure, internal data are processed in 64 bit
 wide word size.  The B-tree structure enables ``NILFS'' to create and
 store huge files.  
 
-NILFS will be freely-distributable Open Source software, will be
-released under the GNU GPL.
-
 What is NILFS version 2?
 ------------------------
 
-NILFS version 2 is a new implementation of NILFS for Linux 2.6
-operating system.  NILFS version 2 is equipped with the Garbage Collector
-that can keep numerous snapshots of NILFS filesystem.  You can
-preserve some consistent states (checkpoints) of NILFS filesystem as
-snapshots ``after'' the states are established.  For example, when you
-have removed some files accidentally, you can get the snapshot that
-represent the past state which holds the vanished files.  Checkpoints
-are collected by the garbage collector unless they are marked
-as ``snapshot''.
+NILFS version 2 (NILFS2) is a new version of NILFS redesigned for
+pactical use.  NILFS2 realizes online garbage collection that reclaims
+disk space with keeping multiple snapshots.  As well as preserving
+recent data and namespaces of a filesystem which save users from
+unexpected data lost, NILFS2 can keep selected filesystem checkpoints
+(i.e. snapshots) for long periods, for an indefinite period if you
+want.  This flexible snapshot feature helps you to maintain
+significant versions of data or system state, and would make
+snapshotting or versioning of the POSIX filesystem much familiar to
+you.  Snapshot administration is easy and quickly performable as well
+as its creation is instantaneous and spontaneous like NILFS version 1.
+You can receive full benefits of snapshotting without wasting valuable
+time.
+
+The possible use of NILFS2 includes disaster recovery, versioning,
+tamper detection, SOX compliance logging, and so on.  It can serve as
+an alternative filesystem for Linux desktop environment, or as a basis
+of advanced storage appliances.
+
+License
+-------
+
+NILFS2 is a freely-distributable open source software, and is
+released under the GNU General Public License (GPLv2).
 
 Prerequisites
 -------------
 
-Make sure you have all the following installed:
+Make sure you have installed all of the followings:
 
 - Linux 2.6.11~2.6.25
   The kernel should be used on the build machine, and it should be
-  compiled from the source.  The source tree which was used to build 
-  the kernel is also required.
+  compiled from the source.  In some distros, kernel header packages
+  are available instead.  For example, Debian users can skip a
+  kernel build for distro kernels by installing the corresponding
+  linux-headers-2.6-xxx package.
+
+  Though it is not guaranteed to work on distro kernels,
+  some patches are available on the following FAQ page:
+
+  http://www.nilfs.org/en/faq.html
+
 - GCC
 - GNU Make
 - GNU Binutils
 - Development package of uuid library (e.g., e2fsprogs-devel or
   uuid-dev)
-- the proc kernel module
 - newer umount utility
 
-This program was tested on some i386-architecture machines (e.g.,
-Pentium-3 or Pentium-4 with Hyper Threading Technology), x86_64 and
-ppc64 architecture machines. It may cause problems on other
-architectures.
+If you use official or unofficial distro binary packages described
+later, these are omissiable.
+
+NILFS2 was tested on some i386-architecture machines, x86_64 and
+ppc64 machines.
 
 Installation
 ------------
 
-1. Get the source package of NILFS2 and NILFS2 utilities, then extract
-   the tar ball files
+1. For distro kernels, install official or unofficial binary packages
+   of NILFS2 module and NILFS2 utilities.
+   Or get source tar ball files for vanilla kernels.
 
-2. Compile and install NILFS2 
+   The unofficial binary packages and the source tar balls are 
+   available on http://www.nilfs.org/en/download.html.
+
+2. Compile and install NILFS2 (skip this if using the binary packages)
 
   Kernel module
-   # cd fs
+   # tar jxf nilfs-2.x.x.tar.bz2
+   # cd nilfs-2.x.x
    # make
    # make install
    (you should run "make uninstall" if you have already installed)
 
-   The file "/lib/modules/`uname -r`/kernel/nilfs/nilfs2.ko" may be
+   The file "/lib/modules/`uname -r`/kernel/nilfs/nilfs2.ko" will be
    created.
 
   Userland tools
+   # tar jxf nilfs-utils-2.x.x.tar.bz2
+   # cd nilfs-utils-2.x.x
    # ./configure
    # make
    # make install
 
-3. Format a disk partition for a new NILFS2 file system, and mount it
+3. Format a disk partition and mount it
 
    e.g.
-   # mkfs -t nilfs2 /dev/sda2
+   # mkfs -t nilfs2 /dev/sdb1
+   mkfs.nilfs2 ver 2.0
+   Start writing file system initial data to the device
+          Blocksize:4096  Device:/dev/sdb1  Device Size:73402366464
+   File system initialization succeeded !! 
    # mkdir /nilfs
-   # mount -t nilfs2 /dev/sda2 /nilfs
+   # mount -t nilfs2 /dev/sdb1 /nilfs
 
-4. NILFS2 cleaner configuration
+   This will invoke a cleaner (i.e. garbage collector) through an
+   external mount program (mount.nilfs2).  The cleaner is
+   implemented as an userland daemon whose name is ``nilfs_cleanerd''.
 
-   You can tune the behavior of the garbage collector.
-   See /etc/nilfs_cleanerd.conf 
+4. How to make a snapshot
+   For NILFS2, we distinguish two terminologies, ``checkpoint'' and
+   ``snapshot'':
 
-5. How to make a snapshot and mount your snapshot
-   Two important terminology, ``checkpoint'' and ``snapshot''.
+   A checkpoint represents a consistent state of NILFS2 filesystem.
+   A number of checkpoints are created automatically and continuously.
+   Though the recent checkpoints are protected from the cleaner
+   during the period given by a cleaner parameter ``protection_period'',
+   older checkpoints may be deleted by the cleaner.
 
-   A checkpoint represents a consistent state of NILFS filesystem,
-   many checkpoints are created automatically and continuously.
-   Each checkpoint has a unique checkpoint number.  Checkpoints may
-   be collected by the garbage collector.  There is a cleaner parameter
-   ``protection_period'', means a checkpoint has never collected within
-   the period (in second) from its creation time.  So, if you want to
-   recover some files that made yesterday, you specify larger (> 86400) 
-   protection_period to /etc/nilfs_cleanerd.conf.
+   You can protect the older checkpoint by extending the
+   protection_period with a larger value.
+   For example, if you want to ensure to keep files made yesterday,
+   specify larger (> 86400) protection_period in
+   /etc/nilfs_cleanerd.conf.
 
-   A snapshot is a checkpoint that is marked as a snapshot.
-   Some userland commands perform the marking operation.
-   Snapshots are protected from garbage collection, they remains
-   forever. Snapshots are mountable as read-only filesystem.
+   You can also do this by changing a checkpoint to a ``snapshot''.
+   A snapshot is the checkpoint marked not to be deleted by the
+   cleaner.  The checkpoint and the snapshot are handled through the
+   following userland tools:
 
+   lscp     lists checkpoints and snapshots.
    mkcp     makes a checkpoint immediately.
-   mkcp -s  makes a checkpoint immediately and mark it as a snapshot.
-   lscp     shows checkpoints.
-   chcp     makes existing checkpoints to snapshots and vise versa.
+   mkcp -s  makes a snapshot of the current state immediately.
+   chcp     changes an existing checkpoint to a snapshot or vice versa.
+   rmcp     invalidates specified checkpoint(s).
 
-   # mount -t nilfs2 /dev/sda2 /nilfs
+   In the following example, the existing checkpoint whose checkpoint
+   number is two, is changed into a snapshot after a period of time.
+
+   # mount -t nilfs2 /dev/sdb1 /nilfs
    # --- some operation ---
    # lscp
-                 CNO        DATE     TIME  MODE  NBLKINC       ICNT
-                   1  2007-06-13 11:38:27  cp         11          3
-                   2  2007-06-13 11:39:16  cp     102769      22017
-                   3  2007-06-13 11:39:29  cp          9      22017
-                   4  2007-06-13 11:39:48  cp       7543      22315
+                 CNO        DATE     TIME  MODE  SKT   NBLKINC       ICNT
+                   1  2008-05-08 14:45:49  cp     -         11          3
+                   2  2008-05-08 14:50:22  cp     -     200523         81
+                   3  2008-05-08 20:40:34  cp     -        136         61
+                   4  2008-05-08 20:41:20  cp     -     187666       1604
+                   5  2008-05-08 20:41:42  cp     -         51       1634
+                   6  2008-05-08 20:42:00  cp     -         37       1653
+                   7  2008-05-08 20:42:42  cp     -     272146       2116
+                   8  2008-05-08 20:43:13  cp     -     264649       2117
+                   9  2008-05-08 20:43:44  cp     -     285848       2117
+                  10  2008-05-08 20:44:16  cp     -     139876       7357
    # chcp ss 2
    # lscp
-                 CNO        DATE     TIME  MODE  NBLKINC       ICNT
-                   1  2007-06-13 11:38:27  cp         11          3
-                   2  2007-06-13 11:39:16  ss     102769      22017
-                   3  2007-06-13 11:39:29  cp          9      22017
-                   4  2007-06-13 11:39:48  cp       7543      22315
-   # mount -t nilfs2 -r -o cp=3 /dev/sda2 /nilfs-cp
+                 CNO        DATE     TIME  MODE  SKT   NBLKINC       ICNT
+                   1  2008-05-08 14:45:49  cp     -         11          3
+                   2  2008-05-08 14:50:22  ss     -     200523         81
+                   3  2008-05-08 20:40:34  cp     -        136         61
+                   4  2008-05-08 20:41:20  cp     -     187666       1604
+                   5  2008-05-08 20:41:42  cp     -         51       1634
+                   6  2008-05-08 20:42:00  cp     -         37       1653
+                   7  2008-05-08 20:42:42  cp     -     272146       2116
+                   8  2008-05-08 20:43:13  cp     -     264649       2117
+                   9  2008-05-08 20:43:44  cp     -     285848       2117
+                  10  2008-05-08 20:44:16  cp     -     139876       7357
+                  11  2008-05-08 21:05:23  cp     -         10       7357
+
+   Each checkpoint or snapshot is identified with a unique number
+   called checkpoint number (CNO).  There is no practical limit on the 
+   number of checkpoints and snapshots.
+
+5. How to mount snapshots
+
+   Snapshots are mountable as read-only filesystems.  They are mounted
+   with two options, a read-only option (``-r'' or ``-o ro'') and the
+   ``cp'' option which specifies the checkpoint number:
+
+   # mount -t nilfs2 -r -o cp=2 /dev/sdb1 /nilfs-cp
    # df -t nilfs2
    Filesystem           1K-blocks      Used Available Use% Mounted on
-   /dev/sda2              4374524    319484   3842048   8% /nilfs
-   /dev/sda2              4374524    319484   3842048   8% /nilfs-cp
+   /dev/sdb1             71679996   3203068  64888832   5% /nilfs
+   /dev/sdb1             71679996   3203068  64888832   5% /nilfs-cp
    # mount -t nilfs2
-   /dev/sda2 on /nilfs type nilfs2 (rw)
-   /dev/sda2 on /nilfs-cp type nilfs2 (ro,cp=2)
+   /dev/sdb1 on /nilfs type nilfs2 (rw,gcpid=13296)
+   /dev/sdb1 on /nilfs-cp type nilfs2 (ro,cp=2)
+
+   The ``current'' filesystem and snapshots are mountable
+   independently, which means that the online backup is possible
+   with NILFS.
 
 6. Snapshot operations
 
@@ -144,16 +210,16 @@ lscp [-rsh] [device]
     -s  list snapshots only
     -h  display help message and exit
     ----
-    List checkpoints and snapshots of specified NILFS v2 file system.
+    List checkpoints and snapshots of specified NILFS2 filesystem.
 
    # lscp
-                 CNO        DATE     TIME  MODE  NBLKINC       ICNT
-                   1  2007-06-13 11:38:27  cp         11          3
-                   2  2007-06-13 11:39:16  ss     102769      22017
-                   3  2007-06-13 11:39:29  cp          9      22017
-                   4  2007-06-13 11:39:48  cp       7543      22315
-		        checkpoint/snapshot^       ^number of blocks
-  checkpoint number^  ^creation time              number of inodes^     
+                 CNO        DATE     TIME  MODE  SKT   NBLKINC       ICNT
+                   1  2008-05-08 14:45:49  cp     -         11          3
+                   2  2008-05-08 14:50:22  ss     -     200523         81
+                   3  2008-05-08 20:40:34  cp     -        136         61
+                   4  2008-05-08 20:41:20  cp     -     187666       1604
+		        checkpoint/snapshot^            ^number of blocks
+  checkpoint number^  ^creation time                    number of inodes^     
 
 mkcp - make a checkpoint
 mkcp [-sh] [device]
