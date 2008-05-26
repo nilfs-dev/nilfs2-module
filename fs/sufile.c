@@ -749,9 +749,9 @@ ssize_t nilfs_sufile_get_suinfo(struct inode *sufile, __u64 segnum,
 		su = nilfs_sufile_block_get_segment_usage(
 			sufile, segnum, su_bh, kaddr);
 		for (j = 0; j < n; j++, su++) {
-			si[i + j].si_lastmod = le64_to_cpu(su->su_lastmod);
-			si[i + j].si_nblocks = le32_to_cpu(su->su_nblocks);
-			si[i + j].si_flags = le32_to_cpu(su->su_flags);
+			si[i + j].sui_lastmod = le64_to_cpu(su->su_lastmod);
+			si[i + j].sui_nblocks = le32_to_cpu(su->su_nblocks);
+			si[i + j].sui_flags = le32_to_cpu(su->su_flags);
 		}
 		kunmap_atomic(kaddr, KM_USER0);
 		brelse(su_bh);
