@@ -436,39 +436,6 @@ int nilfs_mdt_delete_block(struct inode *inode, unsigned long block)
 }
 
 /**
- * nilfs_mdt_truncate_blocks - truncate meta data file.
- * @inode: inode of the meta data file
- * @block: block offset
- *
- * Return Value: On success, zero is returned.
- * On error, one of the following negative error code is returned.
- *
- * %-ENOMEM - Insufficient memory available.
- *
- * %-EIO - I/O error
- *
- * %-EINVAL - bmap is broken. (the caller should call nilfs_error())
- */
-int nilfs_mdt_truncate_blocks(struct inode *inode, unsigned long block)
-{
-	struct nilfs_inode_info *ii = NILFS_I(inode);
-	int err;
-
-	mdt_debug(3, "called (ino=%lu, blkoff=%lu)\n", inode->i_ino, block);
-	err = nilfs_bmap_truncate(ii->i_bmap, block);
-	if (likely(!err)) {
-#if 0  /* XXX: truncation of page cache should be delayed to avoid excessive
-	  page removals and insertions */
-		truncate_inode_pages(inode->i_mapping,
-				     (loff_t)block << inode->i_blkbits);
-#endif
-		nilfs_mdt_mark_dirty(inode);
-	}
-	mdt_debug(3, "done (err=%d)\n", err);
-	return err;
-}
-
-/**
  * nilfs_mdt_forget_block - discard dirty state and try to remove the page
  * @inode: inode of the meta data file
  * @block: block offset

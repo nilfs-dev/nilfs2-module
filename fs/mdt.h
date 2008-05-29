@@ -87,7 +87,6 @@ int nilfs_mdt_get_block(struct inode *, unsigned long, int,
 			nilfs_mdt_init_block_t *, struct buffer_head **);
 int nilfs_mdt_delete_block(struct inode *, unsigned long);
 int nilfs_mdt_forget_block(struct inode *, unsigned long);
-int nilfs_mdt_truncate_blocks(struct inode *, unsigned long);
 int nilfs_mdt_mark_block_dirty(struct inode *, unsigned long);
 int nilfs_mdt_fetch_dirty(struct inode *);
 
