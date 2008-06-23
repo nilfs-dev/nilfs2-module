@@ -188,13 +188,6 @@ nilfs_ifile_commit_free(struct inode *ifile, struct nilfs_persistent_req *req)
 	nilfs_ifile_commit_free_ino(ifile, req);
 }
 
-void
-nilfs_ifile_abort_free(struct inode *ifile, struct nilfs_persistent_req *req)
-{
-	nilfs_persistent_put_entry_block(ifile, req->pr_entry_bh);
-	nilfs_persistent_abort_free_entry(ifile, req);
-}
-
 /**
  * nilfs_ifile_create_inode - create a NILFS disk inode
  * @ifile: ifile inode
