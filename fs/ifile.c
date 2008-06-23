@@ -68,65 +68,46 @@ nilfs_ifile_entry_block_init(struct inode *ifile, struct buffer_head *bh,
 static int nilfs_ifile_prepare_alloc_ino(struct inode *ifile,
 					 struct nilfs_persistent_req *req)
 {
-	unsigned long group;
-	int target, ret, bsize;
-
-	bsize = nilfs_persistent_entries_per_group(ifile);
-	group = req->pr_ino / bsize;
-	target = req->pr_ino % bsize;
+	int entries_per_group = nilfs_persistent_entries_per_group(ifile);
+	unsigned long group = req->pr_ino / entries_per_group;
+	int target = req->pr_ino % entries_per_group;
+	int ret;
 
 	ret = nilfs_persistent_prepare_alloc_entry(ifile, req, &group,
 						   &target);
-	if (ret < 0)
-		return ret;
-	req->pr_ino = bsize * group + target;
-
-	return 0;
-}
-
-static inline void
-nilfs_ifile_commit_alloc_ino(struct inode *ifile,
-			     struct nilfs_persistent_req *req)
-{
-	nilfs_persistent_commit_alloc_entry(ifile, req);
+	if (!ret)
+		req->pr_ino = entries_per_group * group + target;
+	return ret;
 }
 
 static void nilfs_ifile_abort_alloc_ino(struct inode *ifile,
 					struct nilfs_persistent_req *req)
 {
-	int bsize = nilfs_persistent_entries_per_group(ifile);
-	unsigned long group = req->pr_ino / bsize;
-	int grpoff = req->pr_ino % bsize;
+	int entries_per_group = nilfs_persistent_entries_per_group(ifile);
+	unsigned long group = req->pr_ino / entries_per_group;
+	int grpoff = req->pr_ino % entries_per_group;
 
 	nilfs_persistent_abort_alloc_entry(ifile, req, group, grpoff);
 }
 
-static int nilfs_ifile_get_entry_block(struct inode *ifile, ino_t ino,
-				       struct buffer_head **entry_bhp)
+static unsigned long nilfs_ifile_entry_blkoff(struct inode *ifile, ino_t ino)
 {
-	struct buffer_head *entry_bh = NULL;
-	unsigned long blkoff;
-	unsigned long group;
-	int grpoff;
-	int ret;
+	int entries_per_group = nilfs_persistent_entries_per_group(ifile);
+	unsigned long group = ino / entries_per_group;
+	int grpoff = ino % entries_per_group;
 
-	group = ino / nilfs_persistent_entries_per_group(ifile);
-	grpoff = ino % nilfs_persistent_entries_per_group(ifile);
-	blkoff = nilfs_persistent_group_bitmap_blkoff(ifile, group) + 1 +
+	return nilfs_persistent_group_bitmap_blkoff(ifile, group) + 1 +
 		grpoff / NILFS_MDT(ifile)->mi_entries_per_block;
-
-	ret = nilfs_mdt_get_block(ifile, blkoff, 1,
-				  nilfs_ifile_entry_block_init, &entry_bh);
-	if (entry_bhp != NULL)
-		*entry_bhp = entry_bh;
-	return ret;
 }
 
-static inline int nilfs_ifile_prepare_entry(struct inode *ifile,
-					    struct nilfs_persistent_req *req)
+static int nilfs_ifile_prepare_entry(struct inode *ifile,
+				     struct nilfs_persistent_req *req)
 {
-	return nilfs_ifile_get_entry_block(ifile, req->pr_ino,
-					   &req->pr_entry_bh);
+	unsigned long blkoff = nilfs_ifile_entry_blkoff(ifile, req->pr_ino);
+
+	return nilfs_mdt_get_block(ifile, blkoff, 1,
+				   nilfs_ifile_entry_block_init,
+				   &req->pr_entry_bh);
 }
 
 static int nilfs_ifile_prepare_alloc(struct inode *ifile,
@@ -135,61 +116,35 @@ static int nilfs_ifile_prepare_alloc(struct inode *ifile,
 	int ret;
 
 	ret = nilfs_ifile_prepare_alloc_ino(ifile, req);
-	if (ret < 0)
-		return ret;
-	ret = nilfs_ifile_prepare_entry(ifile, req);
-	if (ret < 0) {
-		nilfs_ifile_abort_alloc_ino(ifile, req);
-		return ret;
+	if (!ret) {
+		ret = nilfs_ifile_prepare_entry(ifile, req);
+		if (ret < 0)
+			nilfs_ifile_abort_alloc_ino(ifile, req);
 	}
-
 	return ret;
 }
 
-static inline void
-nilfs_ifile_commit_entry(struct inode *ifile, struct nilfs_persistent_req *req)
-{
-	nilfs_mdt_mark_buffer_dirty(req->pr_entry_bh);
-}
-
-static inline void
+static void
 nilfs_ifile_commit_alloc(struct inode *ifile, struct nilfs_persistent_req *req)
 {
-	nilfs_ifile_commit_alloc_ino(ifile, req);
-	nilfs_ifile_commit_entry(ifile, req);
-}
-
-static inline int
-nilfs_ifile_prepare_free_ino(struct inode *ifile,
-			     struct nilfs_persistent_req *req)
-{
-	unsigned long group =
-		req->pr_ino / nilfs_persistent_entries_per_group(ifile);
-
-	return nilfs_persistent_prepare_free_entry(ifile, req, group);
-}
-
-static inline void
-nilfs_ifile_abort_free_entry(struct inode *ifile,
-			     struct nilfs_persistent_req *req)
-{
-	nilfs_persistent_abort_free_entry(ifile, req);
+	nilfs_persistent_commit_alloc_entry(ifile, req);
+	nilfs_mdt_mark_buffer_dirty(req->pr_entry_bh);
 }
 
 static int
 nilfs_ifile_prepare_free(struct inode *ifile, struct nilfs_persistent_req *req)
 {
+	unsigned long group =
+		req->pr_ino / nilfs_persistent_entries_per_group(ifile);
 	int ret;
 
-	ret = nilfs_ifile_prepare_free_ino(ifile, req);
-	if (ret < 0)
-		return ret;
-	ret = nilfs_ifile_prepare_entry(ifile, req);
-	if (ret < 0) {
-		nilfs_ifile_abort_free_entry(ifile, req);
-		return ret;
+	ret = nilfs_persistent_prepare_free_entry(ifile, req, group);
+	if (!ret) {
+		ret = nilfs_ifile_prepare_entry(ifile, req);
+		if (ret < 0)
+			nilfs_persistent_abort_free_entry(ifile, req);
 	}
-	return 0;
+	return ret;
 }
 
 static void nilfs_ifile_commit_free_ino(struct inode *ifile,
@@ -236,7 +191,7 @@ nilfs_ifile_commit_free(struct inode *ifile, struct nilfs_persistent_req *req)
 	nilfs_ifile_entry_set_flags(ifile, entry, 0);
 	nilfs_ifile_unmap_inode(ifile, req->pr_ino, req->pr_entry_bh);
 
-	nilfs_ifile_commit_entry(ifile, req);
+	nilfs_mdt_mark_buffer_dirty(req->pr_entry_bh);
 	nilfs_ifile_commit_free_ino(ifile, req);
 }
 
@@ -337,10 +292,8 @@ int nilfs_ifile_delete_inode(struct inode *ifile, ino_t ino)
 int nilfs_ifile_get_inode_block(struct inode *ifile, ino_t ino,
 				struct buffer_head **out_bh)
 {
-	unsigned long block;
 	struct super_block *sb = ifile->i_sb;
-	unsigned long group;
-	int grpoff;
+	unsigned long blkoff;
 	int err;
 
 	if (unlikely(!NILFS_VALID_INODE(sb, ino))) {
@@ -349,11 +302,8 @@ int nilfs_ifile_get_inode_block(struct inode *ifile, ino_t ino,
 		return -EINVAL;
 	}
 
-	group = ino / nilfs_persistent_entries_per_group(ifile);
-	grpoff = ino % nilfs_persistent_entries_per_group(ifile);
-	block = nilfs_persistent_group_bitmap_blkoff(ifile, group) + 1 +
-		grpoff / NILFS_MDT(ifile)->mi_entries_per_block;
-	err = nilfs_mdt_read_block(ifile, block, out_bh);
+	blkoff = nilfs_ifile_entry_blkoff(ifile, ino);
+	err = nilfs_mdt_read_block(ifile, blkoff, out_bh);
 	if (unlikely(err)) {
 		if (err == -EINVAL)
 			nilfs_error(sb, __func__, "ifile is broken");
