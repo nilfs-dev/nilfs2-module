@@ -27,13 +27,6 @@
 #include "mdt.h"
 #include "ifile.h"
 
-static inline void
-nilfs_ifile_entry_set_flags(struct inode *ifile, struct nilfs_inode *entry,
-			    unsigned int flags)
-{
-	entry->i_flags = cpu_to_le32(flags);
-}
-
 struct nilfs_inode *
 nilfs_ifile_map_inode(struct inode *ifile, ino_t ino, struct buffer_head *ibh)
 {
@@ -59,7 +52,7 @@ nilfs_ifile_entry_block_init(struct inode *ifile, struct buffer_head *bh,
 	int i;
 
 	for (i = 0; i < NILFS_MDT(ifile)->mi_entries_per_block; i++) {
-		nilfs_ifile_entry_set_flags(ifile, entry, 0);
+		entry->i_flags = 0;
 				/* XXX: set USED flag */
 		entry++;
 	}
@@ -188,7 +181,7 @@ nilfs_ifile_commit_free(struct inode *ifile, struct nilfs_persistent_req *req)
 
 	entry = nilfs_ifile_map_inode(ifile, req->pr_ino, req->pr_entry_bh);
 	/* XXX: flags == 0 means unused ?? */
-	nilfs_ifile_entry_set_flags(ifile, entry, 0);
+	entry->i_flags = 0;
 	nilfs_ifile_unmap_inode(ifile, req->pr_ino, req->pr_entry_bh);
 
 	nilfs_mdt_mark_buffer_dirty(req->pr_entry_bh);
