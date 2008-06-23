@@ -44,20 +44,6 @@ void nilfs_ifile_unmap_inode(struct inode *ifile, ino_t ino,
 	kunmap(ibh->b_page);
 }
 
-static void
-nilfs_ifile_entry_block_init(struct inode *ifile, struct buffer_head *bh,
-			     void *kaddr)
-{
-	struct nilfs_inode *entry = kaddr + bh_offset(bh);
-	int i;
-
-	for (i = 0; i < NILFS_MDT(ifile)->mi_entries_per_block; i++) {
-		entry->i_flags = 0;
-				/* XXX: set USED flag */
-		entry++;
-	}
-}
-
 static int nilfs_ifile_prepare_alloc_ino(struct inode *ifile,
 					 struct nilfs_persistent_req *req)
 {
@@ -98,9 +84,7 @@ static int nilfs_ifile_prepare_entry(struct inode *ifile,
 {
 	unsigned long blkoff = nilfs_ifile_entry_blkoff(ifile, req->pr_ino);
 
-	return nilfs_mdt_get_block(ifile, blkoff, 1,
-				   nilfs_ifile_entry_block_init,
-				   &req->pr_entry_bh);
+	return nilfs_mdt_get_block(ifile, blkoff, 1, NULL, &req->pr_entry_bh);
 }
 
 static int nilfs_ifile_prepare_alloc(struct inode *ifile,
