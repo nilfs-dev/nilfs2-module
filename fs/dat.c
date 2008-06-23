@@ -243,23 +243,6 @@ static void nilfs_dat_desc_block_init(struct inode *dat,
 
 #define nilfs_dat_bitmap_block_init	NULL
 
-static void nilfs_dat_entry_block_init(struct inode *dat,
-				       struct buffer_head *bh,
-				       void *kaddr)
-{
-	struct nilfs_dat_entry *entry;
-	unsigned long i;
-
-	for (i = 0, entry = (struct nilfs_dat_entry *)(kaddr + bh_offset(bh));
-	     i < nilfs_dat_entries_per_block(dat);
-	     i++, entry++) {
-		/* XXX: use macro */
-		nilfs_dat_entry_set_blocknr(dat, entry, 0);
-		nilfs_dat_entry_set_start(dat, entry, 0);
-		nilfs_dat_entry_set_end(dat, entry, 0);
-	}
-}
-
 static inline int nilfs_dat_get_desc_block(struct inode *dat,
 					   unsigned long group,
 					   int create,
@@ -283,7 +266,7 @@ nilfs_dat_get_entry_block(struct inode *dat, __u64 vblocknr, int create,
 			  struct buffer_head **bhp)
 {
 	return nilfs_mdt_get_block(dat, nilfs_dat_entry_blkoff(dat, vblocknr),
-				   create, nilfs_dat_entry_block_init, bhp);
+				   create, NULL, bhp);
 }
 
 static inline struct nilfs_dat_group_desc *
