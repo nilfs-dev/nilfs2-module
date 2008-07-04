@@ -653,7 +653,7 @@ int nilfs_init_proc_entries(void)
 {
 	struct proc_dir_entry *entry;
 
-	nilfs_proc_root = proc_mkdir("nilfs2", proc_root_fs);
+	nilfs_proc_root = proc_mkdir("fs/nilfs2", NULL);
 	if (!nilfs_proc_root) {
 		printk(KERN_WARNING "NILFS: cannot create proc root\n");
 		return 0; /* We don't abort when failed to make proc entries */
@@ -679,7 +679,7 @@ void nilfs_remove_proc_entries(void)
 {
 	remove_proc_entry("page", nilfs_proc_root);
 	remove_proc_entry("debug_option", nilfs_proc_root);
-	remove_proc_entry("nilfs2", proc_root_fs);
+	remove_proc_entry("fs/nilfs2", NULL);
 }
 
 /*
