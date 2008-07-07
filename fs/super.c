@@ -1093,6 +1093,7 @@ static int nilfs_remount(struct super_block *sb, int *flags, char *data)
 		if (err)
 			goto rw_remount_failed;
 
+		down_write(&nilfs->ns_sem);
 		nilfs_setup_super(sbi);
 		up_write(&nilfs->ns_sem);
 
