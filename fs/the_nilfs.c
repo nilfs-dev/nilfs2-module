@@ -62,10 +62,10 @@ struct the_nilfs *alloc_nilfs(struct block_device *bdev)
 
 	nilfs->ns_bdev = bdev;
 	atomic_set(&nilfs->ns_count, 1);
-	atomic_set(&nilfs->ns_writer_sem_count, -1);
+	atomic_set(&nilfs->ns_writer_refcount, -1);
 	atomic_set(&nilfs->ns_ndirtyblks, 0);
 	init_rwsem(&nilfs->ns_sem);
-	init_MUTEX(&nilfs->ns_writer_sem);
+	mutex_init(&nilfs->ns_writer_mutex);
 	INIT_LIST_HEAD(&nilfs->ns_supers);
 	spin_lock_init(&nilfs->ns_last_segment_lock);
 	nilfs->ns_gc_inodes_h = NULL;

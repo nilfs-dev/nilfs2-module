@@ -41,8 +41,8 @@ enum {
  * @ns_bdi: backing dev info
  * @ns_writer: back pointer to writable nilfs_sb_info
  * @ns_sem: semaphore for shared states
- * @ns_writer_sem: semaphore protecting ns_writer attach/detach
- * @ns_writer_sem_count: number of referrers on ns_writer
+ * @ns_writer_mutex: mutex protecting ns_writer attach/detach
+ * @ns_writer_refcount: number of referrers on ns_writer
  * @ns_sbh: buffer head of the on-disk super block
  * @ns_sbp: pointer to the super block data
  * @ns_used_segments: list of full segments in volatile active state
@@ -87,8 +87,12 @@ struct the_nilfs {
 	struct backing_dev_info *ns_bdi;
 	struct nilfs_sb_info   *ns_writer;
 	struct rw_semaphore	ns_sem;
-	struct semaphore	ns_writer_sem;
-	atomic_t		ns_writer_sem_count;
+#if HAVE_PURE_MUTEX
+	struct mutex		ns_writer_mutex;
+#else
+	struct semaphore	ns_writer_mutex;
+#endif
+	atomic_t		ns_writer_refcount;
 
 	/*
 	 * used for
@@ -203,32 +207,32 @@ static inline void get_nilfs(struct the_nilfs *nilfs)
 
 static inline struct nilfs_sb_info *nilfs_get_writer(struct the_nilfs *nilfs)
 {
-	if (atomic_inc_and_test(&nilfs->ns_writer_sem_count))
-		down(&nilfs->ns_writer_sem);
+	if (atomic_inc_and_test(&nilfs->ns_writer_refcount))
+		mutex_lock(&nilfs->ns_writer_mutex);
 	return nilfs->ns_writer;
 }
 
 static inline void nilfs_put_writer(struct the_nilfs *nilfs)
 {
-	if (atomic_add_negative(-1, &nilfs->ns_writer_sem_count))
-		up(&nilfs->ns_writer_sem);
+	if (atomic_add_negative(-1, &nilfs->ns_writer_refcount))
+		mutex_unlock(&nilfs->ns_writer_mutex);
 }
 
 static inline void
 nilfs_attach_writer(struct the_nilfs *nilfs, struct nilfs_sb_info *sbi)
 {
-	down(&nilfs->ns_writer_sem);
+	mutex_lock(&nilfs->ns_writer_mutex);
 	nilfs->ns_writer = sbi;
-	up(&nilfs->ns_writer_sem);
+	mutex_unlock(&nilfs->ns_writer_mutex);
 }
 
 static inline void
 nilfs_detach_writer(struct the_nilfs *nilfs, struct nilfs_sb_info *sbi)
 {
-	down(&nilfs->ns_writer_sem);
+	mutex_lock(&nilfs->ns_writer_mutex);
 	if (sbi == nilfs->ns_writer)
 		nilfs->ns_writer = NULL;
-	up(&nilfs->ns_writer_sem);
+	mutex_unlock(&nilfs->ns_writer_mutex);
 }
 
 static inline void

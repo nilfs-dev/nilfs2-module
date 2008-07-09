@@ -363,11 +363,11 @@
 	(LINUX_VERSION_CODE < KERNEL_VERSION(2, 6, 17))
 #endif
 /*
- * mutex replaced semaphore since linux-2.6.16
+ * Mutex was introduced at linux-2.6.16 to replace single semaphore
  */
-#ifndef NEED_INODE_SEMAPHORE
-# define NEED_INODE_SEMAPHORE		\
-	(LINUX_VERSION_CODE < KERNEL_VERSION(2, 6, 16))
+#ifndef HAVE_PURE_MUTEX
+# define HAVE_PURE_MUTEX	\
+	(LINUX_VERSION_CODE > KERNEL_VERSION(2, 6, 15))
 #endif
 /*
  * attribute argument was removed from kobject_uevent since linux-2.6.16
@@ -529,6 +529,12 @@ extern unsigned __nilfs_find_get_pages_tag(struct address_space *, pgoff_t *,
 
 #if !HAVE_INVALIDATE_INODE_PAGES2_RANGE
 #define invalidate_inode_pages2_range(mapping, start, end)   (0)
+#endif
+
+#if !HAVE_PURE_MUTEX
+#define mutex_init(mutex)	init_MUTEX(mutex)
+#define mutex_lock(mutex)	down(mutex)
+#define mutex_unlock(mutex)	up(mutex)
 #endif
 
 #if NEED_MOUNT_SEMAPHORE

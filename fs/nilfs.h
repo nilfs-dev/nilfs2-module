@@ -29,6 +29,7 @@
 #include <linux/spinlock.h>
 #include <linux/blkdev.h>
 #include <linux/crc32.h>
+#include "kern_feature.h"
 #include "nilfs_fs.h"
 #include "the_nilfs.h"
 #include "sb.h"
@@ -36,7 +37,6 @@
 #include "bmap.h"
 #include "bmap_union.h"
 #include "segment.h"
-#include "kern_feature.h"
 
 /*
  * NILFS filesystem version
