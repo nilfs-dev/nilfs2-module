@@ -707,28 +707,6 @@ static int nilfs_ioctl_sync(struct inode *inode, struct file *filp,
 	return 0;
 }
 
-#if 0
-static int nilfs_ioctl_sync(struct inode *inode, struct file *filp,
-			    unsigned int cmd, unsigned long arg)
-{
-	__u64 cno;
-	int ret;
-
-	unlock_kernel();
-	ret = nilfs_construct_segment(inode->i_sb);
-	if (ret < 0)
-		goto out;
-	if ((__u64 __user *)arg == NULL)
-		goto out;
-	cno = NILFS_SB(inode->i_sb)->s_nilfs->ns_cno - 1;
-	if (copy_to_user((__u64 __user *)arg, &cno, sizeof(cno)))
-		ret = -EFAULT;
- out:
-	lock_kernel();
-	return ret;
-}
-#endif
-
 int nilfs_ioctl(struct inode *inode, struct file *filp,
 		unsigned int cmd, unsigned long arg)
 {

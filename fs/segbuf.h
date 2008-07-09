@@ -165,16 +165,6 @@ nilfs_segbuf_add_file_buffer(struct nilfs_segment_buffer *segbuf,
 	segbuf->sb_sum.nfileblk++;
 }
 
-#if 0
-static inline void
-nilfs_segbuf_add_payload_buffers(struct nilfs_segment_buffer *segbuf,
-				 struct list_head *list, unsigned len)
-{
-	list_splice(list, segbuf->sb_payload_buffers.prev);
-	segbuf->sb_sum.nblocks += len;
-}
-#endif
-
 static inline void nilfs_release_buffers(struct list_head *list)
 {
 	struct buffer_head *bh, *n;
