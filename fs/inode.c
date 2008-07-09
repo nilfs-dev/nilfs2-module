@@ -798,7 +798,7 @@ int nilfs_setattr(struct dentry *dentry, struct iattr *iattr)
 	if (!err && (iattr->ia_valid & ATTR_MODE))
 		err = nilfs_acl_chmod(inode);
 	err2 = nilfs_transaction_end(sb, 1);
-	return (err ? : err2);
+	return err ? : err2;
 }
 
 int nilfs_load_inode_block(struct nilfs_sb_info *sbi, struct inode *inode,

@@ -190,7 +190,7 @@ static int nilfs_init_inode_cache(void)
 #else
 					       init_once);
 #endif
-	return ((nilfs_inode_cachep == NULL) ? -ENOMEM : 0);
+	return (nilfs_inode_cachep == NULL) ? -ENOMEM : 0;
 }
 
 static inline void nilfs_destroy_inode_cache(void)
@@ -1172,7 +1172,7 @@ static int nilfs_test_bdev_super(struct super_block *s, void *data)
 {
 	struct nilfs_super_data *sd = data;
 
-	return (s->s_bdev == sd->bdev);
+	return s->s_bdev == sd->bdev;
 }
 
 static int nilfs_test_bdev_super2(struct super_block *s, void *data)

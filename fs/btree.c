@@ -411,7 +411,7 @@ static int nilfs_btree_node_lookup(const struct nilfs_btree *btree,
 	BUG_ON(indexp == NULL);
 	*indexp = index;
 
-	return (s == 0);
+	return s == 0;
 }
 
 static inline struct nilfs_btree_node *

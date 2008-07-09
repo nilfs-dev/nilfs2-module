@@ -180,7 +180,7 @@ int nilfs_init_transaction_cache(void)
 #else
 				  NULL);
 #endif
-	return ((nilfs_transaction_cachep == NULL) ? -ENOMEM : 0);
+	return (nilfs_transaction_cachep == NULL) ? -ENOMEM : 0;
 }
 
 /**
@@ -938,11 +938,11 @@ static int nilfs_test_metadata_dirty(struct nilfs_sb_info *sbi)
 
 static int nilfs_segctor_clean(struct nilfs_sc_info *sci)
 {
-	return (list_empty(&sci->sc_dirty_files) &&
+	return list_empty(&sci->sc_dirty_files) &&
 		!test_bit(NILFS_SC_DIRTY, &sci->sc_flags) &&
 		list_empty(&sci->sc_cleaning_segments) &&
 		(!test_bit(NILFS_SC_GC_COPY, &sci->sc_flags) ||
-		 list_empty(&sci->sc_gc_inodes)));
+		 list_empty(&sci->sc_gc_inodes));
 }
 
 static int nilfs_segctor_confirm(struct nilfs_sc_info *sci)

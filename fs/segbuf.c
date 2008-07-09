@@ -59,7 +59,7 @@ int __init nilfs_init_segbuf_cache(void)
 #else
 				  nilfs_segbuf_init_once);
 #endif
-	return ((nilfs_segbuf_cachep == NULL) ? -ENOMEM : 0);
+	return (nilfs_segbuf_cachep == NULL) ? -ENOMEM : 0;
 }
 
 void nilfs_destroy_segbuf_cache(void)

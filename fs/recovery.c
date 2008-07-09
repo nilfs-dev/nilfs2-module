@@ -1037,5 +1037,5 @@ int nilfs_search_super_root(struct the_nilfs *nilfs, struct nilfs_sb_info *sbi,
 
  failed:
 	nilfs_dispose_segment_list(&segments);
-	return ((ret < 0) ? ret : nilfs_warn_segment_error(ret));
+	return (ret < 0) ? ret : nilfs_warn_segment_error(ret);
 }

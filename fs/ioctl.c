@@ -639,8 +639,8 @@ static int nilfs_ioctl_clean_segments(struct inode *inode, struct file *filp,
 
 static int nilfs_ioctl_test_cond(struct the_nilfs *nilfs, int cond)
 {
-	return ((cond & NILFS_TIMEDWAIT_SEG_WRITE) &&
-		nilfs_cond_nongc_write(nilfs));
+	return (cond & NILFS_TIMEDWAIT_SEG_WRITE) &&
+		nilfs_cond_nongc_write(nilfs);
 }
 
 static void nilfs_ioctl_clear_cond(struct the_nilfs *nilfs, int cond)
