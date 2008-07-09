@@ -152,7 +152,6 @@ extern struct nilfs_debug_info nilfs_debug_info;
 #ifdef CONFIG_NILFS_DEBUG
 extern int nilfs_init_proc_entries(void);
 extern void nilfs_remove_proc_entries(void);
-extern void nilfs_init_counters(void);
 extern void nilfs_fill_debug_info(int);
 #define nilfs_init_debug_info()  do { nilfs_fill_debug_info(1); } while (0)
 
@@ -189,7 +188,6 @@ extern void nilfs_check_btnode_cache(const char *, int,
 #else /* CONFIG_NILFS_DEBUG */
 #define nilfs_init_proc_entries()  (0)
 #define nilfs_remove_proc_entries()  do {} while (0)
-#define nilfs_init_counters()  do {} while (0)
 #define nilfs_init_debug_info()  do {} while (0)
 #define nilfs_print_seginfo(segbuf)  do {} while (0)
 #define nilfs_print_finfo(blocknr, ino, nblocks, ndatablk)  do {} while (0)

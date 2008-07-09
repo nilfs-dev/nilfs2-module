@@ -37,13 +37,6 @@ static int proc_calc_metrics(char *page, char **start, off_t off,
 			     int count, int *eof, int len);
 
 /*
- * Counters
- */
-void nilfs_init_counters(void)
-{
-}
-
-/*
  * debug info
  */
 struct nilfs_debug_info nilfs_debug_info;

@@ -1463,7 +1463,6 @@ static int __init init_nilfs_fs(void)
 {
 	int err;
 
-	nilfs_init_counters();
 	nilfs_init_debug_info();
 	nilfs_pages_init();
 
