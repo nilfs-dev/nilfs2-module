@@ -58,8 +58,7 @@ struct nilfs_btree_path {
  */
 struct nilfs_btree_operations {
 	__u64 (*btop_find_target)(const struct nilfs_btree *,
-					     const struct nilfs_btree_path *,
-					     __u64);
+				  const struct nilfs_btree_path *, __u64);
 	void (*btop_set_target)(struct nilfs_btree *, __u64, __u64);
 
 	struct the_nilfs *(*btop_get_nilfs)(struct nilfs_btree *);
