@@ -207,8 +207,9 @@ int nilfs_ifile_create_inode(struct inode *ifile, ino_t *out_ino,
  */
 int nilfs_ifile_delete_inode(struct inode *ifile, ino_t ino)
 {
-	struct nilfs_persistent_req req =
-		{ .pr_ino = ino, .pr_entry_bh = NULL };
+	struct nilfs_persistent_req req = {
+		.pr_ino = ino, .pr_entry_bh = NULL
+	};
 	unsigned long group = ino / nilfs_persistent_entries_per_group(ifile);
 	int ret;
 
