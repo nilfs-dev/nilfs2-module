@@ -213,10 +213,7 @@ static struct inode *alloc_gcinode(struct the_nilfs *nilfs, ino_t ino,
 	ii->i_state = 1 << NILFS_I_GCINODE;
 	ii->i_bh = NULL;
 	ii->i_dtime = 0;
-	/* buffer_head ? */
-	/* bmap ? */
 	nilfs_bmap_init_gc(ii->i_bmap);
-	/* other initialize needed ?? */
 
 	return inode;
 }
@@ -275,7 +272,6 @@ struct inode *nilfs_gc_iget(struct the_nilfs *nilfs, ino_t ino, __u64 cno)
  */
 void nilfs_clear_gcinode(struct inode *inode)
 {
-	/* other finalize needed ?? */
 	nilfs_mdt_clear(inode);
 	inode->i_state = I_CLEAR;
 	nilfs_mdt_destroy(inode);
