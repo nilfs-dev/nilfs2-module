@@ -1,3 +1,18 @@
+nilfs-2.0.3  Mon Jul 14, 2008 JST
+
+	* add 2.6.25 and 2.6.26 to the supported kernel versions.
+	* fix a compile-time error for the kernel 2.6.26 in case of
+	  CONFIG_NILFS_DEBUG=y.
+	* fix build errors on ia64 machines.
+	* fix hang problem after read/write remount.
+	* improve writeback implementation to avoid page locks and allow read
+	  accesses against page cache during writebacks.
+	* eliminate the prepare dirty flag on B-tree node pages to reform
+	  readability of the B-tree cache code.
+	* revise README.
+	* Cleanups; remove unused code or redundancy in the code,
+	  resolve several type of checkpatch warnings, and so forth.
+
 nilfs-2.0.2  Wed Mar 26, 2008 JST
 
 	* fix mount failure of nilfs-2.0.1 for 2.0.0 filesystem.
