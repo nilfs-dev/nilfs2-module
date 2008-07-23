@@ -171,6 +171,7 @@ void nilfs_bmap_write(struct nilfs_bmap *, struct nilfs_inode *);
 int nilfs_bmap_lookup(struct nilfs_bmap *, unsigned long, unsigned long *);
 int nilfs_bmap_insert(struct nilfs_bmap *, unsigned long, unsigned long);
 int nilfs_bmap_delete(struct nilfs_bmap *, unsigned long);
+int nilfs_bmap_last_key(struct nilfs_bmap *, unsigned long *);
 int nilfs_bmap_truncate(struct nilfs_bmap *, unsigned long);
 void nilfs_bmap_clear(struct nilfs_bmap *);
 int nilfs_bmap_terminate(struct nilfs_bmap *);

@@ -180,6 +180,19 @@ static int nilfs_bmap_do_delete(struct nilfs_bmap *bmap, __u64 key)
 	return (*bmap->b_ops->bop_delete)(bmap, key);
 }
 
+int nilfs_bmap_last_key(struct nilfs_bmap *bmap, unsigned long *key)
+{
+	__u64 lastkey;
+	int ret;
+
+	down_read(&bmap->b_sem);
+	ret = (*bmap->b_ops->bop_last_key)(bmap, &lastkey);
+	if (!ret)
+		*key = lastkey;
+	up_read(&bmap->b_sem);
+	return ret;
+}
+
 /**
  * nilfs_bmap_delete - delete a key-record pair from a bmap
  * @bmap: bmap
