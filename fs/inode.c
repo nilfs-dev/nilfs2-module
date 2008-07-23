@@ -701,6 +701,43 @@ void nilfs_update_inode(struct inode *inode, struct buffer_head *ibh)
 	nilfs_ifile_unmap_inode(sbi->s_ifile, ino, ibh);
 }
 
+#define NILFS_MAX_TRUNCATE_BLOCKS	16384  /* 64MB for 4KB block */
+
+static void nilfs_truncate_bmap(struct nilfs_inode_info *ii,
+				unsigned long from)
+{
+	unsigned long b;
+	int ret;
+
+	if (!test_bit(NILFS_I_BMAP, &ii->i_state))
+		return;
+ repeat:
+	ret = nilfs_bmap_last_key(ii->i_bmap, &b);
+	if (ret == -ENOENT)
+		return;
+	else if (ret < 0)
+		goto failed;
+
+	if (b < from)
+		return;
+
+	b -= min_t(unsigned long, NILFS_MAX_TRUNCATE_BLOCKS, b - from);
+	ret = nilfs_bmap_truncate(ii->i_bmap, b);
+	nilfs_relax_pressure_in_lock(ii->vfs_inode.i_sb);
+	if (!ret || (ret == -ENOMEM &&
+		     nilfs_bmap_truncate(ii->i_bmap, b) == 0))
+		goto repeat;
+
+ failed:
+	if (ret == -EINVAL)
+		nilfs_error(ii->vfs_inode.i_sb, __func__,
+			    "bmap is broken (ino=%lu)", ii->vfs_inode.i_ino);
+	else
+		nilfs_warning(ii->vfs_inode.i_sb, __func__,
+			      "failed to truncate bmap (ino=%lu, err=%d)",
+			      ii->vfs_inode.i_ino, ret);
+}
+
 void nilfs_truncate(struct inode *inode)
 {
 	unsigned long blkoff;
@@ -723,7 +760,7 @@ void nilfs_truncate(struct inode *inode)
 
 	block_truncate_page(inode->i_mapping, inode->i_size, nilfs_get_block);
 
-	ret = nilfs_bmap_truncate(ii->i_bmap, blkoff);
+	nilfs_truncate_bmap(ii, blkoff);
 
 	inode->i_mtime = inode->i_ctime = CURRENT_TIME;
 	if (IS_SYNC(inode))
@@ -756,21 +793,7 @@ void nilfs_delete_inode(struct inode *inode)
 	if (inode->i_data.nrpages)
 		truncate_inode_pages(&inode->i_data, 0);
 #endif
-	if (test_bit(NILFS_I_BMAP, &ii->i_state)) {
-		err = nilfs_bmap_terminate(ii->i_bmap);
-		if (unlikely(err)) {
-			if (err == -EINVAL)
-				nilfs_error(sb, __func__,
-					    "bmap is broken (ino=%lu)",
-					    inode->i_ino);
-			else
-				nilfs_warning(sb, __func__,
-					      "failed to terminate bmap "
-					      "(ino=%lu, err=%d)",
-					      inode->i_ino, err);
-		}
-	}
-
+	nilfs_truncate_bmap(ii, 0);
 	nilfs_free_inode(inode);
 	/* nilfs_free_inode() marks inode buffer dirty */
 	if (IS_SYNC(inode))
