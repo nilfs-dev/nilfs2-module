@@ -171,7 +171,7 @@ int nilfs_mdt_create_block(struct inode *inode, unsigned long block,
 			   nilfs_mdt_init_block_t *init_block)
 {
 	struct the_nilfs *nilfs = NILFS_MDT(inode)->mi_nilfs;
-	struct nilfs_sb_info *sbi = NULL;
+	struct nilfs_sb_info *writer = NULL;
 	struct super_block *sb = inode->i_sb;
 	struct nilfs_transaction_info ti;
 	struct buffer_head *bh;
@@ -180,12 +180,12 @@ int nilfs_mdt_create_block(struct inode *inode, unsigned long block,
 	mdt_debug(3, "called (ino=%lu, blkoff=%lu)\n", inode->i_ino, block);
 
 	if (!sb) {
-		sbi = nilfs_get_writer(nilfs);
-		if (!sbi) {
+		writer = nilfs_get_writer(nilfs);
+		if (!writer) {
 			err = -EROFS;
 			goto out;
 		}
-		sb = sbi->s_super;
+		sb = writer->s_super;
 	}
 
 	nilfs_transaction_begin(sb, &ti, 0);
@@ -218,7 +218,7 @@ int nilfs_mdt_create_block(struct inode *inode, unsigned long block,
 
  failed_unlock:
 	nilfs_transaction_end(sb, !err);
-	if (sbi)
+	if (writer)
 		nilfs_put_writer(nilfs);
  out:
 	mdt_debug(3, "done (err=%d)\n", err);
@@ -544,7 +544,9 @@ nilfs_mdt_write_page(struct page *page, struct writeback_control *wbc)
 {
 	struct inode *inode = container_of(page->mapping,
 					   struct inode, i_data);
-	int err;
+	struct super_block *sb = inode->i_sb;
+	struct nilfs_sb_info *writer = NULL;
+	int err = 0;
 
 	mdt_debug(2, "called (page=%p, index=%lu, wbc nonblocking %d, "
 		  "wbc for_reclaim %d)\n",
@@ -552,15 +554,21 @@ nilfs_mdt_write_page(struct page *page, struct writeback_control *wbc)
 	redirty_page_for_writepage(wbc, page);
 	unlock_page(page);
 
-	if (!inode->i_sb)
-		return 0;
-	if (wbc->sync_mode == WB_SYNC_ALL) {
-		err = nilfs_construct_segment(inode->i_sb);
-		if (unlikely(err))
-			return err;
-	} else if (wbc->for_reclaim)
-		nilfs_flush_segment(NILFS_SB(inode->i_sb), inode->i_ino);
-	return 0;
+	if (!sb) {
+		writer = nilfs_get_writer(NILFS_MDT(inode)->mi_nilfs);
+		if (!writer)
+			return -EROFS;
+		sb = writer->s_super;
+	}
+
+	if (wbc->sync_mode == WB_SYNC_ALL)
+		err = nilfs_construct_segment(sb);
+	else if (wbc->for_reclaim)
+		nilfs_flush_segment(sb, inode->i_ino);
+
+	if (writer)
+		nilfs_put_writer(NILFS_MDT(inode)->mi_nilfs);
+	return err;
 }
 
 

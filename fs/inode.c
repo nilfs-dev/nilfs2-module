@@ -165,7 +165,7 @@ static int nilfs_writepage(struct page *page, struct writeback_control *wbc)
 		if (unlikely(err))
 			return err;
 	} else if (wbc->for_reclaim)
-		nilfs_flush_segment(NILFS_SB(inode->i_sb), inode->i_ino);
+		nilfs_flush_segment(inode->i_sb, inode->i_ino);
 
 	return 0;
 }

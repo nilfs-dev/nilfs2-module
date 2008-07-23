@@ -56,14 +56,13 @@
 
 /* Construction mode */
 enum {
-	SC_FLUSH_DATA = 1,   /* Flush current dirty data blocks and make
-				partial segments without the super root and
-				the inode file */
-	SC_FLUSH_IFILE,      /* Flush current dirty data blocks and ifile;
-				make partial segments without checkpoint */
-	SC_LSEG_SR,          /* Make a logical segment having a super root */
-	SC_LSEG_DSYNC,       /* Flush data blocks of a given file and make
-				a logical segment without the super root */
+	SC_LSEG_SR = 1,	/* Make a logical segment having a super root */
+	SC_LSEG_DSYNC,	/* Flush data blocks of a given file and make
+			   a logical segment without a super root */
+	SC_FLUSH_FILE,	/* Flush data files, leads to segment writes without
+			   creating a checkpoint */
+	SC_FLUSH_DAT,	/* Flush DAT file. This also creates segments without
+			   a checkpoint */
 };
 
 /*
@@ -79,8 +78,8 @@ enum {
 	SC_MAIN_SUFILE,
 	SC_MAIN_DAT,
 	SC_MAIN_SR,
-	SC_MAIN_DONE,
 	SC_MAIN_DSYNC,
+	SC_MAIN_DONE,
 };
 
 enum {
@@ -136,7 +135,7 @@ struct nilfs_sc_operations {
  * Other definitions
  */
 static void nilfs_segctor_start_timer(struct nilfs_sc_info *);
-static void nilfs_segctor_do_flush(struct nilfs_sc_info *, unsigned long);
+static void nilfs_segctor_do_flush(struct nilfs_sc_info *, int);
 static void nilfs_dispose_list(struct nilfs_sb_info *, struct list_head *,
 			       int);
 
@@ -330,7 +329,7 @@ int nilfs_transaction_end(struct super_block *sb, int commit)
 			nilfs_segctor_start_timer(sci);
 		if (atomic_read(&sbi->s_nilfs->ns_ndirtyblks) >
 		    sci->sc_watermark)
-			nilfs_segctor_do_flush(sci, NILFS_SEGCTOR_FLUSH_DATA);
+			nilfs_segctor_do_flush(sci, 0);
 	}
 	up_read(&sbi->s_nilfs->ns_segctor_sem);
 	seg_debug(3, "task %p unlocked segment semaphore\n", current);
@@ -1315,7 +1314,6 @@ static int nilfs_segctor_collect_blocks(struct nilfs_sc_info *sci, int mode)
 	struct nilfs_inode_info *ii;
 	int err = 0;
 
- start:
 	switch (sci->sc_stage.main) {
 	case SC_MAIN_INIT:
 		/*
@@ -1329,7 +1327,7 @@ static int nilfs_segctor_collect_blocks(struct nilfs_sc_info *sci, int mode)
 				seg_debug(2, "** DSYNC BEGIN\n");
 				SC_STAGE_SKIP_TO(&sci->sc_stage,
 						 SC_MAIN_DSYNC);
-				goto start;
+				goto dsync_mode;
 			}
 			seg_debug(2, "** LSEG BEGIN\n");
 		} else
@@ -1337,6 +1335,10 @@ static int nilfs_segctor_collect_blocks(struct nilfs_sc_info *sci, int mode)
 
 		sci->sc_stage.dirty_file_ptr = NULL;
 		sci->sc_stage.gc_inode_ptr = NULL;
+		if (mode == SC_FLUSH_DAT) {
+			SC_STAGE_SKIP_TO(&sci->sc_stage, SC_MAIN_DAT);
+			goto dat_stage;
+		}
 		SC_STAGE_NEXT(&sci->sc_stage);
 	case SC_MAIN_GC:
 		seg_debug(3, "** GC INODE STAGE\n");
@@ -1381,7 +1383,7 @@ static int nilfs_segctor_collect_blocks(struct nilfs_sc_info *sci, int mode)
 			/* XXX: required ? */
 		}
 		sci->sc_stage.dirty_file_ptr = NULL;
-		if (mode == SC_FLUSH_DATA) {
+		if (mode == SC_FLUSH_FILE) {
 			SC_STAGE_SKIP_TO(&sci->sc_stage, SC_MAIN_DONE);
 			seg_debug(2, "** LSEG CONTINUED\n");
 			return 0;
@@ -1414,11 +1416,6 @@ static int nilfs_segctor_collect_blocks(struct nilfs_sc_info *sci, int mode)
 					      &nilfs_sc_file_ops);
 		if (unlikely(err))
 			break;
-		if (mode == SC_FLUSH_IFILE) {
-			SC_STAGE_SKIP_TO(&sci->sc_stage, SC_MAIN_DONE);
-			seg_debug(2, "** LSEG CONTINUED\n");
-			return 0;
-		}
 		SC_STAGE_NEXT(&sci->sc_stage);
 		/* Creating a checkpoint */
 		err = nilfs_segctor_create_checkpoint(sci);
@@ -1443,11 +1440,17 @@ static int nilfs_segctor_collect_blocks(struct nilfs_sc_info *sci, int mode)
 			break;
 		SC_STAGE_NEXT(&sci->sc_stage);
 	case SC_MAIN_DAT:
+	dat_stage:
 		seg_debug(3, "** DAT STAGE\n");
 		err = nilfs_segctor_scan_file(sci, nilfs_dat_inode(nilfs),
 					      &nilfs_sc_dat_ops);
 		if (unlikely(err))
 			break;
+		if (mode == SC_FLUSH_DAT) {
+			SC_STAGE_SKIP_TO(&sci->sc_stage, SC_MAIN_DONE);
+			seg_debug(2, "** LSEG CONTINUED\n");
+			return 0;
+		}
 		SC_STAGE_NEXT(&sci->sc_stage);
 	case SC_MAIN_SR:
 		seg_debug(3, "** SR STAGE\n");
@@ -1458,16 +1461,13 @@ static int nilfs_segctor_collect_blocks(struct nilfs_sc_info *sci, int mode)
 				break;
 			seg_debug(3, "add a super root block\n");
 		}
-		SC_STAGE_NEXT(&sci->sc_stage);
-	case SC_MAIN_DONE:
-		/*
-		 * Post processes after final segment construction
-		 * can be inserted here.
-		 */
+		/* End of a logical segment */
 		sci->sc_curseg->sb_sum.flags |= NILFS_SS_LOGEND;
+		SC_STAGE_SKIP_TO(&sci->sc_stage, SC_MAIN_DONE);
 		seg_debug(2, "** LSEG END\n");
 		return 0;
 	case SC_MAIN_DSYNC:
+	dsync_mode:
 		sci->sc_curseg->sb_sum.flags |= NILFS_SS_SYNDT;
 		ii = sci->sc_stage.dirty_file_ptr;
 		if (!test_bit(NILFS_I_BUSY, &ii->i_state))
@@ -1480,6 +1480,8 @@ static int nilfs_segctor_collect_blocks(struct nilfs_sc_info *sci, int mode)
 		sci->sc_curseg->sb_sum.flags |= NILFS_SS_LOGEND;
 		SC_STAGE_SKIP_TO(&sci->sc_stage, SC_MAIN_DONE);
 		seg_debug(2, "** DSYNC END\n");
+		return 0;
+	case SC_MAIN_DONE:
 		return 0;
 	default:
 		BUG();
@@ -1805,8 +1807,7 @@ static int nilfs_segctor_collect(struct nilfs_sc_info *sci,
 			goto failed;
 
 		/* The current segment is filled up */
-		if (mode == SC_LSEG_DSYNC ||
-		    sci->sc_stage.main < SC_MAIN_CPFILE)
+		if (mode != SC_LSEG_SR || sci->sc_stage.main < SC_MAIN_CPFILE)
 			break;
 
 		nilfs_segctor_cancel_free_segments(sci, nilfs->ns_sufile);
@@ -1825,26 +1826,6 @@ static int nilfs_segctor_collect(struct nilfs_sc_info *sci,
 
  failed:
 	return err;
-}
-
-/**
- * nilfs_follow_up_check - Check whether the segment is empty or not.
- * @sci: nilfs_sc_info
- *
- * We reject empty or SR-only segment if the previous write was continuing.
- */
-static int nilfs_segctor_follow_up_check(struct nilfs_sc_info *sci)
-{
-	struct nilfs_segment_buffer *segbuf = sci->sc_curseg;
-	int has_sr = (sci->sc_super_root != NULL);
-
-	if (NILFS_SEG_SIMPLEX(&segbuf->sb_sum) &&
-	    /* # of payload blocks */
-	    segbuf->sb_sum.nblocks - segbuf->sb_sum.nsumblk <= has_sr) {
-		seg_debug(2, "Aborted construction (no blocks collected)\n");
-		return 1;
-	}
-	return 0;
 }
 
 static void nilfs_list_replace_buffer(struct buffer_head *old_bh,
@@ -2590,10 +2571,12 @@ static int nilfs_segctor_do_construct(struct nilfs_sc_info *sci, int mode)
 			goto failed;
 
 		has_sr = (sci->sc_super_root != NULL);
+
+		/* Avoid empty segment */
 		if (sci->sc_stage.main == SC_MAIN_DONE &&
-		    nilfs_segctor_follow_up_check(sci)) {
-			if (mode != SC_LSEG_DSYNC)
-				clear_bit(NILFS_SC_DIRTY, &sci->sc_flags);
+		    NILFS_SEG_EMPTY(&sci->sc_curseg->sb_sum)) {
+			seg_debug(2, "aborted (no blocks collected)\n");
+			BUG_ON(mode == SC_LSEG_SR);
 			nilfs_segctor_end_construction(sci, nilfs, 1);
 			goto out;
 		}
@@ -2696,42 +2679,33 @@ static void nilfs_segctor_start_timer(struct nilfs_sc_info *sci)
 	spin_unlock(&sci->sc_state_lock);
 }
 
-static void
-nilfs_segctor_do_flush(struct nilfs_sc_info *sci, unsigned long flag)
+static void nilfs_segctor_do_flush(struct nilfs_sc_info *sci, int bn)
 {
 	spin_lock(&sci->sc_state_lock);
-	if (!(sci->sc_state & flag)) {
-		sci->sc_state |= flag;
-		wake_up(&sci->sc_wait_daemon);
+	if (!(sci->sc_flush_request & (1 << bn))) {
+		unsigned long prev_req = sci->sc_flush_request;
+
+		sci->sc_flush_request |= (1 << bn);
+		if (!prev_req)
+			wake_up(&sci->sc_wait_daemon);
 	}
 	spin_unlock(&sci->sc_state_lock);
 }
 
 /**
  * nilfs_flush_segment - trigger a segment construction for resource control
- * @sbi: nilfs_sb_info
+ * @sb: super block
  * @ino: inode number of the file to be flushed out.
  */
-void nilfs_flush_segment(struct nilfs_sb_info *sbi, ino_t ino)
+void nilfs_flush_segment(struct super_block *sb, ino_t ino)
 {
+	struct nilfs_sb_info *sbi = NILFS_SB(sb);
 	struct nilfs_sc_info *sci = NILFS_SC(sbi);
-	unsigned long flag;
 
-	if (!sci) {
-		nilfs_warning(sbi->s_super, __func__,
-			      "Tried to flush destructed FS.\n");
-		dump_stack();
+	if (!sci)
 		return;
-	}
-	if (ino >= sbi->s_nilfs->ns_first_ino)
-		flag = NILFS_SEGCTOR_FLUSH_DATA;
-	else if (ino == NILFS_IFILE_INO)
-		flag = NILFS_SEGCTOR_FLUSH_IFILE;
-	else
-		return;
-
-	seg_debug(2, "kick segment constructor (inode number=%lu)\n", ino);
-	nilfs_segctor_do_flush(sci, flag);
+	nilfs_segctor_do_flush(sci, NILFS_MDT_INODE(sb, ino) ? ino : 0);
+					/* assign bit 0 to data files */
 }
 
 int nilfs_segctor_add_segments_to_be_freed(struct nilfs_sc_info *sci,
@@ -2969,6 +2943,9 @@ struct nilfs_segctor_req {
 	int sb_err;  /* super block writeback failure */
 };
 
+#define FLUSH_FILE_BIT	(0x1) /* data file only */
+#define FLUSH_DAT_BIT	(1 << NILFS_DAT_INO) /* DAT only */
+
 static void nilfs_segctor_accept(struct nilfs_sc_info *sci,
 				 struct nilfs_segctor_req *req)
 {
@@ -2988,19 +2965,20 @@ static void nilfs_segctor_notify(struct nilfs_sc_info *sci,
 {
 	/* Clear requests (even when the construction failed) */
 	spin_lock(&sci->sc_state_lock);
-	if (req->mode == SC_FLUSH_DATA)
-		sci->sc_state &=
-			~(NILFS_SEGCTOR_COMMIT | NILFS_SEGCTOR_FLUSH_DATA);
-	else
-		sci->sc_state &=
-			~(NILFS_SEGCTOR_COMMIT | NILFS_SEGCTOR_FLUSH);
+
+	sci->sc_state &= ~NILFS_SEGCTOR_COMMIT;
 
 	if (req->mode == SC_LSEG_SR) {
 		seg_debug(3, "complete requests from seq=%d to seq=%d\n",
 			  sci->sc_seq_done + 1, req->seq_accepted);
 		sci->sc_seq_done = req->seq_accepted;
 		nilfs_segctor_wakeup(sci, req->sc_err ? : req->sb_err);
-	}
+		sci->sc_flush_request = 0;
+	} else if (req->mode == SC_FLUSH_FILE)
+		sci->sc_flush_request &= ~FLUSH_FILE_BIT;
+	else if (req->mode == SC_FLUSH_DAT)
+		sci->sc_flush_request &= -FLUSH_DAT_BIT;
+
 	spin_unlock(&sci->sc_state_lock);
 }
 
@@ -3020,7 +2998,8 @@ static int nilfs_segctor_construct(struct nilfs_sc_info *sci,
 		seg_debug(2, "end (stage=%d)\n", sci->sc_stage.main);
 	}
 	if (likely(!err)) {
-		atomic_set(&nilfs->ns_ndirtyblks, 0);
+		if (req->mode != SC_FLUSH_DAT)
+			atomic_set(&nilfs->ns_ndirtyblks, 0);
 		if (test_bit(NILFS_SC_SUPER_ROOT, &sci->sc_flags) &&
 		    nilfs_discontinued(nilfs)) {
 			down_write(&nilfs->ns_sem);
@@ -3140,6 +3119,18 @@ static void nilfs_segctor_thread_construct(struct nilfs_sc_info *sci, int mode)
 	nilfs_transaction_unlock(sbi);
 }
 
+static int nilfs_segctor_flush_mode(struct nilfs_sc_info *sci)
+{
+	if (!test_bit(NILFS_SC_UNCLOSED, &sci->sc_flags) ||
+	    time_before(jiffies, sci->sc_lseg_stime + sci->sc_mjcp_freq)) {
+		if (!(sci->sc_flush_request & ~FLUSH_FILE_BIT))
+			return SC_FLUSH_FILE;
+		else if (!(sci->sc_flush_request & ~FLUSH_DAT_BIT))
+			return SC_FLUSH_DAT;
+	}
+	return SC_LSEG_SR;
+}
+
 /**
  * nilfs_segctor_thread - main loop of the segment constructor thread.
  * @arg: pointer to a struct nilfs_sc_info.
@@ -3180,15 +3171,10 @@ static int nilfs_segctor_thread(void *arg)
 
 		if (timeout || sci->sc_seq_request != sci->sc_seq_done)
 			mode = SC_LSEG_SR;
-		else if (!(sci->sc_state & NILFS_SEGCTOR_FLUSH))
+		else if (!sci->sc_flush_request)
 			break;
-		else if (!test_bit(NILFS_SC_UNCLOSED, &sci->sc_flags) ||
-			 time_before(jiffies,
-				     sci->sc_lseg_stime + sci->sc_mjcp_freq))
-			mode = (sci->sc_state & NILFS_SEGCTOR_FLUSH_IFILE) ?
-				SC_FLUSH_IFILE : SC_FLUSH_DATA;
 		else
-			mode = SC_LSEG_SR;
+			mode = nilfs_segctor_flush_mode(sci);
 
 		spin_unlock(&sci->sc_state_lock);
 		nilfs_segctor_thread_construct(sci, mode);
@@ -3219,7 +3205,7 @@ static int nilfs_segctor_thread(void *arg)
 
 		if (sci->sc_seq_request != sci->sc_seq_done)
 			should_sleep = 0;
-		else if (sci->sc_state & NILFS_SEGCTOR_FLUSH)
+		else if (sci->sc_flush_request)
 			should_sleep = 0;
 		else if (sci->sc_state & NILFS_SEGCTOR_COMMIT)
 			should_sleep = time_before(jiffies,
@@ -3383,7 +3369,7 @@ static void nilfs_segctor_destroy(struct nilfs_sc_info *sci)
 
 	spin_lock(&sci->sc_state_lock);
 	nilfs_segctor_kill_thread(sci);
-	flag = ((sci->sc_state & (NILFS_SEGCTOR_COMMIT | NILFS_SEGCTOR_FLUSH))
+	flag = ((sci->sc_state & NILFS_SEGCTOR_COMMIT) || sci->sc_flush_request
 		|| sci->sc_seq_request != sci->sc_seq_done);
 	spin_unlock(&sci->sc_state_lock);
 

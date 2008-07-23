@@ -134,6 +134,7 @@ struct nilfs_collection_stage {
  * @sc_sketch_inode: Inode of the sketch file
  * @sc_state_lock: spinlock for sc_state and so on
  * @sc_state: Segctord state flags
+ * @sc_flush_request: inode bitmap of metadata files to be flushed
  * @sc_wait_request: Client request queue
  * @sc_wait_daemon: Daemon wait queue
  * @sc_wait_task: Start/end wait queue to control segctord task
@@ -185,6 +186,7 @@ struct nilfs_sc_info {
 
 	spinlock_t		sc_state_lock;
 	unsigned long		sc_state;
+	unsigned long		sc_flush_request;
 
 	wait_queue_head_t	sc_wait_request;
 	wait_queue_head_t	sc_wait_daemon;
@@ -214,10 +216,6 @@ enum {
 /* sc_state */
 #define NILFS_SEGCTOR_QUIT	    0x0001  /* segctord is being destroyed */
 #define NILFS_SEGCTOR_COMMIT	    0x0004  /* committed transaction exists */
-#define NILFS_SEGCTOR_FLUSH_DATA    0x0010
-#define NILFS_SEGCTOR_FLUSH_IFILE   0x0020
-#define NILFS_SEGCTOR_FLUSH	    (NILFS_SEGCTOR_FLUSH_DATA | \
-				     NILFS_SEGCTOR_FLUSH_IFILE)
 
 /*
  * Constant parameters
@@ -252,7 +250,7 @@ extern int nilfs_transaction_end(struct super_block *, int);
 extern int nilfs_construct_segment(struct super_block *);
 extern int nilfs_construct_dsync_segment(struct super_block *,
 					 struct inode *);
-extern void nilfs_flush_segment(struct nilfs_sb_info *, ino_t);
+extern void nilfs_flush_segment(struct super_block *, ino_t);
 extern int nilfs_clean_segments(struct super_block *, unsigned long);
 
 extern int nilfs_segctor_add_segments_to_be_freed(struct nilfs_sc_info *,

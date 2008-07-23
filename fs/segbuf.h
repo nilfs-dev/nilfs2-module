@@ -62,6 +62,8 @@ struct nilfs_segsum_info {
 	(((sum)->flags & (NILFS_SS_LOGBGN | NILFS_SS_LOGEND)) == \
 	 (NILFS_SS_LOGBGN | NILFS_SS_LOGEND))
 
+#define NILFS_SEG_EMPTY(sum)	((sum)->nblocks == (sum)->nsumblk)
+
 /**
  * struct nilfs_segment_buffer - Segment buffer
  * @sb_super: back pointer to a superblock struct
