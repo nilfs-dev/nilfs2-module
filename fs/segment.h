@@ -211,6 +211,8 @@ enum {
 	NILFS_SC_UNCLOSED,	/* Logical segment is not closed */
 	NILFS_SC_SUPER_ROOT,	/* The latest segment has a super root */
 	NILFS_SC_GC_COPY,	/* Copying GC blocks */
+	NILFS_SC_PRIOR_FLUSH,	/* Requesting immediate flush without making a
+				   checkpoint */
 };
 
 /* sc_state */
@@ -246,6 +248,7 @@ extern void nilfs_destroy_transaction_cache(void);
 extern int nilfs_transaction_begin(struct super_block *,
 				   struct nilfs_transaction_info *, int);
 extern int nilfs_transaction_end(struct super_block *, int);
+extern void nilfs_relax_pressure_in_lock(struct super_block *);
 
 extern int nilfs_construct_segment(struct super_block *);
 extern int nilfs_construct_dsync_segment(struct super_block *,

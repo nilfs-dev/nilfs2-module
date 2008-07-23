@@ -136,6 +136,7 @@ struct nilfs_sc_operations {
  */
 static void nilfs_segctor_start_timer(struct nilfs_sc_info *);
 static void nilfs_segctor_do_flush(struct nilfs_sc_info *, int);
+static void nilfs_segctor_do_immediate_flush(struct nilfs_sc_info *);
 static void nilfs_dispose_list(struct nilfs_sb_info *, struct list_head *,
 			       int);
 
@@ -342,6 +343,30 @@ int nilfs_transaction_end(struct super_block *sb, int commit)
 	return err;
 }
 
+void nilfs_relax_pressure_in_lock(struct super_block *sb)
+{
+	struct nilfs_sb_info *sbi = NILFS_SB(sb);
+	struct nilfs_sc_info *sci = NILFS_SC(sbi);
+	struct the_nilfs *nilfs = sbi->s_nilfs;
+
+	if (!sci || !sci->sc_flush_request)
+		return;
+
+	set_bit(NILFS_SC_PRIOR_FLUSH, &sci->sc_flags);
+	up_read(&nilfs->ns_segctor_sem);
+
+	down_write(&nilfs->ns_segctor_sem);
+	if (sci->sc_flush_request &&
+	    test_bit(NILFS_SC_PRIOR_FLUSH, &sci->sc_flags)) {
+		struct nilfs_transaction_info *ti = current->journal_info;
+
+		ti->ti_flags |= NILFS_TI_WRITER;
+		nilfs_segctor_do_immediate_flush(sci);
+		ti->ti_flags &= ~NILFS_TI_WRITER;
+	}
+	downgrade_write(&nilfs->ns_segctor_sem);
+}
+
 static void nilfs_transaction_lock(struct nilfs_sb_info *sbi,
 				   struct nilfs_transaction_info *ti,
 				   int gcflag)
@@ -351,8 +376,6 @@ static void nilfs_transaction_lock(struct nilfs_sb_info *sbi,
 	BUG_ON(cur_ti);
 	BUG_ON(!ti);
 	ti->ti_flags = NILFS_TI_WRITER;
-	if (gcflag)
-		ti->ti_flags |= NILFS_TI_GC;
 	ti->ti_count = 0;
 	ti->ti_save = cur_ti;
 	ti->ti_magic = NILFS_TI_MAGIC;
@@ -360,7 +383,18 @@ static void nilfs_transaction_lock(struct nilfs_sb_info *sbi,
 	current->journal_info = ti;
 
 	seg_debug(3, "task %p locking segment semaphore\n", current);
-	down_write(&sbi->s_nilfs->ns_segctor_sem);
+	for (;;) {
+		down_write(&sbi->s_nilfs->ns_segctor_sem);
+		if (!test_bit(NILFS_SC_PRIOR_FLUSH, &NILFS_SC(sbi)->sc_flags))
+			break;
+
+		nilfs_segctor_do_immediate_flush(NILFS_SC(sbi));
+
+		up_write(&sbi->s_nilfs->ns_segctor_sem);
+		yield();
+	}
+	if (gcflag)
+		ti->ti_flags |= NILFS_TI_GC;
 	seg_debug(3, "locked\n");
 }
 
@@ -3117,6 +3151,29 @@ static void nilfs_segctor_thread_construct(struct nilfs_sc_info *sci, int mode)
 		nilfs_segctor_start_timer(sci);
 
 	nilfs_transaction_unlock(sbi);
+}
+
+static void nilfs_segctor_do_immediate_flush(struct nilfs_sc_info *sci)
+{
+	int mode = 0;
+	int err;
+
+	spin_lock(&sci->sc_state_lock);
+	mode = (sci->sc_flush_request & FLUSH_DAT_BIT) ?
+		SC_FLUSH_DAT : SC_FLUSH_FILE;
+	spin_unlock(&sci->sc_state_lock);
+
+	if (mode) {
+		seg_debug(2, "begin (mode=0x%x)\n", mode);
+		err = nilfs_segctor_do_construct(sci, mode);
+		seg_debug(2, "end\n");
+
+		spin_lock(&sci->sc_state_lock);
+		sci->sc_flush_request &= (mode == SC_FLUSH_FILE) ?
+			~FLUSH_FILE_BIT : ~FLUSH_DAT_BIT;
+		spin_unlock(&sci->sc_state_lock);
+	}
+	clear_bit(NILFS_SC_PRIOR_FLUSH, &sci->sc_flags);
 }
 
 static int nilfs_segctor_flush_mode(struct nilfs_sc_info *sci)
