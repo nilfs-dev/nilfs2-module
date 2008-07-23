@@ -2967,7 +2967,6 @@ int nilfs_construct_dsync_segment(struct super_block *sb,
 	}
 	spin_unlock(&sbi->s_inode_lock);
 	sci->sc_stage.dirty_file_ptr = ii;
-	sci->sc_seg_ctime = sbi->s_nilfs->ns_ctime;
 
 	seg_debug(2, "begin (mode=0x%x)\n", SC_LSEG_DSYNC);
 	err = nilfs_segctor_do_construct(sci, SC_LSEG_DSYNC);
@@ -3025,8 +3024,6 @@ static int nilfs_segctor_construct(struct nilfs_sc_info *sci,
 	struct nilfs_sb_info *sbi = sci->sc_sbi;
 	struct the_nilfs *nilfs = sbi->s_nilfs;
 	int err = 0;
-
-	sci->sc_seg_ctime = nilfs->ns_ctime;
 
 	if (nilfs_discontinued(nilfs))
 		req->mode = SC_LSEG_SR;
