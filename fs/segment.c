@@ -992,14 +992,10 @@ static int nilfs_segctor_confirm(struct nilfs_sc_info *sci)
 	return ret;
 }
 
-static void
-nilfs_segctor_clear_metadata_dirty(struct nilfs_sc_info *sci, int mode)
+static void nilfs_segctor_clear_metadata_dirty(struct nilfs_sc_info *sci)
 {
 	struct nilfs_sb_info *sbi = sci->sc_sbi;
 	struct the_nilfs *nilfs = sbi->s_nilfs;
-
-	if (mode == SC_LSEG_DSYNC)
-		return;
 
 	if (SC_STAGE_DONE(&sci->sc_stage, SC_MAIN_IFILE))
 		nilfs_mdt_clear_dirty(sbi->s_ifile);
@@ -2662,7 +2658,8 @@ static int nilfs_segctor_do_construct(struct nilfs_sc_info *sci, int mode)
 			nilfs_segctor_commit_free_segments(sci);
 		}
 
-		nilfs_segctor_clear_metadata_dirty(sci, mode);
+		if (mode == SC_LSEG_SR)
+			nilfs_segctor_clear_metadata_dirty(sci);
 		nilfs_segctor_end_construction(sci, nilfs, 0);
 
 	} while (sci->sc_stage.main != SC_MAIN_DONE);
