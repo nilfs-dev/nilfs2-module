@@ -3008,7 +3008,7 @@ static void nilfs_segctor_notify(struct nilfs_sc_info *sci,
 	} else if (req->mode == SC_FLUSH_FILE)
 		sci->sc_flush_request &= ~FLUSH_FILE_BIT;
 	else if (req->mode == SC_FLUSH_DAT)
-		sci->sc_flush_request &= -FLUSH_DAT_BIT;
+		sci->sc_flush_request &= ~FLUSH_DAT_BIT;
 
 	spin_unlock(&sci->sc_state_lock);
 }
