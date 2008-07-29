@@ -28,22 +28,6 @@
 #include <linux/version.h>
 
 /*
- * This file gives backward compatibility against past kernel versions, and
- * will be removed if merged into the mainline.
- */
-#ifndef NILFS_BUILT_INTERNAL
-# define NILFS_BUILT_INTERNAL \
-	(defined(CONFIG_NILFS) && CONFIG_NILFS == y)
-#endif
-
-/*
- * Unsupported features
- */
-#ifndef HAVE_EXPORTED_FIND_GET_PAGES
-# define HAVE_EXPORTED_FIND_GET_PAGES  NILFS_BUILT_INTERNAL
-#endif
-
-/*
  * Please define as 0/1 here if you want to override
  */
 
@@ -192,14 +176,6 @@
 #ifndef NEED_SLAB_CTOR_CONSTRUCTOR
 # define NEED_SLAB_CTOR_CONSTRUCTOR \
 	(LINUX_VERSION_CODE < KERNEL_VERSION(2, 6, 22))
-#endif
-/*
- * find_get_pages_tag() and find_get_pages_contig() became available for
- * modules in linux-2.6.22.
- */
-#ifndef HAVE_EXPORTED_FIND_GET_PAGES_TAG
-# define HAVE_EXPORTED_FIND_GET_PAGES_TAG \
-	(LINUX_VERSION_CODE > KERNEL_VERSION(2, 6, 21) || NILFS_BUILT_INTERNAL)
 #endif
 /*
  * In Linux-2.6.21, invalidate_inode_pages() was deprecated
@@ -540,19 +516,6 @@ static inline void *kzalloc(size_t size, gfp_t flags)
 
 #if NEED_X_CLEAR_PAGE_BITOPS
 # define __ClearPageActive(page)	__clear_bit(PG_active, &(page)->flags)
-#endif
-
-#if !HAVE_EXPORTED_FIND_GET_PAGES
-extern unsigned __nilfs_find_get_pages(struct address_space *, pgoff_t,
-				       unsigned int, struct page **);
-# define find_get_pages(m, i, n, p)  __nilfs_find_get_pages(m, i, n, p)
-#endif
-
-#if !HAVE_EXPORTED_FIND_GET_PAGES_TAG
-extern unsigned __nilfs_find_get_pages_tag(struct address_space *, pgoff_t *,
-					   int, unsigned int, struct page **);
-# define find_get_pages_tag(m, i, t, n, p) \
-	__nilfs_find_get_pages_tag(m, i, t, n, p)
 #endif
 
 #if !HAVE_EXPORTED_PAGEVEC_LOOKUP

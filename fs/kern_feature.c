@@ -24,9 +24,9 @@
 #include "kern_feature.h"
 
 /*
- * The following functions come from mm/filemap.c
+ * The following functions come from mm/filemap.c and mm/swap.c
  */
-#if !HAVE_EXPORTED_FIND_GET_PAGES
+#if !HAVE_EXPORTED_PAGEVEC_LOOKUP
 unsigned __nilfs_find_get_pages(struct address_space *mapping, pgoff_t start,
 				unsigned int nr_pages, struct page **pages)
 {
@@ -41,9 +41,18 @@ unsigned __nilfs_find_get_pages(struct address_space *mapping, pgoff_t start,
 	READ_UNLOCK_IRQ(&mapping->tree_lock);
 	return ret;
 }
+
+unsigned
+__nilfs_pagevec_lookup(struct pagevec *pvec, struct address_space *mapping,
+		       pgoff_t start, unsigned nr_pages)
+{
+	pvec->nr = __nilfs_find_get_pages(mapping, start, nr_pages,
+					  pvec->pages);
+	return pagevec_count(pvec);
+}
 #endif
 
-#if !HAVE_EXPORTED_FIND_GET_PAGES_TAG
+#if !HAVE_EXPORTED_PAGEVEC_LOOKUP_TAG
 unsigned
 __nilfs_find_get_pages_tag(struct address_space *mapping, pgoff_t *index,
 			   int tag, unsigned int nr_pages,
@@ -62,23 +71,7 @@ __nilfs_find_get_pages_tag(struct address_space *mapping, pgoff_t *index,
 	READ_UNLOCK_IRQ(&mapping->tree_lock);
 	return ret;
 }
-#endif
 
-/*
- * The following functions come from mm/swap.c
- */
-#if !HAVE_EXPORTED_PAGEVEC_LOOKUP
-unsigned
-__nilfs_pagevec_lookup(struct pagevec *pvec, struct address_space *mapping,
-		       pgoff_t start, unsigned nr_pages)
-{
-	pvec->nr = __nilfs_find_get_pages(mapping, start, nr_pages,
-					  pvec->pages);
-	return pagevec_count(pvec);  
-}
-#endif
-
-#if !HAVE_EXPORTED_PAGEVEC_LOOKUP_TAG
 unsigned
 __nilfs_pagevec_lookup_tag(struct pagevec *pvec, struct address_space *mapping,
 			   pgoff_t *index, int tag, unsigned nr_pages)
