@@ -699,10 +699,10 @@ int nilfs_releasepage(struct page *page, gfp_t gfp_mask)
 			verbose = 1;
 	}
 	if (unlikely(!PagePrivate(page)))
-		PAGE_BUG(page, "no buffers");
+		NILFS_PAGE_BUG(page, "no buffers");
 
 	if (buffer_nilfs_allocated(page_buffers(page)))
-		PAGE_BUG(page, "nilfs allocated page");
+		NILFS_PAGE_BUG(page, "nilfs allocated page");
 
 	/*
 	 * Note that non-busy buffer heads may be discarded though the

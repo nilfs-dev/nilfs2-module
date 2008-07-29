@@ -222,7 +222,7 @@ out_free:
 		*res = page;
 		err = 0;
 		if (unlikely(!nilfs_btnode_page_referenced(page, 0)))
-			PAGE_BUG(page, "page not referred");
+			NILFS_PAGE_BUG(page, "page not referred");
 	}
 	return err;
 }
@@ -401,7 +401,8 @@ int nilfs_btnode_invalidate_page(struct page *page, int force)
 	/* remove page and associated tags from cache */
 	page2 = radix_tree_delete(&btnc->page_tree, page->index);
 	if (unlikely(page != page2))
-		PAGE_BUG(page, "radix_tree_delete failed (page2=%p)", page2);
+		NILFS_PAGE_BUG(page, "radix_tree_delete failed (page2=%p)",
+			       page2);
 
 	page->mapping = NULL;
 	page->index = 0;
@@ -479,7 +480,7 @@ void nilfs_btnode_delete(struct buffer_head *bh)
 	page_cache_get(page);	/* for dealloc */
 	lock_page(page);
 	if (unlikely(!nilfs_doing_construction() && PageWriteback(page)))
-		PAGE_BUG(page, "page is on writeback");
+		NILFS_PAGE_BUG(page, "page is on writeback");
 
 	if (unlikely(!buffer_mapped(bh)))
 		BH_DEBUG(bh, "deleting unused btnode buffer");
@@ -536,10 +537,10 @@ int nilfs_btnode_prepare_change_key(struct nilfs_btnode_cache *btnc,
 #endif
 		/* BUG_ON(oldkey != obh->b_page->index); */
 		if (unlikely(oldkey != obh->b_page->index))
-			PAGE_BUG(obh->b_page,
-				 "invalid oldkey %lld (newkey=%lld)",
-				 (unsigned long long)oldkey,
-				 (unsigned long long)newkey);
+			NILFS_PAGE_BUG(obh->b_page,
+				       "invalid oldkey %lld (newkey=%lld)",
+				       (unsigned long long)oldkey,
+				       (unsigned long long)newkey);
 
  retry:
 		nilfs_btnode_write_lock(btnc);
@@ -578,9 +579,9 @@ int nilfs_btnode_prepare_change_key(struct nilfs_btnode_cache *btnc,
 					     page, (unsigned long long)newkey);
 				lock_page(page);
 				if (nilfs_btnode_delete_page(page, 0))
-					PAGE_BUG(page,
-						 "busy page for key %lld",
-						 (unsigned long long)newkey);
+					NILFS_PAGE_BUG(
+						page, "busy page for key %lld",
+						(unsigned long long)newkey);
 
 				nilfs_pages_enable_shrinker();
 			}
@@ -626,9 +627,10 @@ void nilfs_btnode_commit_change_key(struct nilfs_btnode_cache *btnc,
 		opage = obh->b_page;
 		/* BUG_ON(oldkey != opage->index); */
 		if (unlikely(oldkey != opage->index))
-			PAGE_BUG(opage, "invalid oldkey %lld (newkey=%lld)",
-				 (unsigned long long)oldkey,
-				 (unsigned long long)newkey);
+			NILFS_PAGE_BUG(opage,
+				       "invalid oldkey %lld (newkey=%lld)",
+				       (unsigned long long)oldkey,
+				       (unsigned long long)newkey);
 
 		lock_page(opage);
 		if (!test_set_buffer_dirty(obh) && TestSetPageDirty(opage))
@@ -825,9 +827,9 @@ repeat:
 			nilfs_btnode_write_lock(src);
 			page2 = radix_tree_delete(&src->page_tree, offset);
 			if (unlikely(page2 != page))
-				PAGE_BUG(page, "page removal failed "
-					 "(offset=%lu, page2=%p)",
-					 offset, page2);
+				NILFS_PAGE_BUG(page, "page removal failed "
+					       "(offset=%lu, page2=%p)",
+					       offset, page2);
 
 			page->mapping = NULL;
 			page_cache_release(page);
@@ -867,7 +869,7 @@ void nilfs_btnode_cache_clear(struct nilfs_btnode_cache *btnc)
 		lock_page(page);
 		if (unlikely(!nilfs_doing_construction() &&
 			     PageWriteback(page)))
-			PAGE_BUG(page, "page is on writeback");
+			NILFS_PAGE_BUG(page, "page is on writeback");
 
 		nilfs_btnode_delete_page(page, 1);
 	}

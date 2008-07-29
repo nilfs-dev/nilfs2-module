@@ -49,7 +49,7 @@ repeat:
 
 		lock_page(page);
 		if (unlikely(!PageDirty(page)))
-			PAGE_BUG(page, "inconsistent dirty state");
+			NILFS_PAGE_BUG(page, "inconsistent dirty state");
 
 		dpage = grab_cache_page(dst, page->index);
 		if (unlikely(!dpage)) {
@@ -59,7 +59,8 @@ repeat:
 			goto failed;
 		}
 		if (unlikely(!page_has_buffers(page)))
-			PAGE_BUG(page, "found empty page in dat page cache");
+			NILFS_PAGE_BUG(page,
+				       "found empty page in dat page cache");
 
 		nilfs_copy_buffer_page(page, dpage, 1);
 		__set_page_dirty_nobuffers(dpage);

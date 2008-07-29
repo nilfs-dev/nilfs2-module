@@ -164,10 +164,10 @@ static void nilfs_free_page(struct page *page)
 #ifdef CONFIG_NILFS_DEBUG
 	/* Checks helpful for debugging purpose. */
 	if (unlikely(!list_empty(&page->lru)))
-		PAGE_BUG(page, "page not isolated");
+		NILFS_PAGE_BUG(page, "page not isolated");
 
 	if (unlikely(page_count(page) != 1))
-		PAGE_BUG(page, "wrong page count");
+		NILFS_PAGE_BUG(page, "wrong page count");
 
 	if (unlikely(PageDirty(page)))
 		PAGE_DEBUG(page, "dirty page");
@@ -435,12 +435,12 @@ void nilfs_free_buffer_page(struct page *page)
 {
 	BUG_ON(!PageLocked(page));
 	if (page->mapping)
-		PAGE_BUG(page, "freeing page with mapping");
+		NILFS_PAGE_BUG(page, "freeing page with mapping");
 
 	if (unlikely(!page_has_buffers(page)))
 		PAGE_DEBUG(page, "freeing page without buffers");
 	else if (!try_to_free_buffers(page))
-		PAGE_BUG(page, "failed to free page");
+		NILFS_PAGE_BUG(page, "failed to free page");
 
 	nilfs_free_page(page);
 }
@@ -606,7 +606,7 @@ void nilfs_page_bug(struct page *page)
 	unsigned long ino = 0;
 
 	if (unlikely(!page)) {
-		printk(KERN_CRIT "PAGE_BUG(NULL)\n");
+		printk(KERN_CRIT "NILFS_PAGE_BUG(NULL)\n");
 		return;
 	}
 
@@ -616,7 +616,7 @@ void nilfs_page_bug(struct page *page)
 		if (inode != NULL)
 			ino = inode->i_ino;
 	}
-	printk(KERN_CRIT "PAGE_BUG(%p): cnt=%d index#=%llu flags=0x%lx "
+	printk(KERN_CRIT "NILFS_PAGE_BUG(%p): cnt=%d index#=%llu flags=0x%lx "
 	       "mapping=%p ino=%lu\n",
 	       page, atomic_read(&page->_count),
 	       (unsigned long long)page->index, page->flags, m, ino);
