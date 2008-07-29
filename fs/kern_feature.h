@@ -382,6 +382,13 @@
 	(LINUX_VERSION_CODE > KERNEL_VERSION(2, 6, 15))
 #endif
 /*
+ * pagevec_lookup() became available from kernel modules since linux-2.6.16
+ */
+#ifndef HAVE_EXPORTED_PAGEVEC_LOOKUP
+# define HAVE_EXPORTED_PAGEVEC_LOOKUP			\
+	(LINUX_VERSION_CODE > KERNEL_VERSION(2, 6, 15))
+#endif
+/*
  * attribute argument was removed from kobject_uevent since linux-2.6.16
  */
 #ifndef NEED_KOBJECT_UEVENT_ATTRIBUTE_ARG
@@ -416,6 +423,14 @@
 #ifndef NEED_KMEM_CACHE_S
 # define NEED_KMEM_CACHE_S				\
 	(LINUX_VERSION_CODE < KERNEL_VERSION(2, 6, 15))
+#endif
+/*
+ * pagevec_lookup_tag() and pagevec_release() became available from kernel
+ * modules since linux-2.6.15.
+ */
+#ifndef HAVE_EXPORTED_PAGEVEC_LOOKUP_TAG
+# define HAVE_EXPORTED_PAGEVEC_LOOKUP_TAG		\
+	(LINUX_VERSION_CODE > KERNEL_VERSION(2, 6, 14))
 #endif
 /*
  * kzalloc() was introduced in linux-2.6.14
@@ -465,6 +480,7 @@
 
 #include <linux/list.h>
 #include <linux/fs.h>
+#include <linux/pagevec.h>
 
 /*
  * definitions dependent to above macros
@@ -537,6 +553,24 @@ extern unsigned __nilfs_find_get_pages_tag(struct address_space *, pgoff_t *,
 					   int, unsigned int, struct page **);
 # define find_get_pages_tag(m, i, t, n, p) \
 	__nilfs_find_get_pages_tag(m, i, t, n, p)
+#endif
+
+#if !HAVE_EXPORTED_PAGEVEC_LOOKUP
+extern unsigned
+__nilfs_pagevec_lookup(struct pagevec *, struct address_space *, pgoff_t,
+		       unsigned);
+# define pagevec_lookup(v, m, i, n)  __nilfs_pagevec_lookup(v, m, i, n)
+#endif
+
+#if !HAVE_EXPORTED_PAGEVEC_LOOKUP_TAG
+extern unsigned __nilfs_pagevec_lookup_tag(struct pagevec *,
+					   struct address_space *, pgoff_t *,
+					   int, unsigned);
+extern void __nilfs_pagevec_release(struct pagevec *);
+
+# define pagevec_lookup_tag(v, m, i, t, n) \
+	__nilfs_pagevec_lookup_tag(v, m, i, t, n)
+# define pagevec_release(v)  __nilfs_pagevec_release(v)
 #endif
 
 #if !HAVE_INVALIDATE_INODE_PAGES2_RANGE
