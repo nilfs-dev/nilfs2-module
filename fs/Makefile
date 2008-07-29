@@ -15,7 +15,7 @@ endif
 
 # Some assembler options.
 ifneq ($(CONFIG_NILFS_DEBUG),)
-  EXTRA_CFLAGS += -g -Wa,-adhlms=$@.lst -fno-omit-frame-pointer
+  EXTRA_CFLAGS += -g -fno-omit-frame-pointer
 endif
 
 list-$(CONFIG_NILFS) += nilfs2
