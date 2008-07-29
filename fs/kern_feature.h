@@ -36,6 +36,13 @@
  */
 #ifdef LINUX_VERSION_CODE
 /*
+ * The lockless page cache was merged at linux-2.6.27-rc1.
+ */
+#ifndef HAVE_LOCKLESS_PAGECACHE
+# define HAVE_LOCKLESS_PAGECACHE \
+	(LINUX_VERSION_CODE > KERNEL_VERSION(2, 6, 26))
+#endif
+/*
  * The definition of init_once() callback function used by kmem_cache_create()
  * changed again in linux-2.6.27; kmem_cache struct dropped from the arguments.
  */
@@ -556,7 +563,10 @@ extern void __nilfs_pagevec_release(struct pagevec *);
 	do { mutex_unlock(&(bdev)->bd_mount_mutex); } while (0)
 #endif
 
-#if NEED_RWLOCK_FOR_PAGECACHE_LOCK
+#if HAVE_LOCKLESS_PAGECACHE
+# define WRITE_LOCK_IRQ(x)	spin_lock_irq((x))
+# define WRITE_UNLOCK_IRQ(x)	spin_unlock_irq((x))
+#elif NEED_RWLOCK_FOR_PAGECACHE_LOCK
 # define READ_LOCK_IRQ(x)	read_lock_irq((x))
 # define READ_UNLOCK_IRQ(x)	read_unlock_irq((x))
 # define WRITE_LOCK_IRQ(x)	write_lock_irq((x))
