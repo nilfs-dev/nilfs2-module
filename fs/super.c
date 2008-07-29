@@ -159,8 +159,10 @@ void nilfs_destroy_inode(struct inode *inode)
 #if NEED_OLD_INIT_ONCE_ARGS
 static void init_once(void *obj, struct kmem_cache *cachep,
 		      unsigned long flags)
-#else
+#elif NEED_OLD_INIT_ONCE_ARGS2
 static void init_once(struct kmem_cache *cachep, void *obj)
+#else
+static void init_once(void *obj)
 #endif
 {
 	struct nilfs_inode_info *ii = (struct nilfs_inode_info *)obj;

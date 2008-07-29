@@ -33,8 +33,10 @@ static struct kmem_cache *nilfs_segbuf_cachep;
 #if NEED_OLD_INIT_ONCE_ARGS
 static void nilfs_segbuf_init_once(void *obj, struct kmem_cache *cachep,
 				   unsigned long flags)
-#else
+#elif NEED_OLD_INIT_ONCE_ARGS2
 static void nilfs_segbuf_init_once(struct kmem_cache *cachep, void *obj)
+#else
+static void nilfs_segbuf_init_once(void *obj)
 #endif
 {
 	struct nilfs_segment_buffer *segbuf = obj;

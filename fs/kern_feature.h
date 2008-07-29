@@ -48,10 +48,22 @@
  */
 
 /*
+ * defaults dependent to kernel versions
+ */
+#ifdef LINUX_VERSION_CODE
+/*
+ * The definition of init_once() callback function used by kmem_cache_create()
+ * changed again in linux-2.6.27; kmem_cache struct dropped from the arguments.
+ */
+#ifndef NEED_OLD_INIT_ONCE_ARGS2
+# define NEED_OLD_INIT_ONCE_ARGS2 \
+	(LINUX_VERSION_CODE < KERNEL_VERSION(2, 6, 27) && \
+	 LINUX_VERSION_CODE >= KERNEL_VERSION(2, 6, 24))
+#endif
+/*
  * s_op->read_inode() was removed and replaced with xxxfs_iget() since
  * linux-2.6.25.
  */
-#ifdef LINUX_VERSION_CODE
 #ifndef NEED_READ_INODE
 # define NEED_READ_INODE \
 	(LINUX_VERSION_CODE < KERNEL_VERSION(2, 6, 25))
