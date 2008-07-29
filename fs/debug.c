@@ -77,7 +77,7 @@ static match_table_t class_tokens = {
 
 static const char *find_token(int token, match_table_t tokens)
 {
-	struct match_token *pt;
+	const struct match_token *pt;
 
 	for (pt = tokens; pt->pattern != NULL; pt++)
 		if (pt->token == token)
