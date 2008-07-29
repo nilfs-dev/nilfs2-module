@@ -28,6 +28,7 @@
 #include <linux/proc_fs.h>
 #include <linux/string.h>
 #include <linux/parser.h>
+#include "kern_feature.h"
 #include "nilfs.h"
 #include "sufile.h"
 #include "page.h"
@@ -758,11 +759,10 @@ nilfs_invalidatepage(struct page *page, unsigned long offset)
 /*
  * Radix-tree checker
  */
-#define S_N_PAGEVEC  16
 void nilfs_check_radix_tree(const char *fname, int line,
 			    struct address_space *mapping, int tag)
 {
-	struct page *pages[S_N_PAGEVEC];
+	struct pagevec pvec;
 	unsigned int i, n;
 	pgoff_t index = 0;
 	char *page_type;
@@ -775,14 +775,15 @@ void nilfs_check_radix_tree(const char *fname, int line,
 	else
 		page_type = "leaking";
 
+	pagevec_init(&pvec, 0);
  repeat:
 	if (tag < 0) {
-		n = find_get_pages(mapping, index, S_N_PAGEVEC, pages);
+		n = pagevec_lookup(&pvec, mapping, index, PAGEVEC_SIZE);
 		if (n)
-			index = pages[n - 1]->index + 1;
+			index = pvec.pages[n - 1]->index + 1;
 	} else
-		n = find_get_pages_tag(mapping, &index, tag, S_N_PAGEVEC,
-				       pages);
+		n = pagevec_lookup_tag(&pvec, mapping, &index, tag,
+				       PAGEVEC_SIZE);
 	if (!n) {
 		if (nr_found)
 			printk(KERN_WARNING "%s: found %d %s pages\n",
@@ -791,16 +792,19 @@ void nilfs_check_radix_tree(const char *fname, int line,
 	}
 
 	for (i = 0; i < n; i++) {
-		nilfs_page_debug(fname, line, pages[i], "%s page", page_type);
+		nilfs_page_debug(fname, line, pvec.pages[i], "%s page",
+				 page_type);
 		nr_found++;
-		page_cache_release(pages[i]);
 	}
+	pagevec_release(&pvec);
+	cond_resched();
 	goto repeat;
 }
 
 /*
  * btnode cache checker
  */
+#define S_N_PAGEVEC  16
 void nilfs_check_btnode_cache(const char *fname, int line,
 			      struct nilfs_btnode_cache *btnc, int tag)
 {

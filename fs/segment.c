@@ -800,32 +800,29 @@ static int nilfs_lookup_dirty_data_buffers(struct inode *inode,
 {
 	struct nilfs_segment_buffer *segbuf = sci->sc_curseg;
 	struct address_space *mapping = inode->i_mapping;
-	struct page *pages[SC_N_PAGEVEC];
-	unsigned i, n, ndirties = 0, nlimit;
+	struct pagevec pvec;
+	unsigned i, ndirties = 0, nlimit;
 	pgoff_t index = 0;
 	int err = 0;
 
 	seg_debug(3, "called (ino=%lu)\n", inode->i_ino);
 	nlimit = sci->sc_segbuf_nblocks -
 		(sci->sc_nblk_this_inc + segbuf->sb_sum.nblocks);
+	pagevec_init(&pvec, 0);
  repeat:
-	n = find_get_pages_tag(mapping, &index, PAGECACHE_TAG_DIRTY,
-			       SC_N_PAGEVEC, pages);
-	if (!n) {
+	if (!pagevec_lookup_tag(&pvec, mapping, &index, PAGECACHE_TAG_DIRTY,
+				PAGEVEC_SIZE)) {
 		seg_debug(3, "done (ino=%lu)\n", inode->i_ino);
 		return 0;
 	}
-	for (i = 0; i < n; i++) {
+	for (i = 0; i < pagevec_count(&pvec); i++) {
 		struct buffer_head *bh, *head;
-		struct page *page = pages[i];
-
-		if (err)
-			goto skip_page;
+		struct page *page = pvec.pages[i];
 
 		if (mapping->host) {
 			err = nilfs_prepare_data_page(inode, page);
 			if (unlikely(err))
-				goto skip_page;
+				break;
 		}
 
 		bh = head = page_buffers(page);
@@ -841,10 +838,10 @@ static int nilfs_lookup_dirty_data_buffers(struct inode *inode,
 			}
 			bh = bh->b_this_page;
 		} while (bh != head);
-
- skip_page:
-		page_cache_release(page);
 	}
+	pagevec_release(&pvec);
+	cond_resched();
+
 	if (!err)
 		goto repeat;
 	seg_debug(3, "failed (err=%d, ino=%lu)\n", err, inode->i_ino);

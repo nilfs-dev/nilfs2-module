@@ -23,29 +23,28 @@
  */
 
 #include <linux/buffer_head.h>
+#include "kern_feature.h"
 #include "nilfs.h"
 #include "page.h"
 #include "mdt.h"
-
-#define	GCDAT_N_PAGEVEC	16
 
 
 static int nilfs_gcdat_copy_dirty_data(struct address_space *src,
 				       struct address_space *dst)
 {
-	struct page *pages[GCDAT_N_PAGEVEC];
-	unsigned int i, n;
+	struct pagevec pvec;
+	unsigned int i;
 	pgoff_t index = 0;
-	int err;
+	int err = 0;
 
+	pagevec_init(&pvec, 0);
 repeat:
-	n = find_get_pages_tag(src, &index, PAGECACHE_TAG_DIRTY,
-			       GCDAT_N_PAGEVEC, pages);
-	if (!n)
+	if (!pagevec_lookup_tag(&pvec, src, &index, PAGECACHE_TAG_DIRTY,
+				PAGEVEC_SIZE))
 		return 0;
 
-	for (i = 0; i < n; i++) {
-		struct page *page = pages[i], *dpage;
+	for (i = 0; i < pagevec_count(&pvec); i++) {
+		struct page *page = pvec.pages[i], *dpage;
 
 		lock_page(page);
 		if (unlikely(!PageDirty(page)))
@@ -56,7 +55,7 @@ repeat:
 			/* No empty page is added to the page cache */
 			err = -ENOMEM;
 			unlock_page(page);
-			goto failed;
+			break;
 		}
 		if (unlikely(!page_has_buffers(page)))
 			NILFS_PAGE_BUG(page,
@@ -68,66 +67,66 @@ repeat:
 		unlock_page(dpage);
 		page_cache_release(dpage);
 		unlock_page(page);
-		page_cache_release(page);
 	}
-	goto repeat;
- failed:
-	while (i < n)
-		page_cache_release(pages[i++]);
+	pagevec_release(&pvec);
+	cond_resched();
+
+	if (likely(!err))
+		goto repeat;
 	return err;
 }
 
 static void nilfs_gcdat_clear_dirty_data(struct address_space *mapping)
 {
-	struct page *pages[GCDAT_N_PAGEVEC];
-	unsigned int i, n;
+	struct pagevec pvec;
+	unsigned int i;
 	pgoff_t index = 0;
 
-repeat:
-	n = find_get_pages_tag(mapping, &index, PAGECACHE_TAG_DIRTY,
-			       GCDAT_N_PAGEVEC, pages);
-	if (!n)
-		return;
+	pagevec_init(&pvec, 0);
 
-	for (i = 0; i < n; i++) {
-		struct page *page = pages[i];
-		struct buffer_head *bh, *head;
+	while (pagevec_lookup_tag(&pvec, mapping, &index, PAGECACHE_TAG_DIRTY,
+				  PAGEVEC_SIZE)) {
+		for (i = 0; i < pagevec_count(&pvec); i++) {
+			struct page *page = pvec.pages[i];
+			struct buffer_head *bh, *head;
 
-		lock_page(page);
-		ClearPageUptodate(page);
-		bh = head = page_buffers(page);
-		do {
-			lock_buffer(bh);
-			clear_buffer_dirty(bh);
-			clear_buffer_nilfs_volatile(bh);
-			clear_buffer_uptodate(bh);
-			clear_buffer_mapped(bh);
-			unlock_buffer(bh);
-			bh = bh->b_this_page;
-		} while (bh != head);
-		__nilfs_clear_page_dirty(page);
-		unlock_page(page);
-		page_cache_release(page);
+			lock_page(page);
+			ClearPageUptodate(page);
+			bh = head = page_buffers(page);
+			do {
+				lock_buffer(bh);
+				clear_buffer_dirty(bh);
+				clear_buffer_nilfs_volatile(bh);
+				clear_buffer_uptodate(bh);
+				clear_buffer_mapped(bh);
+				unlock_buffer(bh);
+				bh = bh->b_this_page;
+			} while (bh != head);
+			__nilfs_clear_page_dirty(page);
+			unlock_page(page);
+		}
+		pagevec_release(&pvec);
+		cond_resched();
 	}
-	goto repeat;
 }
 
 static void nilfs_gcdat_copy_mapping(struct address_space *gmapping,
 				     struct address_space *mapping)
 {
-	struct page *pages[GCDAT_N_PAGEVEC];
+	struct pagevec pvec;
 	unsigned int i, n;
 	pgoff_t index = 0;
 
+	pagevec_init(&pvec, 0);
 repeat:
-	n = find_get_pages(gmapping, index, GCDAT_N_PAGEVEC, pages);
+	n = pagevec_lookup(&pvec, gmapping, index, PAGEVEC_SIZE);
 	if (!n)
 		return;
-	index = pages[n - 1]->index + 1;
+	index = pvec.pages[n - 1]->index + 1;
 	/* note: mdt dirty flags should be cleared by segctor. */
 
-	for (i = 0; i < n; i++) {
-		struct page *page = pages[i], *dpage;
+	for (i = 0; i < pagevec_count(&pvec); i++) {
+		struct page *page = pvec.pages[i], *dpage;
 		pgoff_t offset = page->index;
 
 		lock_page(page);
@@ -171,8 +170,10 @@ skip_unlock:
 #endif
 		}
 		unlock_page(page);
-		page_cache_release(page);
 	}
+	pagevec_release(&pvec);
+	cond_resched();
+
 	goto repeat;
 }
 
