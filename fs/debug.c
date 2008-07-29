@@ -170,10 +170,18 @@ static int nilfs_parse_debug_option(char *data)
 
 		token = match_token(++p, opt_tokens, args);
 		switch (token) {
-		case Opt_verbose:  level = 1; break;
-		case Opt_verbose2: level = 2; break;
-		case Opt_verbose3: level = 3; break;
-		case Opt_quiet: level = 0; break;
+		case Opt_verbose:
+			level = 1;
+			break;
+		case Opt_verbose2:
+			level = 2;
+			break;
+		case Opt_verbose3:
+			level = 3;
+			break;
+		case Opt_quiet:
+			level = 0;
+			break;
 		default:
 			goto bad_option;
 		}
