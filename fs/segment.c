@@ -1470,7 +1470,7 @@ static int nilfs_segctor_collect_blocks(struct nilfs_sc_info *sci, int mode)
 			break;
 		SC_STAGE_NEXT(&sci->sc_stage);
 	case SC_MAIN_DAT:
-	dat_stage:
+ dat_stage:
 		seg_debug(3, "** DAT STAGE\n");
 		err = nilfs_segctor_scan_file(sci, nilfs_dat_inode(nilfs),
 					      &nilfs_sc_dat_ops);
@@ -1497,7 +1497,7 @@ static int nilfs_segctor_collect_blocks(struct nilfs_sc_info *sci, int mode)
 		seg_debug(2, "** LSEG END\n");
 		return 0;
 	case SC_MAIN_DSYNC:
-	dsync_mode:
+ dsync_mode:
 		sci->sc_curseg->sb_sum.flags |= NILFS_SS_SYNDT;
 		ii = sci->sc_stage.dirty_file_ptr;
 		if (!test_bit(NILFS_I_BUSY, &ii->i_state))
