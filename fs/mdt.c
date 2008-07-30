@@ -554,6 +554,8 @@ nilfs_mdt_write_page(struct page *page, struct writeback_control *wbc)
 	redirty_page_for_writepage(wbc, page);
 	unlock_page(page);
 
+	if (NILFS_MDT(inode)->mi_orig_inode)
+		return 0; /* Do not request flush for shadow inode */
 	if (!sb) {
 		writer = nilfs_get_writer(NILFS_MDT(inode)->mi_nilfs);
 		if (!writer)
