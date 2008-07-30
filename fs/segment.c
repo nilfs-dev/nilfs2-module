@@ -2733,7 +2733,7 @@ void nilfs_flush_segment(struct super_block *sb, ino_t ino)
 	struct nilfs_sb_info *sbi = NILFS_SB(sb);
 	struct nilfs_sc_info *sci = NILFS_SC(sbi);
 
-	if (!sci)
+	if (!sci || nilfs_doing_construction())
 		return;
 	nilfs_segctor_do_flush(sci, NILFS_MDT_INODE(sb, ino) ? ino : 0);
 					/* assign bit 0 to data files */
