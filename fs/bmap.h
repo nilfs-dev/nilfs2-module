@@ -116,7 +116,6 @@ struct nilfs_bmap_ptr_operations {
 	void (*bpop_abort_end_ptr)(struct nilfs_bmap *,
 				   union nilfs_bmap_ptr_req *);
 
-	struct the_nilfs *(*bpop_get_nilfs)(const struct nilfs_bmap *);
 	int (*bpop_translate)(const struct nilfs_bmap *, __u64, __u64 *);
 };
 
