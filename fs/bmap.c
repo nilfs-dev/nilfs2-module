@@ -598,13 +598,13 @@ static int nilfs_bmap_prepare_end_v(struct nilfs_bmap *bmap,
 static void nilfs_bmap_commit_end_v(struct nilfs_bmap *bmap,
 				    union nilfs_bmap_ptr_req *req)
 {
-	nilfs_dat_commit_end(nilfs_bmap_get_dat(bmap), &req->bpr_req);
+	nilfs_dat_commit_end(nilfs_bmap_get_dat(bmap), &req->bpr_req, 0);
 }
 
 static void nilfs_bmap_commit_end_vmdt(struct nilfs_bmap *bmap,
 				       union nilfs_bmap_ptr_req *req)
 {
-	nilfs_dat_commit_end_dead(nilfs_bmap_get_dat(bmap), &req->bpr_req);
+	nilfs_dat_commit_end(nilfs_bmap_get_dat(bmap), &req->bpr_req, 1);
 }
 
 static void nilfs_bmap_abort_end_v(struct nilfs_bmap *bmap,

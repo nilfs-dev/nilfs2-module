@@ -78,8 +78,7 @@ int nilfs_dat_prepare_start(struct inode *, struct nilfs_dat_req *);
 void nilfs_dat_commit_start(struct inode *, struct nilfs_dat_req *, sector_t);
 void nilfs_dat_abort_start(struct inode *, struct nilfs_dat_req *);
 int nilfs_dat_prepare_end(struct inode *, struct nilfs_dat_req *);
-void nilfs_dat_commit_end(struct inode *, struct nilfs_dat_req *);
-void nilfs_dat_commit_end_dead(struct inode *, struct nilfs_dat_req *);
+void nilfs_dat_commit_end(struct inode *, struct nilfs_dat_req *, int);
 void nilfs_dat_abort_end(struct inode *, struct nilfs_dat_req *);
 
 int nilfs_dat_alloc(struct inode *, __u64 *);

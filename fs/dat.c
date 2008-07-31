@@ -789,8 +789,10 @@ int nilfs_dat_prepare_end(struct inode *dat, struct nilfs_dat_req *req)
  * nilfs_dat_commit_end -
  * @dat:
  * @req:
+ * @dead:
  */
-void nilfs_dat_commit_end(struct inode *dat, struct nilfs_dat_req *req)
+void nilfs_dat_commit_end(struct inode *dat, struct nilfs_dat_req *req,
+			  int dead)
 {
 	struct nilfs_dat_entry *entry;
 	__u64 start, end;
@@ -800,37 +802,12 @@ void nilfs_dat_commit_end(struct inode *dat, struct nilfs_dat_req *req)
 	entry_kaddr = kmap_atomic(req->dr_entry_bh->b_page, KM_USER0);
 	entry = nilfs_dat_block_get_entry(dat, req->dr_vblocknr,
 					  req->dr_entry_bh, entry_kaddr);
-	start = nilfs_dat_entry_get_start(dat, entry);
-	end = nilfs_mdt_cno(dat);
-	blocknr = nilfs_dat_entry_get_blocknr(dat, entry);
-	BUG_ON(start > end);
-
+	end = start = nilfs_dat_entry_get_start(dat, entry);
+	if (!dead) {
+		end = nilfs_mdt_cno(dat);
+		BUG_ON(start > end);
+	}
 	nilfs_dat_entry_set_end(dat, entry, end);
-	kunmap_atomic(entry_kaddr, KM_USER0);
-
-	if (blocknr == 0)
-		nilfs_dat_commit_free(dat, req);
-	else
-		nilfs_dat_commit_entry(dat, req);
-}
-
-/**
- * nilfs_dat_commit_end_dead -
- * @dat:
- * @req:
- */
-void nilfs_dat_commit_end_dead(struct inode *dat, struct nilfs_dat_req *req)
-{
-	struct nilfs_dat_entry *entry;
-	__u64 start;
-	sector_t blocknr;
-	void *entry_kaddr;
-
-	entry_kaddr = kmap_atomic(req->dr_entry_bh->b_page, KM_USER0);
-	entry = nilfs_dat_block_get_entry(dat, req->dr_vblocknr,
-					  req->dr_entry_bh, entry_kaddr);
-	start = nilfs_dat_entry_get_start(dat, entry);
-	nilfs_dat_entry_set_end(dat, entry, start);
 	blocknr = nilfs_dat_entry_get_blocknr(dat, entry);
 	kunmap_atomic(entry_kaddr, KM_USER0);
 
