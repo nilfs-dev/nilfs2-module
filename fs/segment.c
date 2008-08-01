@@ -959,19 +959,6 @@ static int nilfs_segctor_confirm(struct nilfs_sc_info *sci)
 	return ret;
 }
 
-static int nilfs_segctor_reconfirm(struct nilfs_sc_info *sci)
-{
-	if (nilfs_test_metadata_dirty(sci->sc_sbi))
-		set_bit(NILFS_SC_DIRTY, &sci->sc_flags);
-
-	if (nilfs_segctor_clean(sci)) {
-		seg_debug(2, "Aborted construction (no changes found in "
-			  "reconfirmation)\n");
-		return 1;
-	}
-	return 0;
-}
-
 static void
 nilfs_segctor_clear_metadata_dirty(struct nilfs_sc_info *sci, int mode)
 {
@@ -2580,15 +2567,17 @@ static int nilfs_segctor_do_construct(struct nilfs_sc_info *sci, int mode)
 	if (unlikely(err))
 		goto out;
 
+	if (nilfs_test_metadata_dirty(sbi))
+		set_bit(NILFS_SC_DIRTY, &sci->sc_flags);
+
+	if (nilfs_segctor_clean(sci)) {
+		seg_debug(2, "aborted (no changes found)\n");
+		goto out;
+	}
+
 	do {
 		SC_STAGE_CLEAR_HISTORY(&sci->sc_stage);
 
-		/* Re-check needs of construction */
-		if (sci->sc_stage.main == SC_MAIN_INIT &&
-		    nilfs_segctor_reconfirm(sci))
-				goto out;
-
-		/* Set next segment */
 		err = nilfs_segctor_begin_construction(sci, nilfs);
 		if (unlikely(err))
 			goto out;
