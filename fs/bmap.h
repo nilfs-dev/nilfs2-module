@@ -174,7 +174,6 @@ int nilfs_bmap_delete(struct nilfs_bmap *, unsigned long);
 int nilfs_bmap_last_key(struct nilfs_bmap *, unsigned long *);
 int nilfs_bmap_truncate(struct nilfs_bmap *, unsigned long);
 void nilfs_bmap_clear(struct nilfs_bmap *);
-int nilfs_bmap_terminate(struct nilfs_bmap *);
 int nilfs_bmap_propagate(struct nilfs_bmap *, struct buffer_head *);
 void nilfs_bmap_lookup_dirty_buffers(struct nilfs_bmap *, struct list_head *);
 int nilfs_bmap_assign(struct nilfs_bmap *, struct buffer_head **,
@@ -221,7 +220,6 @@ void nilfs_bmap_put_block(const struct nilfs_bmap *, struct buffer_head *);
 int nilfs_bmap_get_new_block(const struct nilfs_bmap *, __u64,
 			     struct buffer_head **);
 void nilfs_bmap_delete_block(const struct nilfs_bmap *, struct buffer_head *);
-void nilfs_bmap_delete_all_blocks(const struct nilfs_bmap *);
 
 
 /* Assume that bmap semaphore is locked. */

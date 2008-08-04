@@ -289,13 +289,6 @@ int nilfs_bmap_truncate(struct nilfs_bmap *bmap, unsigned long key)
 	return ret;
 }
 
-static void nilfs_bmap_do_clear(struct nilfs_bmap *bmap)
-{
-	nilfs_bmap_delete_all_blocks(bmap);
-	if (bmap->b_ops->bop_clear != NULL)
-		(*bmap->b_ops->bop_clear)(bmap);
-}
-
 /**
  * nilfs_bmap_clear - free resources a bmap holds
  * @bmap: bmap
@@ -305,37 +298,9 @@ static void nilfs_bmap_do_clear(struct nilfs_bmap *bmap)
 void nilfs_bmap_clear(struct nilfs_bmap *bmap)
 {
 	down_write(&bmap->b_sem);
-	nilfs_bmap_do_clear(bmap);
+	if (bmap->b_ops->bop_clear != NULL)
+		(*bmap->b_ops->bop_clear)(bmap);
 	up_write(&bmap->b_sem);
-}
-
-/**
- * nilfs_bmap_terminate - terminate a bmap
- * @bmap: bmap
- *
- * Description: nilfs_bmap_terminate() terminates @bmap, freeing the resources
- * it holds.
- *
- * Return Value: On success, 0 is returned. On error, one of the following
- * negative error codes is returned.
- *
- * %-EIO - I/O error.
- *
- * %-ENOMEM - Insufficient amount of memory available.
- */
-int nilfs_bmap_terminate(struct nilfs_bmap *bmap)
-{
-	int ret;
-
-	down_write(&bmap->b_sem);
-	ret = nilfs_bmap_do_truncate(bmap, 0);
-	if (ret < 0)
-		goto out;
-	/* nilfs_bmap_do_clear(bmap); */
-
- out:
-	up_write(&bmap->b_sem);
-	return ret;
 }
 
 /**
@@ -509,12 +474,6 @@ void nilfs_bmap_delete_block(const struct nilfs_bmap *bmap,
 {
 	nilfs_btnode_delete(bh);
 }
-
-void nilfs_bmap_delete_all_blocks(const struct nilfs_bmap *bmap)
-{
-	/* ??? */
-}
-
 
 __u64 nilfs_bmap_data_get_key(const struct nilfs_bmap *bmap,
 			      const struct buffer_head *bh)
