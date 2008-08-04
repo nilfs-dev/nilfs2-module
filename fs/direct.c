@@ -288,9 +288,9 @@ static int nilfs_direct_propagate_v(struct nilfs_direct *direct,
 	__u64 ptr;
 	int ret;
 
+	key = nilfs_bmap_data_get_key(&direct->d_bmap, bh);
+	ptr = nilfs_direct_get_ptr(direct, key);
 	if (!buffer_nilfs_volatile(bh)) {
-		key = nilfs_bmap_data_get_key(&direct->d_bmap, bh);
-		ptr = nilfs_direct_get_ptr(direct, key);
 		oldreq.bpr_ptr = ptr;
 		newreq.bpr_ptr = ptr;
 		ret = nilfs_bmap_prepare_update(&direct->d_bmap, &oldreq,
@@ -300,8 +300,10 @@ static int nilfs_direct_propagate_v(struct nilfs_direct *direct,
 		nilfs_bmap_commit_update(&direct->d_bmap, &oldreq, &newreq);
 		set_buffer_nilfs_volatile(bh);
 		nilfs_direct_set_ptr(direct, key, newreq.bpr_ptr);
-	}
-	return 0;
+	} else
+		ret = nilfs_bmap_mark_dirty(&direct->d_bmap, ptr);
+
+	return ret;
 }
 
 static int nilfs_direct_propagate(const struct nilfs_bmap *bmap,

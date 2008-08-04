@@ -1857,12 +1857,24 @@ static int nilfs_btree_propagate_v(struct nilfs_btree *btree,
 				   struct buffer_head *bh)
 {
 	int maxlevel, ret;
+	struct nilfs_btree_node *parent;
+	__u64 ptr;
 
 	get_bh(bh);
 	path[level].bp_bh = bh;
 	ret = nilfs_btree_prepare_propagate_v(btree, path, level, &maxlevel);
 	if (ret < 0)
 		goto out;
+
+	if (buffer_nilfs_volatile(path[level].bp_bh)) {
+		parent = nilfs_btree_get_node(btree, path, level + 1);
+		ptr = nilfs_btree_node_get_ptr(btree, parent,
+					       path[level + 1].bp_index);
+		ret = nilfs_bmap_mark_dirty(&btree->bt_bmap, ptr);
+		if (ret < 0)
+			goto out;
+	}
+
 	nilfs_btree_commit_propagate_v(btree, path, level, maxlevel, bh);
 
  out:
