@@ -242,7 +242,7 @@ nilfs_mdt_submit_block(struct inode *inode, unsigned long blkoff,
 		goto out;
 
 	if (mode == READA) {
-		if (test_set_buffer_locked(bh)) {
+		if (!trylock_buffer(bh)) {
 			ret = -EBUSY;
 			goto failed_bh;
 		}

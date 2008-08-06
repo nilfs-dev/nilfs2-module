@@ -205,7 +205,7 @@ static int nilfs_pages_free_lru(int active, int nr, int *nf)
 		nr--;
 		n_scanned++;
 		page_cache_get(page);
-		if (TestSetPageLocked(page)) {
+		if (!trylock_page(page)) {
 			page_debug(2, "Skipped(Locked) %p\n", page);
 			goto keep_in_list;
 		}

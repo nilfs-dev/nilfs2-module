@@ -36,6 +36,13 @@
  */
 #ifdef LINUX_VERSION_CODE
 /*
+ * Page trylock and buffer trylock were renamed at linux-2.6.27-rc2.
+ */
+#ifndef HAVE_NEW_TRYLOCKS
+# define HAVE_NEW_TRYLOCKS \
+	(LINUX_VERSION_CODE > KERNEL_VERSION(2, 6, 26))
+#endif
+/*
  * The lockless page cache was merged at linux-2.6.27-rc1.
  */
 #ifndef HAVE_LOCKLESS_PAGECACHE
@@ -523,6 +530,11 @@ static inline void *kzalloc(size_t size, gfp_t flags)
 
 #if NEED_X_CLEAR_PAGE_BITOPS
 # define __ClearPageActive(page)	__clear_bit(PG_active, &(page)->flags)
+#endif
+
+#if !HAVE_NEW_TRYLOCKS
+# define trylock_page(page)		(!TestSetPageLocked(page))
+# define trylock_buffer(bh)		(!test_set_buffer_locked(bh))
 #endif
 
 #if !HAVE_EXPORTED_PAGEVEC_LOOKUP
