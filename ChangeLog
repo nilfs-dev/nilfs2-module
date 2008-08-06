@@ -1,3 +1,17 @@
+nilfs-2.0.4  Wed Aug  6, 2008 JST
+
+	* fix hangup problem while deleteing huge files:
+	  Alexander Schier had reported that OOM killer was invoked while
+	  deleting very large files. This turned out to be the problem of
+	  a btree truncate routine, which creates a number of dirty blocks for
+	  huge files without permitting to write them out.
+	  A similar problem was also found in file truncation.
+	    This fixes these problems by allowing NILFS2 to write out dirty
+	  blocks during terminating or truncating bmap of huge files.
+	  Thank you Alex for reporting this issue.
+	* supported kernel 2.6.27-rc1 experimentally.
+	* remove redundant code and resolve new checkpatch warnings.
+
 nilfs-2.0.3  Mon Jul 14, 2008 JST
 
 	* add 2.6.25 and 2.6.26 to the supported kernel versions.
