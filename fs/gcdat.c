@@ -184,6 +184,7 @@ int nilfs_init_gcdat_inode(struct the_nilfs *nilfs)
 	int err;
 
 	gcdat->i_state = 0;
+	gcdat->i_blocks = dat->i_blocks;
 	gii->i_flags = dii->i_flags;
 	gii->i_state = dii->i_state | (1 << NILFS_I_GCDAT);
 	gii->i_cno = 0;
@@ -205,6 +206,7 @@ void nilfs_commit_gcdat_inode(struct the_nilfs *nilfs)
 	struct address_space *gmapping = gcdat->i_mapping;
 
 	down_write(&NILFS_MDT(dat)->mi_sem);
+	dat->i_blocks = gcdat->i_blocks;
 	dii->i_flags = gii->i_flags;
 	dii->i_state = gii->i_state & ~(1 << NILFS_I_GCDAT);
 
