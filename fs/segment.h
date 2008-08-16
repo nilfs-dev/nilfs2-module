@@ -210,7 +210,6 @@ enum {
 	NILFS_SC_DIRTY,		/* One or more dirty meta-data blocks exist */
 	NILFS_SC_UNCLOSED,	/* Logical segment is not closed */
 	NILFS_SC_SUPER_ROOT,	/* The latest segment has a super root */
-	NILFS_SC_GC_COPY,	/* Copying GC blocks */
 	NILFS_SC_PRIOR_FLUSH,	/* Requesting immediate flush without making a
 				   checkpoint */
 };

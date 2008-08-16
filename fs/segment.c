@@ -449,7 +449,7 @@ static int nilfs_segctor_reset_segment_buffer(struct nilfs_sc_info *sci)
 	unsigned flags = 0;
 	int err;
 
-	if (test_bit(NILFS_SC_GC_COPY, &sci->sc_flags))
+	if (nilfs_doing_gc())
 		flags = NILFS_SS_GC;
 	err = nilfs_segbuf_reset(segbuf, flags, sci->sc_seg_ctime);
 	if (unlikely(err))
@@ -971,8 +971,7 @@ static int nilfs_segctor_clean(struct nilfs_sc_info *sci)
 	return list_empty(&sci->sc_dirty_files) &&
 		!test_bit(NILFS_SC_DIRTY, &sci->sc_flags) &&
 		list_empty(&sci->sc_cleaning_segments) &&
-		(!test_bit(NILFS_SC_GC_COPY, &sci->sc_flags) ||
-		 list_empty(&sci->sc_gc_inodes));
+		(!nilfs_doing_gc() || list_empty(&sci->sc_gc_inodes));
 }
 
 static int nilfs_segctor_confirm(struct nilfs_sc_info *sci)
@@ -1145,7 +1144,7 @@ static void nilfs_segctor_fill_in_super_root(struct nilfs_sc_info *sci,
 
 	raw_sr->sr_bytes = cpu_to_le16(NILFS_SR_BYTES);
 	raw_sr->sr_nongc_ctime
-		= cpu_to_le64(test_bit(NILFS_SC_GC_COPY, &sci->sc_flags) ?
+		= cpu_to_le64(nilfs_doing_gc() ?
 			      nilfs->ns_nongc_ctime : sci->sc_seg_ctime);
 	raw_sr->sr_flags = 0;
 
@@ -1372,7 +1371,7 @@ static int nilfs_segctor_collect_blocks(struct nilfs_sc_info *sci, int mode)
 		SC_STAGE_NEXT(&sci->sc_stage);
 	case SC_MAIN_GC:
 		seg_debug(3, "** GC INODE STAGE\n");
-		if (test_bit(NILFS_SC_GC_COPY, &sci->sc_flags)) {
+		if (nilfs_doing_gc()) {
 			head = &sci->sc_gc_inodes;
 			ii = list_prepare_entry(sci->sc_stage.gc_inode_ptr,
 						head, i_dirty);
@@ -2240,7 +2239,7 @@ static void nilfs_segctor_abort_write(struct nilfs_sc_info *sci,
 	    SC_STAGE_STARTED(&sci->sc_stage, SC_MAIN_IFILE))
 		nilfs_redirty_inodes(&sci->sc_dirty_files);
 
-	if (test_bit(NILFS_SC_GC_COPY, &sci->sc_flags))
+	if (nilfs_doing_gc())
 		nilfs_redirty_inodes(&sci->sc_gc_inodes);
 }
 
@@ -2332,7 +2331,7 @@ static void nilfs_segctor_complete_write(struct nilfs_sc_info *sci)
 
 	nilfs_drop_collected_inodes(&sci->sc_dirty_files);
 
-	if (test_bit(NILFS_SC_GC_COPY, &sci->sc_flags)) {
+	if (nilfs_doing_gc()) {
 		nilfs_drop_collected_inodes(&sci->sc_gc_inodes);
 		if (update_sr)
 			nilfs_commit_gcdat_inode(nilfs);
@@ -3100,8 +3099,6 @@ int nilfs_clean_segments(struct super_block *sb, unsigned long arg)
 	list_splice_init(&nilfs->ns_gc_inodes, sci->sc_gc_inodes.prev);
 	spin_unlock(&nilfs->ns_gc_inode_lock);
 
-	set_bit(NILFS_SC_GC_COPY, &sci->sc_flags);
-
 	for (;;) {
 		nilfs_segctor_accept(sci, &req);
 		err = nilfs_segctor_construct(sci, &req);
@@ -3117,7 +3114,6 @@ int nilfs_clean_segments(struct super_block *sb, unsigned long arg)
 		schedule_timeout(sci->sc_interval);
 	}
 
-	clear_bit(NILFS_SC_GC_COPY, &sci->sc_flags);
 	NILFS_CHECK_PAGE_CACHE(nilfs->ns_gc_dat->i_mapping,
 			       PAGECACHE_TAG_DIRTY);
 
