@@ -235,8 +235,7 @@ nilfs_reload_super_block(struct super_block *, struct buffer_head **, int);
 extern int nilfs_store_magic_and_option(struct super_block *,
 					struct nilfs_super_block *, char *);
 extern void nilfs_update_last_segment(struct nilfs_sb_info *, int);
-extern int nilfs_sync_super(struct nilfs_sb_info *);
-extern int nilfs_commit_super(struct nilfs_sb_info *, int);
+extern int nilfs_commit_super(struct nilfs_sb_info *);
 extern int nilfs_attach_checkpoint(struct nilfs_sb_info *, __u64);
 extern void nilfs_detach_checkpoint(struct nilfs_sb_info *);
 
@@ -268,12 +267,6 @@ static inline int nilfs_doing_construction(void)
 static inline struct inode *nilfs_dat_inode(const struct the_nilfs *nilfs)
 {
 	return nilfs_doing_gc() ? nilfs->ns_gc_dat : nilfs->ns_dat;
-}
-
-static inline int nilfs_writeback_super(struct nilfs_sb_info *sbi)
-{
-	return (sbi->s_super->s_dirt) ?
-		nilfs_commit_super(sbi, 1) : nilfs_sync_super(sbi);
 }
 
 /*

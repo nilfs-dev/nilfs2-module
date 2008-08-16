@@ -108,7 +108,7 @@ nilfs_error(struct super_block *sb, const char *function,
 		if (!(nilfs->ns_mount_state & NILFS_ERROR_FS)) {
 			nilfs->ns_mount_state |= NILFS_ERROR_FS;
 			nilfs->ns_sbp->s_state |= cpu_to_le16(NILFS_ERROR_FS);
-			nilfs_commit_super(sbi, 1);
+			nilfs_commit_super(sbi);
 		}
 		up_write(&nilfs->ns_sem);
 
@@ -272,7 +272,7 @@ void nilfs_update_last_segment(struct nilfs_sb_info *sbi, int update_cno)
 				     nilfs_commit_super() */
 }
 
-int nilfs_sync_super(struct nilfs_sb_info *sbi)
+static int nilfs_sync_super(struct nilfs_sb_info *sbi)
 {
 	struct the_nilfs *nilfs = sbi->s_nilfs;
 	int err;
@@ -283,6 +283,7 @@ int nilfs_sync_super(struct nilfs_sb_info *sbi)
 		barrier_done = 1;
 	}
  retry:
+	set_buffer_dirty(nilfs->ns_sbh);
 	err = sync_dirty_buffer(nilfs->ns_sbh);
 	if (err == -EOPNOTSUPP && barrier_done) {
 		nilfs_warning(sbi->s_super, __func__,
@@ -304,7 +305,7 @@ int nilfs_sync_super(struct nilfs_sb_info *sbi)
 	return err;
 }
 
-int nilfs_commit_super(struct nilfs_sb_info *sbi, int sync)
+int nilfs_commit_super(struct nilfs_sb_info *sbi)
 {
 	struct the_nilfs *nilfs = sbi->s_nilfs;
 	struct nilfs_super_block *sbp = nilfs->ns_sbp;
@@ -316,20 +317,16 @@ int nilfs_commit_super(struct nilfs_sb_info *sbi, int sync)
 	err = nilfs_count_free_blocks(nilfs, &nfreeblocks);
 	if (unlikely(err)) {
 		printk(KERN_ERR "NILFS: failed to count free blocks\n");
-		goto failed;
+		return err;
 	}
 	sbp->s_free_blocks_count = cpu_to_le64(nfreeblocks);
 	sbp->s_wtime = cpu_to_le64(get_seconds());
 	sbp->s_sum = 0;
 	sbp->s_sum = crc32_le(nilfs->ns_crc_seed, (unsigned char *)sbp,
 			      le16_to_cpu(sbp->s_bytes));
-	set_buffer_dirty(nilfs->ns_sbh);
-	if (sync)
-		err = nilfs_sync_super(sbi);
 
 	sbi->s_super->s_dirt = 0;
- failed:
-	return err;
+	return nilfs_sync_super(sbi);
 }
 
 static void nilfs_put_super(struct super_block *sb)
@@ -345,7 +342,7 @@ static void nilfs_put_super(struct super_block *sb)
 		down_write(&nilfs->ns_sem);
 		nilfs_debug(1, "Closing on-disk superblock\n");
 		nilfs->ns_sbp->s_state = cpu_to_le16(nilfs->ns_mount_state);
-		nilfs_commit_super(sbi, 1);
+		nilfs_commit_super(sbi);
 		up_write(&nilfs->ns_sem);
 	}
 
@@ -393,7 +390,7 @@ static void nilfs_write_super(struct super_block *sb)
 
 	down_write(&nilfs->ns_sem);
 	if (!(sb->s_flags & MS_RDONLY))
-		nilfs_commit_super(sbi, 1);
+		nilfs_commit_super(sbi);
 	sb->s_dirt = 0;
 	up_write(&nilfs->ns_sem);
 }
@@ -488,7 +485,7 @@ static int nilfs_mark_recovery_complete(struct nilfs_sb_info *sbi)
 	down_write(&nilfs->ns_sem);
 	if (!(nilfs->ns_mount_state & NILFS_VALID_FS)) {
 		nilfs->ns_mount_state |= NILFS_VALID_FS;
-		err = nilfs_writeback_super(sbi);
+		err = nilfs_commit_super(sbi);
 		if (likely(!err))
 			printk(KERN_INFO "NILFS: recovery complete.\n");
 	}
@@ -754,7 +751,7 @@ static int nilfs_setup_super(struct nilfs_sb_info *sbi)
 	sbp->s_state = cpu_to_le16(le16_to_cpu(sbp->s_state) & ~NILFS_VALID_FS);
 	sbp->s_mtime = cpu_to_le64(get_seconds());
 	nilfs_debug(3, "setting valid to 0\n");
-	return nilfs_commit_super(sbi, 1);
+	return nilfs_commit_super(sbi);
 }
 
 struct nilfs_super_block *
@@ -1062,7 +1059,7 @@ static int nilfs_remount(struct super_block *sb, int *flags, char *data)
 		    (nilfs->ns_mount_state & NILFS_VALID_FS))
 			sbp->s_state = cpu_to_le16(nilfs->ns_mount_state);
 		sbp->s_mtime = cpu_to_le64(get_seconds());
-		nilfs_commit_super(sbi, 1);
+		nilfs_commit_super(sbi);
 		up_write(&nilfs->ns_sem);
 	} else {
 		/*

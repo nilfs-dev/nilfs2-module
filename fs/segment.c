@@ -3033,7 +3033,7 @@ static int nilfs_segctor_construct(struct nilfs_sc_info *sci,
 		if (test_bit(NILFS_SC_SUPER_ROOT, &sci->sc_flags) &&
 		    nilfs_discontinued(nilfs)) {
 			down_write(&nilfs->ns_sem);
-			req->sb_err = nilfs_writeback_super(sbi);
+			req->sb_err = nilfs_commit_super(sbi);
 			up_write(&nilfs->ns_sem);
 		}
 	}
