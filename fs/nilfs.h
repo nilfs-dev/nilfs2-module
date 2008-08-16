@@ -270,12 +270,6 @@ static inline struct inode *nilfs_dat_inode(const struct the_nilfs *nilfs)
 	return nilfs_doing_gc() ? nilfs->ns_gc_dat : nilfs->ns_dat;
 }
 
-static inline __u64
-nilfs_get_checkpoint_number(struct nilfs_sb_info *sbi)
-{
-	return sbi->s_snapshot_cno ? : nilfs_last_cno(sbi->s_nilfs);
-}
-
 static inline int nilfs_writeback_super(struct nilfs_sb_info *sbi)
 {
 	return (sbi->s_super->s_dirt) ?
