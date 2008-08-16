@@ -156,7 +156,7 @@ struct file_operations nilfs_file_operations = {
 #endif	/* CONFIG_COMPAT */
 	.mmap		= nilfs_file_mmap,
 	.open		= generic_file_open,
-	.release	= nilfs_release_file,
+	/* .release	= nilfs_release_file, */
 	.fsync		= nilfs_sync_file,
 #if NEED_READV_WRITEV
 	.readv		= generic_file_readv,

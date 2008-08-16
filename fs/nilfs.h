@@ -187,7 +187,6 @@ extern void nilfs_set_link(struct inode *, struct nilfs_dir_entry *,
 			   struct page *, struct inode *);
 
 /* file.c */
-#define nilfs_release_file   NULL
 extern int nilfs_sync_file(struct file *, struct dentry *, int);
 
 /* ioctl.c */
