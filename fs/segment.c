@@ -1112,9 +1112,9 @@ static void nilfs_fill_in_super_root_crc(struct buffer_head *bh_sr, u32 seed)
 	u32 crc;
 
 	BUG_ON(NILFS_SR_BYTES > bh_sr->b_size);
-	crc = nilfs_crc32(seed,
-			  (unsigned char *)raw_sr + sizeof(raw_sr->sr_sum),
-			  NILFS_SR_BYTES - sizeof(raw_sr->sr_sum));
+	crc = crc32_le(seed,
+		       (unsigned char *)raw_sr + sizeof(raw_sr->sr_sum),
+		       NILFS_SR_BYTES - sizeof(raw_sr->sr_sum));
 	raw_sr->sr_sum = cpu_to_le32(crc);
 }
 

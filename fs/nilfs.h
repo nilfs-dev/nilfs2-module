@@ -174,12 +174,6 @@ static inline int nilfs_init_acl(struct inode *inode, struct inode *dir)
 }
 #endif
 
-/*
- * Macro of checksum calculation
- */
-#define nilfs_crc32(seed, data, length)  crc32_le(seed, data, length)
-
-
 /* dir.c */
 extern int nilfs_add_link(struct dentry *, struct inode *);
 extern ino_t nilfs_inode_by_name(struct inode *, struct dentry *);

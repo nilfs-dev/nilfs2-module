@@ -134,8 +134,8 @@ static int calc_crc_cont(struct nilfs_sb_info *sbi, struct buffer_head *bhs,
 	BUG_ON(offset >= blocksize);
 	check_bytes -= offset;
 	size = min_t(u64, check_bytes, blocksize - offset);
-	crc = nilfs_crc32(sbi->s_nilfs->ns_crc_seed,
-			(unsigned char *)bhs->b_data + offset, size);
+	crc = crc32_le(sbi->s_nilfs->ns_crc_seed,
+		       (unsigned char *)bhs->b_data + offset, size);
 	if (--nblock > 0) {
 		do {
 			struct buffer_head *bh
@@ -144,7 +144,7 @@ static int calc_crc_cont(struct nilfs_sb_info *sbi, struct buffer_head *bhs,
 				return -EIO;
 			check_bytes -= size;
 			size = min_t(u64, check_bytes, blocksize);
-			crc = nilfs_crc32(crc, bh->b_data, size);
+			crc = crc32_le(crc, bh->b_data, size);
 			brelse(bh);
 		} while (--nblock > 0);
 	}

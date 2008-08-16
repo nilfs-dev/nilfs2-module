@@ -217,18 +217,17 @@ void nilfs_segbuf_fill_in_segsum_crc(struct nilfs_segment_buffer *segbuf,
 
 	raw_sum = (struct nilfs_segment_summary *)bh->b_data;
 	size = min_t(unsigned long, bytes, bh->b_size);
-	crc = nilfs_crc32(seed,
-			  (unsigned char *)raw_sum +
-			  sizeof(raw_sum->ss_datasum) +
-			  sizeof(raw_sum->ss_sumsum),
-			  size - (sizeof(raw_sum->ss_datasum) +
-				  sizeof(raw_sum->ss_sumsum)));
+	crc = crc32_le(seed,
+		       (unsigned char *)raw_sum +
+		       sizeof(raw_sum->ss_datasum) + sizeof(raw_sum->ss_sumsum),
+		       size - (sizeof(raw_sum->ss_datasum) +
+			       sizeof(raw_sum->ss_sumsum)));
 
 	list_for_each_entry_continue(bh, &segbuf->sb_segsum_buffers,
 				     b_assoc_buffers) {
 		bytes -= size;
 		size = min_t(unsigned long, bytes, bh->b_size);
-		crc = nilfs_crc32(crc, bh->b_data, size);
+		crc = crc32_le(crc, bh->b_data, size);
 	}
 	raw_sum->ss_sumsum = cpu_to_le32(crc);
 }
@@ -244,18 +243,17 @@ void nilfs_segbuf_fill_in_data_crc(struct nilfs_segment_buffer *segbuf,
 	bh = list_entry(segbuf->sb_segsum_buffers.next, struct buffer_head,
 			b_assoc_buffers);
 	raw_sum = (struct nilfs_segment_summary *)bh->b_data;
-	crc = nilfs_crc32(seed,
-			  (unsigned char *)raw_sum +
-			  sizeof(raw_sum->ss_datasum),
-			  bh->b_size - sizeof(raw_sum->ss_datasum));
+	crc = crc32_le(seed,
+		       (unsigned char *)raw_sum + sizeof(raw_sum->ss_datasum),
+		       bh->b_size - sizeof(raw_sum->ss_datasum));
 
 	list_for_each_entry_continue(bh, &segbuf->sb_segsum_buffers,
 				     b_assoc_buffers) {
-		crc = nilfs_crc32(crc, bh->b_data, bh->b_size);
+		crc = crc32_le(crc, bh->b_data, bh->b_size);
 	}
 	list_for_each_entry(bh, &segbuf->sb_payload_buffers, b_assoc_buffers) {
 		kaddr = kmap_atomic(bh->b_page, KM_USER0);
-		crc = nilfs_crc32(crc, kaddr + bh_offset(bh), bh->b_size);
+		crc = crc32_le(crc, kaddr + bh_offset(bh), bh->b_size);
 		kunmap_atomic(kaddr, KM_USER0);
 	}
 	raw_sum->ss_datasum = cpu_to_le32(crc);
