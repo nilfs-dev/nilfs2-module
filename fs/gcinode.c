@@ -92,13 +92,13 @@ int nilfs_gccache_add_data(struct inode *inode, sector_t offset, sector_t pbn,
 			bh->b_bdev = NILFS_I_NILFS(inode)->ns_bdev;
 			set_buffer_mapped(bh);
 		}
-		err = -EIO;
 		page_debug(3, "reading: pbn=%llu (ino=%lu, vbn=%llu)\n",
 			   (unsigned long long)bh->b_blocknr, inode->i_ino,
 			   (unsigned long long)vbn);
-		bh = nilfs_bread_slow(bh);
-		if (unlikely(!bh))
-			goto out_unlock;
+		lock_buffer(bh);
+		err = bh_submit_read(bh);
+		if (unlikely(err))
+			goto out_free_bh;
 	}
 	bh->b_blocknr = vbn ? vbn : pbn;
 	err = -EEXIST;

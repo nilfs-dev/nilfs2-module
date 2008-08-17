@@ -282,11 +282,12 @@ int __nilfs_btnode_get(struct nilfs_btnode_cache *btnc, __u64 blocknr,
 	}
 	bh->b_blocknr = pblocknr; /* set block address for read */
 	set_buffer_mapped(bh);
-	bh = nilfs_bread_slow(bh);
 
-	if (unlikely(bh == NULL)) {
+	lock_buffer(bh);
+	err = bh_submit_read(bh);
+	if (unlikely(err)) {
+		brelse(bh);
 		btnode_debug(1, "return -EIO.\n");
-		err = -EIO;
 		goto out_locked;
 	}
 	bh->b_blocknr = blocknr; /* set back to the given block address */

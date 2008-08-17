@@ -37,39 +37,6 @@
 #include "page.h"
 #include "btnode.h"
 
-struct buffer_head *nilfs_bread_slow(struct buffer_head *bh)
-{
-	lock_buffer(bh);
-	if (buffer_uptodate(bh)) {
-		unlock_buffer(bh);
-		return bh;
-	} else {
-#ifdef CONFIG_NILFS_DEBUG
-		char b[BDEVNAME_SIZE];
-#endif
-
-		get_bh(bh);
-		page_debug(3, "try to read block (dev=%s, blocknr=%llu)\n",
-			   bdevname(bh->b_bdev, b),
-			   (unsigned long long)bh->b_blocknr);
-		bh->b_end_io = end_buffer_read_sync;
-		submit_bh(READ, bh);
-		wait_on_buffer(bh);
-		if (buffer_uptodate(bh))
-			return bh;
-	}
-	brelse(bh);
-	return NULL;
-	/*
-	 * __bread_slow() releases buffer count when it fails to read.
-	 * The caller must not release buffer_head if NULL is returned.
-	 * Note that an increment by get_bh() in __bread_slow() is consumed by
-	 * the BIO submission.
-	 */
-}
-
-/* end copied functions from fs/buffer.c */
-
 static void nilfs_link_buffers(struct page *page, struct buffer_head *head)
 {
 	struct buffer_head *bh, *tail;
