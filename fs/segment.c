@@ -2228,19 +2228,6 @@ static void nilfs_segctor_abort_write(struct nilfs_sc_info *sci,
 	nilfs_end_page_io(fs_page, err);
  done:
 	nilfs_clear_copied_buffers(&sci->sc_copied_buffers, err);
-
-	/*
-	 * When started the ifile stage, dirty inodes come into a collected
-	 * state.  If the current partial segment includes regular files,
-	 * the collected state must be cancelled to let the next construction
-	 * rewrite bmap roots of the files.
-	 */
-	if (SC_STAGE_DONE(&sci->sc_stage, SC_MAIN_FILE) &&
-	    SC_STAGE_STARTED(&sci->sc_stage, SC_MAIN_IFILE))
-		nilfs_redirty_inodes(&sci->sc_dirty_files);
-
-	if (nilfs_doing_gc())
-		nilfs_redirty_inodes(&sci->sc_gc_inodes);
 }
 
 static void nilfs_set_next_segment(struct the_nilfs *nilfs,
@@ -2682,10 +2669,14 @@ static int nilfs_segctor_do_construct(struct nilfs_sc_info *sci, int mode)
 	nilfs_segctor_cancel_segusage(sci, nilfs->ns_sufile);
 
  failed_to_make_up:
+	if (SC_STAGE_STARTED(&sci->sc_stage, SC_MAIN_IFILE))
+		nilfs_redirty_inodes(&sci->sc_dirty_files);
 	if (has_sr)
 		nilfs_segctor_reactivate_segments(sci, nilfs);
 
  failed:
+	if (nilfs_doing_gc())
+		nilfs_redirty_inodes(&sci->sc_gc_inodes);
 	nilfs_segctor_end_construction(sci, nilfs, err);
 	goto out;
 }
