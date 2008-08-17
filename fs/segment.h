@@ -92,19 +92,15 @@ struct nilfs_transaction_info {
 #define NILFS_TI_WRITER		0x0010	/* Constructor context */
 
 /**
- * struct nilfs_collection_stage - Context of collection stage
- * @main: Collection stage
- * @sub: Sub-stage in a file
- * @done: Flags to store completion status of each stage.
- * @started: Flags to store start status of each stage.
+ * struct nilfs_cstage - Context of collection stage
+ * @scnt: Stage count
+ * @flags: State flags
  * @dirty_file_ptr: Pointer on dirty_files list, or inode of a target file
  * @gc_inode_ptr: Pointer on the list of gc-inodes
  */
-struct nilfs_collection_stage {
-	char			main;
-	char			sub;
-	unsigned short		done;
-	unsigned short		started;
+struct nilfs_cstage {
+	int			scnt;
+	unsigned 		flags;
 	struct nilfs_inode_info *dirty_file_ptr;
 	struct nilfs_inode_info *gc_inode_ptr;
 };
@@ -166,7 +162,7 @@ struct nilfs_sc_info {
 	struct nilfs_segment_buffer *sc_curseg;
 	struct buffer_head     *sc_super_root;
 
-	struct nilfs_collection_stage sc_stage;
+	struct nilfs_cstage	sc_stage;
 
 	struct nilfs_segsum_pointer sc_finfo_ptr;
 	struct nilfs_segsum_pointer sc_binfo_ptr;

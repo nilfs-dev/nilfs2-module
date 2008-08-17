@@ -65,53 +65,27 @@ enum {
 			   a checkpoint */
 };
 
-/*
- * Construction stages
- */
+/* Stage numbers of dirty block collection */
 enum {
-	SC_MAIN_INIT = 0,
-	SC_MAIN_GC,
-	SC_MAIN_FILE,
-	SC_MAIN_SKETCH,
-	SC_MAIN_IFILE,
-	SC_MAIN_CPFILE,
-	SC_MAIN_SUFILE,
-	SC_MAIN_DAT,
-	SC_MAIN_SR,
-	SC_MAIN_DSYNC,
-	SC_MAIN_DONE,
+	NILFS_ST_INIT = 0,
+	NILFS_ST_GC,		/* Collecting dirty blocks for GC */
+	NILFS_ST_FILE,
+	NILFS_ST_SKETCH,
+	NILFS_ST_IFILE,
+	NILFS_ST_CPFILE,
+	NILFS_ST_SUFILE,
+	NILFS_ST_DAT,
+	NILFS_ST_SR,		/* Super root */
+	NILFS_ST_DSYNC,		/* Data sync blocks */
+	NILFS_ST_DONE,
 };
 
-enum {
-	SC_SUB_DATA = 0,
-	SC_SUB_NODE,
-};
+/* State flags of collection */
+#define NILFS_CF_NODE		0x0001	/* Collecting node blocks */
+#define NILFS_CF_IFILE_STARTED	0x0002	/* IFILE stage has started */
+#define NILFS_CF_HISTORY_MASK	(NILFS_CF_IFILE_STARTED)
 
-#define SC_STAGE_INIT(stage)  \
-	do { \
-	     (stage)->main = (stage)->sub = 0; \
-	 } while (0)
-#define SC_STAGE_CLEAR_HISTORY(stage)  \
-	do { \
-	     (stage)->started = (stage)->done = 0; \
-	} while (0)
-#define SC_STAGE_NEXT(stage)  \
-	do { \
-	     (stage)->done |= (1 << (stage)->main++); \
-	     (stage)->started |= (1 << (stage)->main); \
-	} while (0)
-#define SC_STAGE_SKIP_TO(stage, s)  \
-	do { \
-	     (stage)->done |= (1 << (stage)->main); \
-	     (stage)->started |= (1 << ((stage)->main = (s))); \
-	} while (0)
-
-#define SC_STAGE_STARTED(stage, s) ((stage)->started & (1 << (s)))
-#define SC_STAGE_DONE(stage, s)    ((stage)->done & (1 << (s)))
-
-/*
- * Definitions for collecting or writing segment summary
- */
+/* Operations depending on the construction mode and file type */
 struct nilfs_sc_operations {
 	int (*collect_data)(struct nilfs_sc_info *, struct buffer_head *,
 			    struct inode *);
@@ -996,14 +970,10 @@ static void nilfs_segctor_clear_metadata_dirty(struct nilfs_sc_info *sci)
 	struct nilfs_sb_info *sbi = sci->sc_sbi;
 	struct the_nilfs *nilfs = sbi->s_nilfs;
 
-	if (SC_STAGE_DONE(&sci->sc_stage, SC_MAIN_IFILE))
-		nilfs_mdt_clear_dirty(sbi->s_ifile);
-	if (SC_STAGE_DONE(&sci->sc_stage, SC_MAIN_CPFILE))
-		nilfs_mdt_clear_dirty(nilfs->ns_cpfile);
-	if (SC_STAGE_DONE(&sci->sc_stage, SC_MAIN_SUFILE))
-		nilfs_mdt_clear_dirty(nilfs->ns_sufile);
-	if (SC_STAGE_DONE(&sci->sc_stage, SC_MAIN_DAT))
-		nilfs_mdt_clear_dirty(nilfs_dat_inode(nilfs));
+	nilfs_mdt_clear_dirty(sbi->s_ifile);
+	nilfs_mdt_clear_dirty(nilfs->ns_cpfile);
+	nilfs_mdt_clear_dirty(nilfs->ns_sufile);
+	nilfs_mdt_clear_dirty(nilfs_dat_inode(nilfs));
 }
 
 static int nilfs_segctor_create_checkpoint(struct nilfs_sc_info *sci)
@@ -1270,10 +1240,10 @@ static int nilfs_segctor_scan_file(struct nilfs_sc_info *sci,
 	LIST_HEAD(node_buffers);
 	int err, err2;
 
-	seg_debug(3, "called (ino=%lu, main_stage=%d)\n",
-		  inode->i_ino, sci->sc_stage.main);
+	seg_debug(3, "called (ino=%lu, stage-count=%d)\n",
+		  inode->i_ino, sci->sc_stage.scnt);
 
-	if (sci->sc_stage.sub == SC_SUB_DATA) {
+	if (!(sci->sc_stage.flags & NILFS_CF_NODE)) {
 		err = nilfs_lookup_dirty_data_buffers(inode, &data_buffers,
 						      sci);
 		if (err) {
@@ -1287,7 +1257,7 @@ static int nilfs_segctor_scan_file(struct nilfs_sc_info *sci,
 	}
 	nilfs_lookup_dirty_node_buffers(inode, &node_buffers);
 
-	if (sci->sc_stage.sub == SC_SUB_DATA) {
+	if (!(sci->sc_stage.flags & NILFS_CF_NODE)) {
 		err = nilfs_segctor_apply_buffers(
 			sci, inode, &data_buffers, sc_ops->collect_data);
 		if (unlikely(err)) {
@@ -1296,9 +1266,9 @@ static int nilfs_segctor_scan_file(struct nilfs_sc_info *sci,
 				sci, inode, &node_buffers, NULL);
 			goto break_or_fail;
 		}
-		sci->sc_stage.sub++;
+		sci->sc_stage.flags |= NILFS_CF_NODE;
 	}
-	/* sci->sc_state.sub == SC_SUB_NODE */
+	/* Collect node */
 	err = nilfs_segctor_apply_buffers(
 		sci, inode, &node_buffers, sc_ops->collect_node);
 	if (unlikely(err))
@@ -1311,10 +1281,10 @@ static int nilfs_segctor_scan_file(struct nilfs_sc_info *sci,
 		goto break_or_fail;
 
 	nilfs_segctor_end_finfo(sci, inode);
-	sci->sc_stage.sub = SC_SUB_DATA;
+	sci->sc_stage.flags &= ~NILFS_CF_NODE;
 
  break_or_fail:
-	seg_debug(3, "done (err=%d, sub-stage=%d)\n", err, sci->sc_stage.sub);
+	seg_debug(3, "done (err=%d)\n", err);
 	return err;
 }
 
@@ -1343,19 +1313,17 @@ static int nilfs_segctor_collect_blocks(struct nilfs_sc_info *sci, int mode)
 	struct nilfs_inode_info *ii;
 	int err = 0;
 
-	switch (sci->sc_stage.main) {
-	case SC_MAIN_INIT:
-		/*
-		 * Pre-processes before first segment construction are
-		 * inserted here.
-		 */
+	switch (sci->sc_stage.scnt) {
+	case NILFS_ST_INIT:
+		/* Pre-processes */
+		sci->sc_stage.flags = 0;
+
 		if (!test_bit(NILFS_SC_UNCLOSED, &sci->sc_flags)) {
 			sci->sc_nblk_inc = 0;
 			sci->sc_curseg->sb_sum.flags = NILFS_SS_LOGBGN;
 			if (mode == SC_LSEG_DSYNC) {
 				seg_debug(2, "** DSYNC BEGIN\n");
-				SC_STAGE_SKIP_TO(&sci->sc_stage,
-						 SC_MAIN_DSYNC);
+				sci->sc_stage.scnt = NILFS_ST_DSYNC;
 				goto dsync_mode;
 			}
 			seg_debug(2, "** LSEG BEGIN\n");
@@ -1365,11 +1333,11 @@ static int nilfs_segctor_collect_blocks(struct nilfs_sc_info *sci, int mode)
 		sci->sc_stage.dirty_file_ptr = NULL;
 		sci->sc_stage.gc_inode_ptr = NULL;
 		if (mode == SC_FLUSH_DAT) {
-			SC_STAGE_SKIP_TO(&sci->sc_stage, SC_MAIN_DAT);
+			sci->sc_stage.scnt = NILFS_ST_DAT;
 			goto dat_stage;
 		}
-		SC_STAGE_NEXT(&sci->sc_stage);
-	case SC_MAIN_GC:
+		sci->sc_stage.scnt++;  /* Fall through */
+	case NILFS_ST_GC:
 		seg_debug(3, "** GC INODE STAGE\n");
 		if (nilfs_doing_gc()) {
 			head = &sci->sc_gc_inodes;
@@ -1390,8 +1358,8 @@ static int nilfs_segctor_collect_blocks(struct nilfs_sc_info *sci, int mode)
 			}
 			sci->sc_stage.gc_inode_ptr = NULL;
 		}
-		SC_STAGE_NEXT(&sci->sc_stage);
-	case SC_MAIN_FILE:
+		sci->sc_stage.scnt++;  /* Fall through */
+	case NILFS_ST_FILE:
 		seg_debug(3, "** FILE STAGE\n");
 		head = &sci->sc_dirty_files;
 		ii = list_prepare_entry(sci->sc_stage.dirty_file_ptr, head,
@@ -1413,12 +1381,12 @@ static int nilfs_segctor_collect_blocks(struct nilfs_sc_info *sci, int mode)
 		}
 		sci->sc_stage.dirty_file_ptr = NULL;
 		if (mode == SC_FLUSH_FILE) {
-			SC_STAGE_SKIP_TO(&sci->sc_stage, SC_MAIN_DONE);
+			sci->sc_stage.scnt = NILFS_ST_DONE;
 			seg_debug(2, "** LSEG CONTINUED\n");
 			return 0;
 		}
-		SC_STAGE_NEXT(&sci->sc_stage);
-	case SC_MAIN_SKETCH:
+		sci->sc_stage.scnt++;  /* Fall through */
+	case NILFS_ST_SKETCH:
 		seg_debug(3, "** SKETCH FILE STAGE\n");
 		if (mode == SC_LSEG_SR && sci->sc_sketch_inode) {
 			ii = NILFS_I(sci->sc_sketch_inode);
@@ -1438,26 +1406,29 @@ static int nilfs_segctor_collect_blocks(struct nilfs_sc_info *sci, int mode)
 			if (unlikely(err))
 				goto break_or_fail;
 		}
-		SC_STAGE_NEXT(&sci->sc_stage);
-	case SC_MAIN_IFILE:
+		sci->sc_stage.scnt++;
+		sci->sc_stage.flags |= NILFS_CF_IFILE_STARTED;
+		/* Fall through */
+	case NILFS_ST_IFILE:
 		seg_debug(3, "** IFILE STAGE\n");
 		err = nilfs_segctor_scan_file(sci, sbi->s_ifile,
 					      &nilfs_sc_file_ops);
 		if (unlikely(err))
 			break;
-		SC_STAGE_NEXT(&sci->sc_stage);
+		sci->sc_stage.scnt++;
 		/* Creating a checkpoint */
 		err = nilfs_segctor_create_checkpoint(sci);
 		if (unlikely(err))
 			break;
-	case SC_MAIN_CPFILE:
+		/* Fall through */
+	case NILFS_ST_CPFILE:
 		seg_debug(3, "** CP STAGE\n");
 		err = nilfs_segctor_scan_file(sci, nilfs->ns_cpfile,
 					      &nilfs_sc_file_ops);
 		if (unlikely(err))
 			break;
-		SC_STAGE_NEXT(&sci->sc_stage);
-	case SC_MAIN_SUFILE:
+		sci->sc_stage.scnt++;  /* Fall through */
+	case NILFS_ST_SUFILE:
 		seg_debug(3, "** SUFILE STAGE\n");
 		err = nilfs_segctor_prepare_free_segments(sci,
 							  nilfs->ns_sufile);
@@ -1467,8 +1438,8 @@ static int nilfs_segctor_collect_blocks(struct nilfs_sc_info *sci, int mode)
 					      &nilfs_sc_file_ops);
 		if (unlikely(err))
 			break;
-		SC_STAGE_NEXT(&sci->sc_stage);
-	case SC_MAIN_DAT:
+		sci->sc_stage.scnt++;  /* Fall through */
+	case NILFS_ST_DAT:
  dat_stage:
 		seg_debug(3, "** DAT STAGE\n");
 		err = nilfs_segctor_scan_file(sci, nilfs_dat_inode(nilfs),
@@ -1476,12 +1447,12 @@ static int nilfs_segctor_collect_blocks(struct nilfs_sc_info *sci, int mode)
 		if (unlikely(err))
 			break;
 		if (mode == SC_FLUSH_DAT) {
-			SC_STAGE_SKIP_TO(&sci->sc_stage, SC_MAIN_DONE);
+			sci->sc_stage.scnt = NILFS_ST_DONE;
 			seg_debug(2, "** LSEG CONTINUED\n");
 			return 0;
 		}
-		SC_STAGE_NEXT(&sci->sc_stage);
-	case SC_MAIN_SR:
+		sci->sc_stage.scnt++;  /* Fall through */
+	case NILFS_ST_SR:
 		seg_debug(3, "** SR STAGE\n");
 		if (mode == SC_LSEG_SR) {
 			/* Appending a super root */
@@ -1492,10 +1463,10 @@ static int nilfs_segctor_collect_blocks(struct nilfs_sc_info *sci, int mode)
 		}
 		/* End of a logical segment */
 		sci->sc_curseg->sb_sum.flags |= NILFS_SS_LOGEND;
-		SC_STAGE_SKIP_TO(&sci->sc_stage, SC_MAIN_DONE);
+		sci->sc_stage.scnt = NILFS_ST_DONE;
 		seg_debug(2, "** LSEG END\n");
 		return 0;
-	case SC_MAIN_DSYNC:
+	case NILFS_ST_DSYNC:
  dsync_mode:
 		sci->sc_curseg->sb_sum.flags |= NILFS_SS_SYNDT;
 		ii = sci->sc_stage.dirty_file_ptr;
@@ -1507,10 +1478,10 @@ static int nilfs_segctor_collect_blocks(struct nilfs_sc_info *sci, int mode)
 			break;
 		sci->sc_stage.dirty_file_ptr = NULL;
 		sci->sc_curseg->sb_sum.flags |= NILFS_SS_LOGEND;
-		SC_STAGE_SKIP_TO(&sci->sc_stage, SC_MAIN_DONE);
+		sci->sc_stage.scnt = NILFS_ST_DONE;
 		seg_debug(2, "** DSYNC END\n");
 		return 0;
-	case SC_MAIN_DONE:
+	case NILFS_ST_DONE:
 		return 0;
 	default:
 		BUG();
@@ -1519,10 +1490,10 @@ static int nilfs_segctor_collect_blocks(struct nilfs_sc_info *sci, int mode)
 	if (unlikely(err)) {
 		if (err == -E2BIG)
 			seg_debug(2, "** SEG FEED(stage=%d)\n",
-				  sci->sc_stage.main);
+				  sci->sc_stage.scnt);
 		else
 			seg_debug(2, "** ERROR(err=%d, stage=%d)\n", err,
-				  sci->sc_stage.main);
+				  sci->sc_stage.scnt);
 	}
 	return err;
 }
@@ -1814,7 +1785,7 @@ static void nilfs_segctor_truncate_segments(struct nilfs_sc_info *sci,
 static int nilfs_segctor_collect(struct nilfs_sc_info *sci,
 				 struct the_nilfs *nilfs, int mode)
 {
-	struct nilfs_collection_stage prev_stage = sci->sc_stage;
+	struct nilfs_cstage prev_stage = sci->sc_stage;
 	int err, nadd = 1;
 
 	/* Collection retry loop */
@@ -1836,7 +1807,7 @@ static int nilfs_segctor_collect(struct nilfs_sc_info *sci,
 			goto failed;
 
 		/* The current segment is filled up */
-		if (mode != SC_LSEG_SR || sci->sc_stage.main < SC_MAIN_CPFILE)
+		if (mode != SC_LSEG_SR || sci->sc_stage.scnt < NILFS_ST_CPFILE)
 			break;
 
 		nilfs_segctor_cancel_free_segments(sci, nilfs->ns_sufile);
@@ -2558,7 +2529,7 @@ static int nilfs_segctor_do_construct(struct nilfs_sc_info *sci, int mode)
 	struct page *failed_page;
 	int err, has_sr = 0;
 
-	SC_STAGE_INIT(&sci->sc_stage);
+	sci->sc_stage.scnt = NILFS_ST_INIT;
 
 	err = nilfs_segctor_check_in_files(sci, sbi);
 	if (unlikely(err))
@@ -2573,7 +2544,7 @@ static int nilfs_segctor_do_construct(struct nilfs_sc_info *sci, int mode)
 	}
 
 	do {
-		SC_STAGE_CLEAR_HISTORY(&sci->sc_stage);
+		sci->sc_stage.flags &= ~NILFS_CF_HISTORY_MASK;
 
 		err = nilfs_segctor_begin_construction(sci, nilfs);
 		if (unlikely(err))
@@ -2589,7 +2560,7 @@ static int nilfs_segctor_do_construct(struct nilfs_sc_info *sci, int mode)
 		has_sr = (sci->sc_super_root != NULL);
 
 		/* Avoid empty segment */
-		if (sci->sc_stage.main == SC_MAIN_DONE &&
+		if (sci->sc_stage.scnt == NILFS_ST_DONE &&
 		    NILFS_SEG_EMPTY(&sci->sc_curseg->sb_sum)) {
 			seg_debug(2, "aborted (no blocks collected)\n");
 			BUG_ON(mode == SC_LSEG_SR);
@@ -2606,18 +2577,15 @@ static int nilfs_segctor_do_construct(struct nilfs_sc_info *sci, int mode)
 			if (unlikely(err))
 				goto failed;
 		}
+		if (sci->sc_stage.flags & NILFS_CF_IFILE_STARTED)
+			nilfs_segctor_fill_in_file_bmap(sci, sbi->s_ifile);
 
-		if (mode != SC_LSEG_DSYNC) {
-			if (SC_STAGE_STARTED(&sci->sc_stage, SC_MAIN_IFILE))
-				nilfs_segctor_fill_in_file_bmap(sci,
-								sbi->s_ifile);
-			if (has_sr) {
-				err = nilfs_segctor_fill_in_checkpoint(sci);
-				if (unlikely(err))
-					goto failed_to_make_up;
+		if (has_sr) {
+			err = nilfs_segctor_fill_in_checkpoint(sci);
+			if (unlikely(err))
+				goto failed_to_make_up;
 
-				nilfs_segctor_fill_in_super_root(sci, nilfs);
-			}
+			nilfs_segctor_fill_in_super_root(sci, nilfs);
 		}
 		nilfs_segctor_update_segusage(sci, nilfs->ns_sufile);
 
@@ -2642,13 +2610,12 @@ static int nilfs_segctor_do_construct(struct nilfs_sc_info *sci, int mode)
 			__nilfs_segctor_commit_deactivate_segments(sci, nilfs);
 			up_write(&nilfs->ns_sem);
 			nilfs_segctor_commit_free_segments(sci);
+			nilfs_segctor_clear_metadata_dirty(sci);
 		}
 
-		if (mode == SC_LSEG_SR)
-			nilfs_segctor_clear_metadata_dirty(sci);
 		nilfs_segctor_end_construction(sci, nilfs, 0);
 
-	} while (sci->sc_stage.main != SC_MAIN_DONE);
+	} while (sci->sc_stage.scnt != NILFS_ST_DONE);
 
 	seg_debug(2, "submitted all segments\n");
 
@@ -2669,7 +2636,7 @@ static int nilfs_segctor_do_construct(struct nilfs_sc_info *sci, int mode)
 	nilfs_segctor_cancel_segusage(sci, nilfs->ns_sufile);
 
  failed_to_make_up:
-	if (SC_STAGE_STARTED(&sci->sc_stage, SC_MAIN_IFILE))
+	if (sci->sc_stage.flags & NILFS_CF_IFILE_STARTED)
 		nilfs_redirty_inodes(&sci->sc_dirty_files);
 	if (has_sr)
 		nilfs_segctor_reactivate_segments(sci, nilfs);
@@ -2951,7 +2918,7 @@ int nilfs_construct_dsync_segment(struct super_block *sb,
 
 	seg_debug(2, "begin (mode=0x%x)\n", SC_LSEG_DSYNC);
 	err = nilfs_segctor_do_construct(sci, SC_LSEG_DSYNC);
-	seg_debug(2, "end (stage=%d)\n", sci->sc_stage.main);
+	seg_debug(2, "end (stage=%d)\n", sci->sc_stage.scnt);
 
 	nilfs_transaction_unlock(sbi);
 	return err;
@@ -3016,7 +2983,7 @@ static int nilfs_segctor_construct(struct nilfs_sc_info *sci,
 		seg_debug(2, "begin (mode=0x%x)\n", req->mode);
 		err = nilfs_segctor_do_construct(sci, req->mode);
 		req->sc_err = err;
-		seg_debug(2, "end (stage=%d)\n", sci->sc_stage.main);
+		seg_debug(2, "end (stage=%d)\n", sci->sc_stage.scnt);
 	}
 	if (likely(!err)) {
 		if (req->mode != SC_FLUSH_DAT)
