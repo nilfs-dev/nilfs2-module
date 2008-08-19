@@ -71,8 +71,6 @@ static int test_exclusive_mount(struct file_system_type *fs_type,
 				struct block_device *bdev, int flags);
 
 
-#define CONFIGURE_RW_MOUNT_AND_RO_MOUNT_MUTUALLY_EXCLUSIVE
-
 /**
  * nilfs_error() - report failure condition on a filesystem
  *
@@ -1243,13 +1241,11 @@ nilfs_get_sb(struct file_system_type *fs_type, int flags,
 	 * while we are mounting
 	 */
 	nilfs_lock_bdev(sd.bdev);
-#ifdef CONFIGURE_RW_MOUNT_AND_RO_MOUNT_MUTUALLY_EXCLUSIVE
 	if (!sd.cno &&
 	    (err = test_exclusive_mount(fs_type, sd.bdev, flags ^ MS_RDONLY))) {
 		err = (err < 0) ? : -EBUSY;
 		goto failed_unlock;
 	}
-#endif
 
 	/*
 	 * Phase-1: search any existent instance and get the_nilfs
