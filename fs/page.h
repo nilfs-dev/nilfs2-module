@@ -1,5 +1,5 @@
 /*
- * page.h - buffer/page managemen for NILFS
+ * page.h - buffer/page management specific to NILFS
  *
  * Copyright (C) 2005-2008 Nippon Telegraph and Telephone Corporation.
  *
@@ -17,9 +17,8 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  *
- * Modified for NILFS by Amagai Yoshiji <amagai@osrg.net>,
- *                       Ryusuke Konishi <ryusuke@osrg.net>,
- *			 Seiji Kihara <kihara@osrg.net>
+ * Written by Ryusuke Konishi <ryusuke@osrg.net>,
+ *            Seiji Kihara <kihara@osrg.net>.
  */
 
 #ifndef _NILFS_PAGE_H

@@ -1,5 +1,5 @@
 /*
- * page.c - buffer/page management for NILFS
+ * page.c - buffer/page management specific to NILFS
  *
  * Copyright (C) 2005-2008 Nippon Telegraph and Telephone Corporation.
  *
@@ -17,14 +17,8 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  *
- * Modified for NILFS by Amagai Yoshiji <amagai@osrg.net>,
- *                       Ryusuke Konishi <ryusuke@osrg.net>,
- *			 Seiji Kihara <kihara@osrg.net>.
- */
-/*
- *  linux/fs/buffer.c
- *
- *  Copyright (C) 1991, 1992, 2002  Linus Torvalds
+ * Written by Ryusuke Konishi <ryusuke@osrg.net>,
+ *            Seiji Kihara <kihara@osrg.net>.
  */
 
 #include <linux/pagemap.h>
@@ -37,6 +31,7 @@
 #include "page.h"
 #include "btnode.h"
 
+/* borrow from fs/buffer.c::link_dev_buffers() */
 static void nilfs_link_buffers(struct page *page, struct buffer_head *head)
 {
 	struct buffer_head *bh, *tail;
@@ -80,7 +75,8 @@ nilfs_get_page_block(struct page *page, unsigned long block, pgoff_t index,
 }
 
 /*
- * low-level nilfs pages, page functions
+ * Low-level nilfs pages, page functions
+ * Reviews should be made to adapt these to the common pagemap and buffer code.
  */
 static struct nilfs_pages {
 	spinlock_t		lru_lock;
