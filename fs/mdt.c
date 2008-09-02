@@ -33,18 +33,8 @@
 
 #define NILFS_MDT_MAX_RA_BLOCKS		(16 - 1)
 
-#define USE_DEFAULT_BDEV_INFO
 #define INIT_UNUSED_INODE_FIELDS
 
-
-#ifndef INIT_UNUSED_INODE_FIELDS
-static struct backing_dev_info nilfs_mdt_bdi = {
-	.ra_pages       = (VM_MAX_READAHEAD * 1024) / PAGE_CACHE_SIZE,
-	.state          = 0,
-	.capabilities   = BDI_CAP_MAP_COPY,
-	.unplug_io_fn   = default_unplug_io_fn,
-};
-#endif
 
 #if NEED_OLD_MARK_BUFFER_DIRTY
 void nilfs_mdt_mark_buffer_dirty(struct buffer_head *bh)
@@ -648,11 +638,7 @@ nilfs_mdt_new_common(struct the_nilfs *nilfs, struct super_block *sb,
 		mapping->flags = 0;
 		mapping_set_gfp_mask(mapping, gfp_mask);
 		mapping->assoc_mapping = NULL;
-#ifdef USE_DEFAULT_BDEV_INFO
 		mapping->backing_dev_info = nilfs->ns_bdi;
-#else
-		mapping->backing_dev_info = &nilfs_mdt_bdi;
-#endif
 
 		inode->i_mapping = mapping;
 	}
