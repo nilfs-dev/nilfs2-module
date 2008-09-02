@@ -3005,28 +3005,16 @@ static void nilfs_construction_timeout(unsigned long data)
 }
 
 static void
-nilfs_dispose_gcinode_list(struct the_nilfs *nilfs, struct list_head *head)
+nilfs_remove_written_gcinodes(struct the_nilfs *nilfs, struct list_head *head)
 {
 	struct nilfs_inode_info *ii, *n;
-	struct nilfs_inode_info *ivec[SC_N_INODEVEC], **pii;
-	unsigned nv = 0;
 
-	while (!list_empty(head)) {
-		list_for_each_entry_safe(ii, n, head, i_dirty) {
-			seg_debug(3, "removing gc_inode (ino=%lu)\n",
-				  ii->vfs_inode.i_ino);
-			if (!test_and_clear_bit(NILFS_I_UPDATED, &ii->i_state))
-				continue;
-
-			hlist_del_init(&ii->vfs_inode.i_hash);
-			list_del_init(&ii->i_dirty);
-			ivec[nv++] = ii;
-			if (nv == SC_N_INODEVEC)
-				break;
-		}
-
-		for (pii = ivec; nv > 0; pii++, nv--)
-			nilfs_clear_gcinode(&(*pii)->vfs_inode);
+	list_for_each_entry_safe(ii, n, head, i_dirty) {
+		if (!test_bit(NILFS_I_UPDATED, &ii->i_state))
+			continue;
+		hlist_del_init(&ii->vfs_inode.i_hash);
+		list_del_init(&ii->i_dirty);
+		nilfs_clear_gcinode(&ii->vfs_inode);
 	}
 }
 
@@ -3056,7 +3044,7 @@ int nilfs_clean_segments(struct super_block *sb, unsigned long arg)
 	for (;;) {
 		nilfs_segctor_accept(sci, &req);
 		err = nilfs_segctor_construct(sci, &req);
-		nilfs_dispose_gcinode_list(nilfs, &sci->sc_gc_inodes);
+		nilfs_remove_written_gcinodes(nilfs, &sci->sc_gc_inodes);
 		nilfs_segctor_notify(sci, &req);
 
 		if (likely(!err))
