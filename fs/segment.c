@@ -3012,7 +3012,6 @@ nilfs_dispose_gcinode_list(struct the_nilfs *nilfs, struct list_head *head)
 	unsigned nv = 0;
 
 	while (!list_empty(head)) {
-		spin_lock(&nilfs->ns_gc_inode_lock); /* XXX: to be removed? */
 		list_for_each_entry_safe(ii, n, head, i_dirty) {
 			seg_debug(3, "removing gc_inode (ino=%lu)\n",
 				  ii->vfs_inode.i_ino);
@@ -3025,7 +3024,6 @@ nilfs_dispose_gcinode_list(struct the_nilfs *nilfs, struct list_head *head)
 			if (nv == SC_N_INODEVEC)
 				break;
 		}
-		spin_unlock(&nilfs->ns_gc_inode_lock);
 
 		for (pii = ivec; nv > 0; pii++, nv--)
 			nilfs_clear_gcinode(&(*pii)->vfs_inode);
@@ -3053,9 +3051,7 @@ int nilfs_clean_segments(struct super_block *sb, unsigned long arg)
 	if (unlikely(err))
 		goto out_unlock;
 
-	spin_lock(&nilfs->ns_gc_inode_lock); /* XXX: shouled be removed? */
 	list_splice_init(&nilfs->ns_gc_inodes, sci->sc_gc_inodes.prev);
-	spin_unlock(&nilfs->ns_gc_inode_lock);
 
 	for (;;) {
 		nilfs_segctor_accept(sci, &req);

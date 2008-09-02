@@ -65,7 +65,6 @@ enum {
  * @ns_cpfile: checkpoint file inode
  * @ns_sufile: segusage file inode
  * @ns_gc_dat: shadow inode of the DAT file inode for GC
- * @ns_gc_inode_lock: lock for gc inode list/hlist operations
  * @ns_gc_inodes: dummy inodes to keep live blocks
  * @ns_gc_inodes_h: hash list to keep dummy inode holding live blocks
  * @ns_cleanerd_wq: wait queue for cleanerd
@@ -146,7 +145,6 @@ struct the_nilfs {
 	struct inode	       *ns_gc_dat;
 
 	/* GC inode list and hash table head */
-	spinlock_t		ns_gc_inode_lock;
 	struct list_head	ns_gc_inodes;
 	struct hlist_head      *ns_gc_inodes_h;
 

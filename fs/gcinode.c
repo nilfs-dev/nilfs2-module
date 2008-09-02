@@ -167,7 +167,6 @@ int nilfs_init_gcinode(struct the_nilfs *nilfs)
 
 	BUG_ON(nilfs->ns_gc_inodes_h);
 
-	spin_lock_init(&nilfs->ns_gc_inode_lock);
 	INIT_LIST_HEAD(&nilfs->ns_gc_inodes);
 
 	nilfs->ns_gc_inodes_h =
@@ -241,14 +240,12 @@ struct inode *nilfs_gc_iget(struct the_nilfs *nilfs, ino_t ino, __u64 cno)
 	struct nilfs_inode_info *ii;
 	unsigned long hv = ihash(ino, cno);
 
-	spin_lock(&nilfs->ns_gc_inode_lock);
 	head = nilfs->ns_gc_inodes_h + hv;
 	hlist_for_each_entry(inode, node, head, i_hash) {
 		ii = NILFS_I(inode);
 		if (inode->i_ino == ino && ii->i_cno == cno)
 			break;
 	}
-	spin_unlock(&nilfs->ns_gc_inode_lock);
 
 	if (node)
 		return inode;
@@ -257,11 +254,9 @@ struct inode *nilfs_gc_iget(struct the_nilfs *nilfs, ino_t ino, __u64 cno)
 	if (!inode)
 		return NULL;
 
-	spin_lock(&nilfs->ns_gc_inode_lock);
 	head = nilfs->ns_gc_inodes_h + hv;
 	hlist_add_head(&inode->i_hash, head);
 	list_add(&NILFS_I(inode)->i_dirty, &nilfs->ns_gc_inodes);
-	spin_unlock(&nilfs->ns_gc_inode_lock);
 
 	return inode;
 }
@@ -288,15 +283,11 @@ void nilfs_remove_all_gcinode(struct the_nilfs *nilfs)
 	struct inode *inode;
 	int loop;
 
-	spin_lock(&nilfs->ns_gc_inode_lock);
 	for (loop = 0; loop < NILFS_GCINODE_HASH_SIZE; loop++, head++) {
 		hlist_for_each_entry_safe(inode, node, n, head, i_hash) {
 			hlist_del_init(&inode->i_hash);
 			list_del_init(&NILFS_I(inode)->i_dirty);
-			spin_unlock(&nilfs->ns_gc_inode_lock);
 			nilfs_clear_gcinode(inode); /* might sleep */
-			spin_lock(&nilfs->ns_gc_inode_lock);
 		}
 	}
-	spin_unlock(&nilfs->ns_gc_inode_lock);
 }
