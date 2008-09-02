@@ -228,24 +228,23 @@ out_free:
 }
 
 /* page must be locked by caller */
-int nilfs_btnode_get(struct nilfs_btnode_cache *btnc, __u64 blocknr,
-		     sector_t pblocknr, struct buffer_head **result,
-		     int newblk)
+int nilfs_btnode_submit_block(struct nilfs_btnode_cache *btnc, __u64 blocknr,
+			      sector_t pblocknr, struct buffer_head **pbh,
+			      int newblk)
 {
 	struct page *page = NULL;
-	struct buffer_head *bh = NULL;
+	struct buffer_head *bh;
 	struct inode *inode = BTNC_I(btnc);
 	int err;
 
 	err = nilfs_btnode_get_page(btnc, B2P(blocknr, inode), &page, 1);
-	if (unlikely(err)) {	/* -ENOMEM */
-		btnode_debug(2, "return %d (get_page).\n", err);
-		goto out_nopage;
-	}
-	lock_page(page);
+	if (unlikely(err))	/* -ENOMEM */
+		return err;
 
+	lock_page(page);
 	bh = nilfs_page_get_nth_block(page, B2O(blocknr, inode));
 
+	err = -EEXIST; /* internal code */
 	if (newblk) {
 		if (unlikely(buffer_mapped(bh) || buffer_uptodate(bh) ||
 			     buffer_dirty(bh))) {
@@ -256,14 +255,11 @@ int nilfs_btnode_get(struct nilfs_btnode_cache *btnc, __u64 blocknr,
 		bh->b_blocknr = blocknr;
 		set_buffer_mapped(bh);
 		set_buffer_uptodate(bh);
-		/* btnode_debug(3, "return 0 for new bh.\n"); */
 		goto found;
 	}
 
-	if (buffer_uptodate(bh) || buffer_dirty(bh)) {
-		/* btnode_debug(3, "return 0 for valid bh.\n"); */
+	if (buffer_uptodate(bh) || buffer_dirty(bh))
 		goto found;
-	}
 
 	if (pblocknr == 0) {
 		pblocknr = blocknr;
@@ -280,26 +276,47 @@ int nilfs_btnode_get(struct nilfs_btnode_cache *btnc, __u64 blocknr,
 			}
 		}
 	}
-	bh->b_blocknr = pblocknr; /* set block address for read */
-	set_buffer_mapped(bh);
-
 	lock_buffer(bh);
-	err = bh_submit_read(bh);
-	if (unlikely(err)) {
-		brelse(bh);
-		btnode_debug(1, "return -EIO.\n");
-		goto out_locked;
+	if (buffer_uptodate(bh)) {
+		unlock_buffer(bh);
+		err = -EEXIST; /* internal code */
+		goto found;
 	}
-	bh->b_blocknr = blocknr; /* set back to the given block address */
-	btnode_debug(3, "return 0.\n");
-found:
-	*result = bh;
+	set_buffer_mapped(bh);
+	bh->b_blocknr = pblocknr; /* set block address for read */
+	bh->b_end_io = end_buffer_read_sync;
+	get_bh(bh);
+	submit_bh(READ, bh);
 	err = 0;
+found:
+	*pbh = bh;
+
 out_locked:
 	unlock_page(page);
 	page_cache_release(page);	/* from nilfs_btnode_get_page() */
-out_nopage:
 	return err;
+}
+
+int nilfs_btnode_get(struct nilfs_btnode_cache *btnc, __u64 blocknr,
+		     sector_t pblocknr, struct buffer_head **pbh, int newblk)
+{
+	struct buffer_head *bh;
+	int err;
+
+	err = nilfs_btnode_submit_block(btnc, blocknr, pblocknr, pbh, newblk);
+	if (err == -EEXIST) /* internal code (cache hit) */
+		return 0;
+	if (unlikely(err))
+		return err;
+
+	bh = *pbh;
+	wait_on_buffer(bh);
+	if (!buffer_uptodate(bh)) {
+		brelse(bh);
+		return -EIO;
+	}
+	bh->b_blocknr = blocknr; /* set back to the given block address */
+	return 0;
 }
 
 static void __nilfs_btnode_set_page_dirty(struct nilfs_btnode_cache *btnc,

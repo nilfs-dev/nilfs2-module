@@ -53,6 +53,8 @@ nilfs_btnode_cache_init_once(struct nilfs_btnode_cache *btnc)
 
 void nilfs_btnode_cache_clear(struct nilfs_btnode_cache *);
 
+int nilfs_btnode_submit_block(struct nilfs_btnode_cache *, __u64, sector_t,
+			      struct buffer_head **, int);
 int nilfs_btnode_get(struct nilfs_btnode_cache *, __u64, sector_t,
 		     struct buffer_head **, int);
 void nilfs_btnode_delete(struct buffer_head *);
