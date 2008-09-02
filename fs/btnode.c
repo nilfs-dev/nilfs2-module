@@ -228,9 +228,9 @@ out_free:
 }
 
 /* page must be locked by caller */
-int __nilfs_btnode_get(struct nilfs_btnode_cache *btnc, __u64 blocknr,
-		       sector_t pblocknr, struct buffer_head **result,
-		       int newblk)
+int nilfs_btnode_get(struct nilfs_btnode_cache *btnc, __u64 blocknr,
+		     sector_t pblocknr, struct buffer_head **result,
+		     int newblk)
 {
 	struct page *page = NULL;
 	struct buffer_head *bh = NULL;
@@ -589,7 +589,7 @@ int nilfs_btnode_prepare_change_key(struct nilfs_btnode_cache *btnc,
 			goto retry;
 		} /* Other errors (eg -ENOMEM) are just returned */
 	} else {
-		err = nilfs_btnode_get_new(btnc, newkey, &nbh);
+		err = nilfs_btnode_get(btnc, newkey, 0, &nbh, 1);
 		if (unlikely(err)) {	/* -ENOMEM or -EIO */
 			btnode_debug(1, "cannot btnode_get_new for key %lld "
 				     "err %d\n",

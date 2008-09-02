@@ -447,7 +447,8 @@ void nilfs_bmap_sub_blocks(const struct nilfs_bmap *bmap, int n)
 int nilfs_bmap_get_block(const struct nilfs_bmap *bmap, __u64 ptr,
 			 struct buffer_head **bhp)
 {
-	return nilfs_btnode_get(&NILFS_BMAP_I(bmap)->i_btnode_cache, ptr, bhp);
+	return nilfs_btnode_get(&NILFS_BMAP_I(bmap)->i_btnode_cache,
+				ptr, 0, bhp, 0);
 }
 
 void nilfs_bmap_put_block(const struct nilfs_bmap *bmap,
@@ -461,8 +462,8 @@ int nilfs_bmap_get_new_block(const struct nilfs_bmap *bmap, __u64 ptr,
 {
 	int ret;
 
-	ret = nilfs_btnode_get_new(&NILFS_BMAP_I(bmap)->i_btnode_cache,
-				   ptr, bhp);
+	ret = nilfs_btnode_get(&NILFS_BMAP_I(bmap)->i_btnode_cache,
+			       ptr, 0, bhp, 1);
 	if (ret < 0)
 		return ret;
 	set_buffer_nilfs_volatile(*bhp);

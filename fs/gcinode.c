@@ -138,7 +138,7 @@ int nilfs_gccache_add_node(struct inode *inode, sector_t pbn, __u64 vbn)
 	struct buffer_head *bh;
 	int ret;
 
-	ret = nilfs_btnode_get_pb(bc, vbn ? vbn : pbn, pbn, &bh);
+	ret = nilfs_btnode_get(bc, vbn ? vbn : pbn, pbn, &bh, 0);
 	if (ret < 0)
 		return ret;	/* -ENOMEM or -EIO */
 	ret = -EEXIST;

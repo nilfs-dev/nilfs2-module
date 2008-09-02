@@ -53,16 +53,9 @@ nilfs_btnode_cache_init_once(struct nilfs_btnode_cache *btnc)
 
 void nilfs_btnode_cache_clear(struct nilfs_btnode_cache *);
 
-int __nilfs_btnode_get(struct nilfs_btnode_cache *, __u64, sector_t,
-		       struct buffer_head **, int);
+int nilfs_btnode_get(struct nilfs_btnode_cache *, __u64, sector_t,
+		     struct buffer_head **, int);
 void nilfs_btnode_delete(struct buffer_head *);
-
-#define nilfs_btnode_get(btnc, bn, res)	\
-	__nilfs_btnode_get(btnc, bn, 0, res, 0 /* exist */)
-#define nilfs_btnode_get_new(btnc, bn, res) \
-	__nilfs_btnode_get(btnc, bn, 0, res, 1 /* new */)
-#define nilfs_btnode_get_pb(btnc, bn, pbn, res)	\
-	__nilfs_btnode_get(btnc, bn, pbn, res, 0 /* exist */)
 
 #define nilfs_btnode_read_lock(btnc)	read_lock(&(btnc)->tree_lock)
 #define nilfs_btnode_read_unlock(btnc)	read_unlock(&(btnc)->tree_lock)
