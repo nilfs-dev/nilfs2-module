@@ -109,7 +109,7 @@ void put_nilfs(struct the_nilfs *nilfs)
 		nilfs_mdt_destroy(nilfs->ns_gc_dat);
 	}
 	if (nilfs_init(nilfs)) {
-		nilfs_destroy_gcinode(nilfs);
+		nilfs_destroy_gccache(nilfs);
 		brelse(nilfs->ns_sbh);
 	}
 	kfree(nilfs);
@@ -439,7 +439,7 @@ int init_nilfs(struct the_nilfs *nilfs, struct nilfs_sb_info *sbi, char *data)
 		nilfs->ns_nsegments - (nilfs->ns_segnum + 1);
 
 	/* Initialize gcinode cache */
-	err = nilfs_init_gcinode(nilfs);
+	err = nilfs_init_gccache(nilfs);
 	if (err)
 		goto failed_sbh;
 

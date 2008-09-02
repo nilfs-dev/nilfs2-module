@@ -58,8 +58,6 @@ static struct address_space_operations def_gcinode_aops = {
  * %-ENOENT - The block specified with @pbn does not exist.
  *
  * %-EEXIST - The block specified with @vbn already exist.
- *
- * Note: pages should be removed by truncate_inode_pages().
  */
 int nilfs_gccache_add_data(struct inode *inode, sector_t offset, sector_t pbn,
 			   __u64 vbn)
@@ -133,8 +131,6 @@ failed:
  * %-ENOMEM - Insufficient amount of memory available.
  *
  * %-EEXIST - The block specified with @vbn already exist.
- *
- * Note: pages should be removed by nilfs_btnode_delete_all().
  */
 int nilfs_gccache_add_node(struct inode *inode, sector_t pbn, __u64 vbn)
 {
@@ -155,13 +151,13 @@ int nilfs_gccache_add_node(struct inode *inode, sector_t pbn, __u64 vbn)
 }
 
 /*
- * nilfs_init_gcinode() - allocate and initialize gc_inode hash table
+ * nilfs_init_gccache() - allocate and initialize gc_inode hash table
  * @nilfs - the_nilfs
  *
  * Return Value: On success, 0.
  * On error, a negative error code is returned.
  */
-int nilfs_init_gcinode(struct the_nilfs *nilfs)
+int nilfs_init_gccache(struct the_nilfs *nilfs)
 {
 	int loop;
 
@@ -181,10 +177,10 @@ int nilfs_init_gcinode(struct the_nilfs *nilfs)
 }
 
 /*
- * nilfs_destroy_gcinode() - free gc_inode hash table
+ * nilfs_destroy_gccache() - free gc_inode hash table
  * @nilfs - the nilfs
  */
-void nilfs_destroy_gcinode(struct the_nilfs *nilfs)
+void nilfs_destroy_gccache(struct the_nilfs *nilfs)
 {
 	if (nilfs->ns_gc_inodes_h) {
 		nilfs_remove_all_gcinode(nilfs);
@@ -194,7 +190,7 @@ void nilfs_destroy_gcinode(struct the_nilfs *nilfs)
 }
 
 static struct inode *alloc_gcinode(struct the_nilfs *nilfs, ino_t ino,
-				   __u64 cno, unsigned long hv)
+				   __u64 cno)
 {
 	struct inode *inode = nilfs_mdt_new_common(nilfs, NULL, ino, GFP_NOFS);
 	struct nilfs_inode_info *ii;
@@ -224,57 +220,38 @@ static unsigned long ihash(ino_t ino, __u64 cno)
 }
 
 /*
- * nilfs_gc_iget() - find inode with ino/cno. if not exist, newly create.
- * @sb - super_block
- * @ino - inode number
- * @cno - check point number
- *
- * Return Value: On success, inode pointer
- * On error, NULL
+ * nilfs_gc_iget() - find or create gc inode with specified (ino,cno)
  */
 struct inode *nilfs_gc_iget(struct the_nilfs *nilfs, ino_t ino, __u64 cno)
 {
-	struct hlist_head *head;
+	struct hlist_head *head = nilfs->ns_gc_inodes_h + ihash(ino, cno);
 	struct hlist_node *node;
-	struct inode *inode = NULL;
-	struct nilfs_inode_info *ii;
-	unsigned long hv = ihash(ino, cno);
+	struct inode *inode;
 
-	head = nilfs->ns_gc_inodes_h + hv;
 	hlist_for_each_entry(inode, node, head, i_hash) {
-		ii = NILFS_I(inode);
-		if (inode->i_ino == ino && ii->i_cno == cno)
-			break;
+		if (inode->i_ino == ino && NILFS_I(inode)->i_cno == cno)
+			return inode;
 	}
 
-	if (node)
-		return inode;
-
-	inode = alloc_gcinode(nilfs, ino, cno, hv);
-	if (!inode)
-		return NULL;
-
-	head = nilfs->ns_gc_inodes_h + hv;
-	hlist_add_head(&inode->i_hash, head);
-	list_add(&NILFS_I(inode)->i_dirty, &nilfs->ns_gc_inodes);
-
+	inode = alloc_gcinode(nilfs, ino, cno);
+	if (likely(inode)) {
+		hlist_add_head(&inode->i_hash, head);
+		list_add(&NILFS_I(inode)->i_dirty, &nilfs->ns_gc_inodes);
+	}
 	return inode;
 }
 
 /*
  * nilfs_clear_gcinode() - clear and free a gc inode
- * @inode - inode
  */
 void nilfs_clear_gcinode(struct inode *inode)
 {
 	nilfs_mdt_clear(inode);
-	inode->i_state = I_CLEAR;
 	nilfs_mdt_destroy(inode);
 }
 
 /*
  * nilfs_remove_all_gcinode() - remove all inodes from the_nilfs
- * @nilfs - the_nilfs
  */
 void nilfs_remove_all_gcinode(struct the_nilfs *nilfs)
 {
