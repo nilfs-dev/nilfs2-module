@@ -355,47 +355,36 @@ static int nilfs_ioctl_get_bdescs(struct inode *inode, struct file *filp,
 }
 
 static int nilfs_ioctl_move_inode_block(struct inode *inode,
-					struct nilfs_vdesc *vdesc)
+					struct nilfs_vdesc *vdesc,
+					struct list_head *buffers)
 {
+	struct buffer_head *bh;
 	int ret;
 
-	if (vdesc->vd_flags == 0) {
-		ret = nilfs_gccache_add_data(inode, vdesc->vd_offset,
-					     vdesc->vd_blocknr,
-					     vdesc->vd_vblocknr);
-		if (ret < 0) {
-			if ((ret == -ENOENT) || (ret == -EEXIST)) {
-				printk(KERN_CRIT "%s: ino = %llu, cno = %llu, "
-				       "offset = %llu, blocknr = %llu, "
-				       "vblocknr = %llu\n",
-				       __func__,
-				       (unsigned long long)vdesc->vd_ino,
-				       (unsigned long long)vdesc->vd_cno,
-				       (unsigned long long)vdesc->vd_offset,
-				       (unsigned long long)vdesc->vd_blocknr,
-				       (unsigned long long)vdesc->vd_vblocknr);
-				BUG();
-			}
-			return ret;
-		}
-	} else {
-		ret = nilfs_gccache_add_node(inode, vdesc->vd_blocknr,
-					     vdesc->vd_vblocknr);
-		if (ret < 0) {
-			if (ret == -EEXIST) {
-				printk(KERN_CRIT "%s: ino = %llu, cno = %llu, "
-				       "blocknr = %llu, vblocknr = %llu\n",
-				       __func__,
-				       (unsigned long long)vdesc->vd_ino,
-				       (unsigned long long)vdesc->vd_cno,
-				       (unsigned long long)vdesc->vd_blocknr,
-				       (unsigned long long)vdesc->vd_vblocknr);
-				BUG();
-			}
-			return ret;
-		}
-	}
+	if (vdesc->vd_flags == 0)
+		ret = nilfs_gccache_submit_read_data(
+			inode, vdesc->vd_offset, vdesc->vd_blocknr,
+			vdesc->vd_vblocknr, &bh);
+	else
+		ret = nilfs_gccache_submit_read_node(
+			inode, vdesc->vd_blocknr, vdesc->vd_vblocknr, &bh);
 
+	if (unlikely(ret < 0)) {
+		if (ret == -ENOENT)
+			printk(KERN_CRIT
+			       "%s: invalid virtual block address (%s): "
+			       "ino=%llu, cno=%llu, offset=%llu, "
+			       "blocknr=%llu, vblocknr=%llu\n",
+			       __func__, vdesc->vd_flags ? "node" : "data",
+			       (unsigned long long)vdesc->vd_ino,
+			       (unsigned long long)vdesc->vd_cno,
+			       (unsigned long long)vdesc->vd_offset,
+			       (unsigned long long)vdesc->vd_blocknr,
+			       (unsigned long long)vdesc->vd_vblocknr);
+		return ret;
+	}
+	bh->b_private = vdesc;
+	list_add_tail(&bh->b_assoc_buffers, buffers);
 	return 0;
 }
 
@@ -404,31 +393,63 @@ nilfs_ioctl_do_move_blocks(struct the_nilfs *nilfs, int index, int flags,
 			   void *buf, size_t size, size_t nmembs)
 {
 	struct inode *inode;
-	struct nilfs_vdesc *vdescs;
+	struct nilfs_vdesc *vdesc;
+	struct buffer_head *bh, *n;
+	LIST_HEAD(buffers);
 	ino_t ino;
 	__u64 cno;
-	int i, j, n, ret;
+	int i, ret;
 
-	vdescs = (struct nilfs_vdesc *)buf;
-
-	for (i = 0; i < nmembs; i += n) {
-		ino = vdescs[i].vd_ino;
-		cno = vdescs[i].vd_cno;
+	for (i = 0, vdesc = buf; i < nmembs; ) {
+		ino = vdesc->vd_ino;
+		cno = vdesc->vd_cno;
 		inode = nilfs_gc_iget(nilfs, ino, cno);
-		if (inode == NULL)
-			return -ENOMEM;
-		for (j = i, n = 0;
-		     (j < nmembs) && (vdescs[j].vd_ino == ino) &&
-			     (vdescs[j].vd_cno == cno);
-		     j++, n++) {
-			ret = nilfs_ioctl_move_inode_block(inode, &vdescs[j]);
-			if (ret < 0)
-				return ret;
+		if (unlikely(inode == NULL)) {
+			ret = -ENOMEM;
+			goto failed;
 		}
-		/* XXX: nilfs_gc_iput() ??? */
+		do {
+			ret = nilfs_ioctl_move_inode_block(inode, vdesc,
+							   &buffers);
+			if (unlikely(ret < 0))
+				goto failed;
+			vdesc++;
+		} while (++i < nmembs &&
+			 vdesc->vd_ino == ino && vdesc->vd_cno == cno);
 	}
 
+	list_for_each_entry_safe(bh, n, &buffers, b_assoc_buffers) {
+		ret = nilfs_gccache_wait_and_mark_dirty(bh);
+		if (unlikely(ret < 0)) {
+			if (ret == -EEXIST) {
+				vdesc = bh->b_private;
+				printk(KERN_CRIT
+				       "%s: conflicting %s buffer: "
+				       "ino=%llu, cno=%llu, offset=%llu, "
+				       "blocknr=%llu, vblocknr=%llu\n",
+				       __func__,
+				       vdesc->vd_flags ? "node" : "data",
+				       (unsigned long long)vdesc->vd_ino,
+				       (unsigned long long)vdesc->vd_cno,
+				       (unsigned long long)vdesc->vd_offset,
+				       (unsigned long long)vdesc->vd_blocknr,
+				       (unsigned long long)vdesc->vd_vblocknr);
+			}
+			goto failed;
+		}
+		list_del_init(&bh->b_assoc_buffers);
+		bh->b_private = NULL;
+		brelse(bh);
+	}
 	return nmembs;
+
+ failed:
+	list_for_each_entry_safe(bh, n, &buffers, b_assoc_buffers) {
+		list_del_init(&bh->b_assoc_buffers);
+		bh->b_private = NULL;
+		brelse(bh);
+	}
+	return ret;
 }
 
 static inline int nilfs_ioctl_move_blocks(struct the_nilfs *nilfs,

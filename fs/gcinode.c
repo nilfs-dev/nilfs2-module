@@ -19,6 +19,7 @@
  *
  * Written by Seiji Kihara <kihara@osrg.net>, Amagai Yoshiji <amagai@osrg.net>,
  *            and Ryusuke Konishi <ryusuke@osrg.net>.
+ * Revised by Ryusuke Konishi <ryusuke@osrg.net>.
  *
  */
 
@@ -38,15 +39,16 @@ static struct address_space_operations def_gcinode_aops = {
 /* XXX need def_gcinode_iops/fops? */
 
 /*
- * nilfs_gccache_add_data() - add data on pbn to cache
+ * nilfs_gccache_submit_read_data() - add data buffer and submit read request
  * @inode - gc inode
- * @offset - dummy offset treated as the key for the page cache
- * @pbn - physical block number for the block
- * @vbn - virtual block number for the block, 0 for non-virtual block
+ * @blkoff - dummy offset treated as the key for the page cache
+ * @pbn - physical block number of the block
+ * @vbn - virtual block number of the block, 0 for non-virtual block
+ * @out_bh - indirect pointer to a buffer_head struct to receive the results
  *
- * Description: nilfs_gccache_add_data() registers the data buffer
- * specified by @pbn to the GC pagecache with the key @offset.
- * The function set @vbn (@pbn if @vbn is zero) to b_blocknr in the buffer.
+ * Description: nilfs_gccache_submit_read_data() registers the data buffer
+ * specified by @pbn to the GC pagecache with the key @blkoff.
+ * This function sets @vbn (@pbn if @vbn is zero) in b_blocknr of the buffer.
  *
  * Return Value: On success, 0 is returned. On Error, one of the following
  * negative error code is returned.
@@ -56,72 +58,74 @@ static struct address_space_operations def_gcinode_aops = {
  * %-ENOMEM - Insufficient amount of memory available.
  *
  * %-ENOENT - The block specified with @pbn does not exist.
- *
- * %-EEXIST - The block specified with @vbn already exist.
  */
-int nilfs_gccache_add_data(struct inode *inode, sector_t offset, sector_t pbn,
-			   __u64 vbn)
+int nilfs_gccache_submit_read_data(struct inode *inode, sector_t blkoff,
+				   sector_t pbn, __u64 vbn,
+				   struct buffer_head **out_bh)
 {
-	struct page *page = NULL;
+	struct page *page;
 	struct buffer_head *bh;
-	int blkbits = inode->i_blkbits, err = -ENOMEM;
-	unsigned long index = offset >> (PAGE_CACHE_SHIFT - blkbits);
+	int blkbits = inode->i_blkbits;
+	unsigned long index = blkoff >> (PAGE_CACHE_SHIFT - blkbits);
+	int err = -ENOMEM;
 
 	page = grab_cache_page(inode->i_mapping, index);
-	if (!page)
+	if (unlikely(!page))
+		return err;
+
+	bh = nilfs_get_page_block(page, blkoff, index, blkbits);
+	if (unlikely(!bh))
 		goto failed;
 
-	bh = nilfs_get_page_block(page, offset, index, blkbits);
-	if (!bh)
-		goto out_unlock;
+	if (buffer_uptodate(bh))
+		goto out;
 
-	if (!buffer_uptodate(bh)) {
-		if (pbn == 0) {
-			struct inode *dat_inode;
+	if (pbn == 0) {
+		struct inode *dat_inode = NILFS_I_NILFS(inode)->ns_dat;
+					  /* use original dat, not gc dat. */
+		err = nilfs_dat_translate(dat_inode, vbn, &pbn);
+		if (unlikely(err)) { /* -EIO, -ENOMEM, -ENOENT */
+			brelse(bh);
+			goto failed;
+		}
+	}
 
-			/* use original dat, not gc dat. */
-			dat_inode = NILFS_I_NILFS(inode)->ns_dat;
-			err = nilfs_dat_translate(dat_inode, vbn, &pbn);
-			if (unlikely(err)) /* -EIO, -ENOMEM, -ENOENT */
-				goto out_free_bh;
-		}
-		bh->b_blocknr = pbn;
-		if (!buffer_mapped(bh)) {
-			bh->b_bdev = NILFS_I_NILFS(inode)->ns_bdev;
-			set_buffer_mapped(bh);
-		}
-		page_debug(3, "reading: pbn=%llu (ino=%lu, vbn=%llu)\n",
-			   (unsigned long long)bh->b_blocknr, inode->i_ino,
-			   (unsigned long long)vbn);
-		lock_buffer(bh);
-		err = bh_submit_read(bh);
-		if (unlikely(err))
-			goto out_free_bh;
+	lock_buffer(bh);
+	if (buffer_uptodate(bh)) {
+		unlock_buffer(bh);
+		goto out;
 	}
-	bh->b_blocknr = vbn ? vbn : pbn;
-	err = -EEXIST;
-	if (!buffer_dirty(bh)) {
-		nilfs_mdt_mark_buffer_dirty(bh);
-		err = 0;
+
+	if (!buffer_mapped(bh)) {
+		bh->b_bdev = NILFS_I_NILFS(inode)->ns_bdev;
+		set_buffer_mapped(bh);
 	}
-out_free_bh:
-	brelse(bh);
-out_unlock:
+	bh->b_blocknr = pbn;
+	bh->b_end_io = end_buffer_read_sync;
+	get_bh(bh);
+	submit_bh(READ, bh);
+	if (vbn)
+		bh->b_blocknr = vbn;
+ out:
+	err = 0;
+	*out_bh = bh;
+
+ failed:
 	unlock_page(page);
 	page_cache_release(page);
-failed:
 	return err;
 }
 
 /*
- * nilfs_gccache_add_node() - add btree node data on pbn to cache
+ * nilfs_gccache_submit_read_node() - add node buffer and submit read request
  * @inode - gc inode
  * @pbn - physical block number for the block
  * @vbn - virtual block number for the block
+ * @out_bh - indirect pointer to a buffer_head struct to receive the results
  *
- * Description: nilfs_gccache_add_node() registers the node buffer
- * specified by @vbn to the GC pagecache.  @pbn may be supplied by the
- * caller to avoid translation of the disk block addresses.
+ * Description: nilfs_gccache_submit_read_node() registers the node buffer
+ * specified by @vbn to the GC pagecache.  @pbn can be supplied by the
+ * caller to avoid translation of the disk block address.
  *
  * Return Value: On success, 0 is returned. On Error, one of the following
  * negative error code is returned.
@@ -129,25 +133,30 @@ failed:
  * %-EIO - I/O error.
  *
  * %-ENOMEM - Insufficient amount of memory available.
- *
- * %-EEXIST - The block specified with @vbn already exist.
  */
-int nilfs_gccache_add_node(struct inode *inode, sector_t pbn, __u64 vbn)
+int nilfs_gccache_submit_read_node(struct inode *inode, sector_t pbn,
+				   __u64 vbn, struct buffer_head **out_bh)
 {
-	struct nilfs_btnode_cache *bc = &NILFS_I(inode)->i_btnode_cache;
-	struct buffer_head *bh;
-	int ret;
-
-	ret = nilfs_btnode_get(bc, vbn ? vbn : pbn, pbn, &bh, 0);
-	if (ret < 0)
-		return ret;	/* -ENOMEM or -EIO */
-	ret = -EEXIST;
-	if (!buffer_dirty(bh)) {
-		nilfs_btnode_mark_dirty(bh);
+	int ret = nilfs_btnode_submit_block(&NILFS_I(inode)->i_btnode_cache,
+					    vbn ? : pbn, pbn, out_bh, 0);
+	if (ret == -EEXIST) /* internal code (cache hit) */
 		ret = 0;
-	}
-	brelse(bh);
 	return ret;
+}
+
+int nilfs_gccache_wait_and_mark_dirty(struct buffer_head *bh)
+{
+	wait_on_buffer(bh);
+	if (!buffer_uptodate(bh))
+		return -EIO;
+	if (buffer_dirty(bh))
+		return -EEXIST;
+
+	if (buffer_nilfs_node(bh))
+		nilfs_btnode_mark_dirty(bh);
+	else
+		nilfs_mdt_mark_buffer_dirty(bh);
+	return 0;
 }
 
 /*

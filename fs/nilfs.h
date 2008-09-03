@@ -240,8 +240,11 @@ extern int nilfs_attach_checkpoint(struct nilfs_sb_info *, __u64);
 extern void nilfs_detach_checkpoint(struct nilfs_sb_info *);
 
 /* gcinode.c */
-int nilfs_gccache_add_data(struct inode *, sector_t, sector_t, __u64);
-int nilfs_gccache_add_node(struct inode *, sector_t, __u64);
+int nilfs_gccache_submit_read_data(struct inode *, sector_t, sector_t, __u64,
+				   struct buffer_head **);
+int nilfs_gccache_submit_read_node(struct inode *, sector_t, __u64,
+				   struct buffer_head **);
+int nilfs_gccache_wait_and_mark_dirty(struct buffer_head *);
 int nilfs_init_gccache(struct the_nilfs *);
 void nilfs_destroy_gccache(struct the_nilfs *);
 void nilfs_clear_gcinode(struct inode *);

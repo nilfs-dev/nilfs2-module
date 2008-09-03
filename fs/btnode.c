@@ -406,6 +406,7 @@ int nilfs_btnode_invalidate_page(struct page *page, int force)
 	   on the invalidated page */
 	head = bh = page_buffers(page);
 	do {
+		wait_on_buffer(bh);
 		if (unlikely(atomic_read(&bh->b_count)))
 			PAGE_DEBUG(page, "referred buffer");
 		bh->b_state = (1 << BH_NILFS_Allocated);
