@@ -287,6 +287,7 @@ int nilfs_btnode_submit_block(struct nilfs_btnode_cache *btnc, __u64 blocknr,
 	bh->b_end_io = end_buffer_read_sync;
 	get_bh(bh);
 	submit_bh(READ, bh);
+	bh->b_blocknr = blocknr; /* set back to the given block address */
 	err = 0;
 found:
 	*pbh = bh;
@@ -315,7 +316,6 @@ int nilfs_btnode_get(struct nilfs_btnode_cache *btnc, __u64 blocknr,
 		brelse(bh);
 		return -EIO;
 	}
-	bh->b_blocknr = blocknr; /* set back to the given block address */
 	return 0;
 }
 
