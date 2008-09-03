@@ -67,14 +67,6 @@
 	(LINUX_VERSION_CODE < KERNEL_VERSION(2, 6, 25))
 #endif
 /*
- * bh_submit_read() that submits locked buffer for reading
- * was introduced in linux-2.6.25.
- */
-#ifndef HAVE_BH_SUBMIT_READ
-# define HAVE_BH_SUBMIT_READ \
-	(LINUX_VERSION_CODE > KERNEL_VERSION(2, 6, 24))
-#endif
-/*
  * Two methods, fh_to_entry and fh_to_parent were added to export_operations
  * in linux-2.6.24.
  */
@@ -562,12 +554,6 @@ extern void __nilfs_pagevec_release(struct pagevec *);
 # define pagevec_lookup_tag(v, m, i, t, n) \
 	__nilfs_pagevec_lookup_tag(v, m, i, t, n)
 # define pagevec_release(v)  __nilfs_pagevec_release(v)
-#endif
-
-#if !HAVE_BH_SUBMIT_READ
-extern int __nilfs_bh_submit_read(struct buffer_head *);
-
-# define bh_submit_read(bh)  __nilfs_bh_submit_read(bh)
 #endif
 
 #if !HAVE_INVALIDATE_INODE_PAGES2_RANGE

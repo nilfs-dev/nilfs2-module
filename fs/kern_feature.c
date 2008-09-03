@@ -92,23 +92,3 @@ void __nilfs_pagevec_release(struct pagevec *pvec)
 	pagevec_reinit(pvec);
 }
 #endif
-
-/*
- * The following function comes from fs/buffer.c
- */
-#if !HAVE_BH_SUBMIT_READ
-int __nilfs_bh_submit_read(struct buffer_head *bh)
-{
-	if (buffer_uptodate(bh)) {
-		unlock_buffer(bh);
-		return 0;
-	}
-	get_bh(bh);
-	bh->b_end_io = end_buffer_read_sync;
-	submit_bh(READ, bh);
-	wait_on_buffer(bh);
-	if (buffer_uptodate(bh))
-		return 0;
-	return -EIO;
-}
-#endif
