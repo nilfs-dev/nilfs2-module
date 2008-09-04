@@ -132,7 +132,6 @@ static void nilfs_cpfile_block_init(struct inode *cpfile,
 	struct nilfs_checkpoint *cp;
 	int i;
 
-	memset(kaddr + bh_offset(bh), 0, 1UL << cpfile->i_blkbits);
 	for (i = 0, cp = (struct nilfs_checkpoint *)(kaddr + bh_offset(bh));
 	     i < nilfs_cpfile_checkpoints_per_block(cpfile);
 	     i++, cp++)
