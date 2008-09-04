@@ -35,6 +35,7 @@
  * @mi_bgl: per-blockgroup locking
  * @mi_orig_inode: original inode (only valid for shadow)
  * @mi_entry_size: size of an entry
+ * @mi_first_entry_offset: offset of the first entry
  * @mi_entries_per_block: number of entries in a block
  * @mi_blocks_per_group: number of blocks in a group
  * @mi_groups_count: number of groups
@@ -45,6 +46,7 @@ struct nilfs_mdt_info {
 	struct blockgroup_lock *mi_bgl;
 	struct inode	       *mi_orig_inode;
 	unsigned		mi_entry_size;
+	unsigned		mi_first_entry_offset;
 	unsigned long		mi_entries_per_block;
 	unsigned long		mi_blocks_per_group;
 	unsigned long		mi_groups_count;
@@ -96,7 +98,7 @@ struct inode *nilfs_mdt_new_common(struct the_nilfs *, struct super_block *,
 				   ino_t, gfp_t);
 void nilfs_mdt_destroy(struct inode *);
 void nilfs_mdt_clear(struct inode *);
-void nilfs_mdt_set_entry_size(struct inode *, unsigned);
+void nilfs_mdt_set_entry_size(struct inode *, unsigned, unsigned);
 int nilfs_mdt_init_blockgroup(struct inode *, unsigned, unsigned long);
 
 #if NEED_OLD_MARK_BUFFER_DIRTY

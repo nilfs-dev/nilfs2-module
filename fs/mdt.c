@@ -660,12 +660,14 @@ struct inode *nilfs_mdt_new(struct the_nilfs *nilfs, struct super_block *sb,
 	return inode;
 }
 
-void nilfs_mdt_set_entry_size(struct inode *inode, unsigned entry_size)
+void nilfs_mdt_set_entry_size(struct inode *inode, unsigned entry_size,
+			      unsigned header_size)
 {
 	struct nilfs_mdt_info *mi = NILFS_MDT(inode);
 
 	mi->mi_entry_size = entry_size;
 	mi->mi_entries_per_block = (1 << inode->i_blkbits) / entry_size;
+	mi->mi_first_entry_offset = (header_size + entry_size - 1) / entry_size;
 }
 
 int nilfs_mdt_init_blockgroup(struct inode *inode, unsigned entry_size,
@@ -682,7 +684,7 @@ int nilfs_mdt_init_blockgroup(struct inode *inode, unsigned entry_size,
 	}
 	bgl_lock_init(mi->mi_bgl);
 
-	nilfs_mdt_set_entry_size(inode, entry_size);
+	nilfs_mdt_set_entry_size(inode, entry_size, 0);
 	mi->mi_blocks_per_group =
 		entries_per_group / mi->mi_entries_per_block + 1;
 	mi->mi_groups_count = groups_count;

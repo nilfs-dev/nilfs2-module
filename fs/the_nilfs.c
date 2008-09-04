@@ -174,8 +174,10 @@ static int nilfs_load_super_root(struct the_nilfs *nilfs,
 		goto failed_sufile;
 
 	nilfs_mdt_set_shadow(nilfs->ns_dat, nilfs->ns_gc_dat);
-	nilfs_mdt_set_entry_size(nilfs->ns_cpfile, checkpoint_size);
-	nilfs_mdt_set_entry_size(nilfs->ns_sufile, segment_usage_size);
+	nilfs_mdt_set_entry_size(nilfs->ns_cpfile, checkpoint_size,
+				 sizeof(struct nilfs_cpfile_header));
+	nilfs_mdt_set_entry_size(nilfs->ns_sufile, segment_usage_size,
+				 sizeof(struct nilfs_sufile_header));
 
 	err = nilfs_mdt_read_inode_direct(
 		nilfs->ns_dat, bh_sr, NILFS_SR_DAT_OFFSET(inode_size));
