@@ -138,35 +138,10 @@ static void nilfs_cpfile_block_init(struct inode *cpfile,
 		nilfs_checkpoint_set_invalid(cp);
 }
 
-static int nilfs_cpfile_get_block(struct inode *cpfile,
-				  unsigned long blkoff,
-				  int create,
-				  struct buffer_head **bhp)
-{
-	struct buffer_head *bh;
-	int ret;
-
-	ret = nilfs_mdt_read_block(cpfile, blkoff, &bh);
-	if (ret < 0) {
-		if ((ret != -ENOENT) || !create)
-			return ret;
-		/* first block must be allocated by mkfs.nilfs */
-		BUG_ON(blkoff == 0);
-		ret = nilfs_mdt_create_block(cpfile, blkoff, &bh,
-					     nilfs_cpfile_block_init);
-		if (ret < 0)
-			return ret;
-	}
-
-	BUG_ON(bhp == NULL);
-	*bhp = bh;
-	return ret;
-}
-
 static inline int nilfs_cpfile_get_header_block(struct inode *cpfile,
 						struct buffer_head **bhp)
 {
-	return nilfs_cpfile_get_block(cpfile, 0, 0, bhp);
+	return nilfs_mdt_get_block(cpfile, 0, 0, NULL, bhp);
 }
 
 static inline int nilfs_cpfile_get_checkpoint_block(struct inode *cpfile,
@@ -174,10 +149,9 @@ static inline int nilfs_cpfile_get_checkpoint_block(struct inode *cpfile,
 						    int create,
 						    struct buffer_head **bhp)
 {
-	return nilfs_cpfile_get_block(cpfile,
-				      nilfs_cpfile_get_blkoff(cpfile, cno),
-				      create,
-				      bhp);
+	return nilfs_mdt_get_block(cpfile,
+				   nilfs_cpfile_get_blkoff(cpfile, cno),
+				   create, nilfs_cpfile_block_init, bhp);
 }
 
 static inline int nilfs_cpfile_delete_checkpoint_block(struct inode *cpfile,

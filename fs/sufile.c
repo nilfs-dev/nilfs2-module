@@ -81,42 +81,19 @@ nilfs_sufile_block_get_segment_usage(const struct inode *sufile, __u64 segnum,
 		nilfs_sufile_get_offset(sufile, segnum);
 }
 
-static int nilfs_sufile_get_block(struct inode *sufile, unsigned long blkoff,
-				  int create, struct buffer_head **bhp)
-{
-	struct buffer_head *bh;
-	int ret;
-
-	ret = nilfs_mdt_read_block(sufile, blkoff, &bh);
-	if (ret < 0) {
-		if ((ret != -ENOENT) || !create)
-			return ret;
-		/* first block must be allocated by mkfs.nilfs */
-		BUG_ON(blkoff == 0);
-		ret = nilfs_mdt_create_block(sufile, blkoff, &bh, NULL);
-		if (ret < 0)
-			return ret;
-	}
-
-	BUG_ON(bhp == NULL);
-	*bhp = bh;
-	return ret;
-}
-
 static inline int nilfs_sufile_get_header_block(struct inode *sufile,
 						struct buffer_head **bhp)
 {
-	return nilfs_sufile_get_block(sufile, 0, 0, bhp);
+	return nilfs_mdt_get_block(sufile, 0, 0, NULL, bhp);
 }
 
 static inline int
 nilfs_sufile_get_segment_usage_block(struct inode *sufile, __u64 segnum,
 				     int create, struct buffer_head **bhp)
 {
-	return nilfs_sufile_get_block(sufile,
-				      nilfs_sufile_get_blkoff(sufile, segnum),
-				      create,
-				      bhp);
+	return nilfs_mdt_get_block(sufile,
+				   nilfs_sufile_get_blkoff(sufile, segnum),
+				   create, NULL, bhp);
 }
 
 /**
