@@ -660,32 +660,33 @@ struct inode *nilfs_mdt_new(struct the_nilfs *nilfs, struct super_block *sb,
 	return inode;
 }
 
+void nilfs_mdt_set_entry_size(struct inode *inode, unsigned entry_size)
+{
+	struct nilfs_mdt_info *mi = NILFS_MDT(inode);
 
-struct inode *
-nilfs_mdt_new_with_blockgroup(struct the_nilfs *nilfs, struct super_block *sb,
-			      ino_t ino, gfp_t gfp_mask, unsigned entry_size,
+	mi->mi_entry_size = entry_size;
+	mi->mi_entries_per_block = (1 << inode->i_blkbits) / entry_size;
+}
+
+int nilfs_mdt_init_blockgroup(struct inode *inode, unsigned entry_size,
 			      unsigned long groups_count)
 {
-	struct inode *inode = nilfs_mdt_new(nilfs, sb, ino, gfp_mask);
+	struct nilfs_mdt_info *mi = NILFS_MDT(inode);
+	unsigned long blocksize = 1 << inode->i_blkbits;
+	unsigned long entries_per_group = blocksize * 8 /* CHAR_BIT */;
 
-	if (inode) {
-		struct nilfs_mdt_info *mi = NILFS_MDT(inode);
-		unsigned long blocksize = 1 << inode->i_blkbits;
-		unsigned long entries_per_group = blocksize * 8 /* CHAR_BIT */;
-
-		mi->mi_bgl = kmalloc(sizeof(*mi->mi_bgl), GFP_NOFS);
-		if (!mi->mi_bgl) {
-			nilfs_mdt_destroy(inode);
-			return NULL;
-		}
-		bgl_lock_init(mi->mi_bgl);
-		mi->mi_entry_size = entry_size;
-		mi->mi_entries_per_block = blocksize / entry_size;
-		mi->mi_blocks_per_group =
-			entries_per_group / mi->mi_entries_per_block + 1;
-		mi->mi_groups_count = groups_count;
+	mi->mi_bgl = kmalloc(sizeof(*mi->mi_bgl), GFP_NOFS);
+	if (!mi->mi_bgl) {
+		nilfs_mdt_destroy(inode);
+		return -ENOMEM;
 	}
-	return inode;
+	bgl_lock_init(mi->mi_bgl);
+
+	nilfs_mdt_set_entry_size(inode, entry_size);
+	mi->mi_blocks_per_group =
+		entries_per_group / mi->mi_entries_per_block + 1;
+	mi->mi_groups_count = groups_count;
+	return 0;
 }
 
 void nilfs_mdt_clear(struct inode *inode)

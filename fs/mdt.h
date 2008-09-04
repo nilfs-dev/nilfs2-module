@@ -96,9 +96,8 @@ struct inode *nilfs_mdt_new_common(struct the_nilfs *, struct super_block *,
 				   ino_t, gfp_t);
 void nilfs_mdt_destroy(struct inode *);
 void nilfs_mdt_clear(struct inode *);
-struct inode *nilfs_mdt_new_with_blockgroup(struct the_nilfs *,
-					    struct super_block *, ino_t, gfp_t,
-					    unsigned, unsigned long);
+void nilfs_mdt_set_entry_size(struct inode *, unsigned);
+int nilfs_mdt_init_blockgroup(struct inode *, unsigned, unsigned long);
 
 #if NEED_OLD_MARK_BUFFER_DIRTY
 void nilfs_mdt_mark_buffer_dirty(struct buffer_head *bh);
@@ -121,12 +120,6 @@ static inline void
 nilfs_mdt_set_shadow(struct inode *orig, struct inode *shadow)
 {
 	NILFS_MDT(shadow)->mi_orig_inode = orig;
-}
-
-static inline void
-nilfs_mdt_set_entry_size(struct inode *inode, unsigned entry_size)
-{
-	NILFS_MDT(inode)->mi_entry_size = entry_size;
 }
 
 static inline __u64 nilfs_mdt_cno(struct inode *inode)

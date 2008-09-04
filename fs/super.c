@@ -415,13 +415,16 @@ int nilfs_attach_checkpoint(struct nilfs_sb_info *sbi, __u64 cno)
 	list_add(&sbi->s_list, &nilfs->ns_supers);
 	up_write(&nilfs->ns_sem);
 
-	BUG_ON(sbi->s_ifile);
-	sbi->s_ifile = nilfs_mdt_new_with_blockgroup(
-		nilfs, sbi->s_super, NILFS_IFILE_INO, NILFS_IFILE_GFP,
-		nilfs->ns_inode_size,
-		NILFS_IFILE_GROUPS_COUNT(nilfs->ns_blocksize_bits));
+	sbi->s_ifile = nilfs_mdt_new(
+		nilfs, sbi->s_super, NILFS_IFILE_INO, NILFS_IFILE_GFP);
 	if (!sbi->s_ifile)
 		return -ENOMEM;
+
+	err = nilfs_mdt_init_blockgroup(
+		sbi->s_ifile, nilfs->ns_inode_size,
+		NILFS_IFILE_GROUPS_COUNT(nilfs->ns_blocksize_bits));
+	if (unlikely(err))
+		goto failed;
 
 	err = nilfs_cpfile_get_checkpoint(nilfs->ns_cpfile, cno, 0, &raw_cp,
 					  &bh_cp);

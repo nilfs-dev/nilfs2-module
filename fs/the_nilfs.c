@@ -123,6 +123,7 @@ static int nilfs_load_super_root(struct the_nilfs *nilfs,
 	struct buffer_head *bh_sr;
 	struct nilfs_super_root *raw_sr;
 	unsigned dat_entry_size, segment_usage_size, checkpoint_size;
+	unsigned long dat_groups_count;
 	unsigned inode_size;
 	int err;
 
@@ -138,20 +139,19 @@ static int nilfs_load_super_root(struct the_nilfs *nilfs,
 	segment_usage_size = le16_to_cpu(nilfs->ns_sbp->s_segment_usage_size);
 	up_read(&nilfs->ns_sem);
 
-	err = -ENOMEM;
-	nilfs->ns_dat = nilfs_mdt_new_with_blockgroup(
-		nilfs, NULL, NILFS_DAT_INO, NILFS_DAT_GFP, dat_entry_size,
-		NILFS_DAT_GROUPS_COUNT(nilfs->ns_blocksize_bits));
-	if (unlikely(!nilfs->ns_dat))
-		goto out;
+	dat_groups_count = NILFS_DAT_GROUPS_COUNT(nilfs->ns_blocksize_bits);
+	inode_size = nilfs->ns_inode_size;
 
-	nilfs->ns_gc_dat = nilfs_mdt_new_with_blockgroup(
-		nilfs, NULL, NILFS_DAT_INO, NILFS_DAT_GFP, dat_entry_size,
-		NILFS_DAT_GROUPS_COUNT(nilfs->ns_blocksize_bits));
+	err = -ENOMEM;
+	nilfs->ns_dat = nilfs_mdt_new(
+		nilfs, NULL, NILFS_DAT_INO, NILFS_DAT_GFP);
+	if (unlikely(!nilfs->ns_dat))
+		goto failed;
+
+	nilfs->ns_gc_dat = nilfs_mdt_new(
+		nilfs, NULL, NILFS_DAT_INO, NILFS_DAT_GFP);
 	if (unlikely(!nilfs->ns_gc_dat))
 		goto failed_dat;
-
-	nilfs_mdt_set_shadow(nilfs->ns_dat, nilfs->ns_gc_dat);
 
 	nilfs->ns_cpfile = nilfs_mdt_new(
 		nilfs, NULL, NILFS_CPFILE_INO, NILFS_CPFILE_GFP);
@@ -161,40 +161,49 @@ static int nilfs_load_super_root(struct the_nilfs *nilfs,
 	nilfs->ns_sufile = nilfs_mdt_new(
 		nilfs, NULL, NILFS_SUFILE_INO, NILFS_SUFILE_GFP);
 	if (unlikely(!nilfs->ns_sufile))
-		goto failed_checkpoint;
+		goto failed_cpfile;
 
+	err = nilfs_mdt_init_blockgroup(
+		nilfs->ns_dat, dat_entry_size, dat_groups_count);
+	if (unlikely(err))
+		goto failed_sufile;
+
+	err = nilfs_mdt_init_blockgroup(
+		nilfs->ns_gc_dat, dat_entry_size, dat_groups_count);
+	if (unlikely(err))
+		goto failed_sufile;
+
+	nilfs_mdt_set_shadow(nilfs->ns_dat, nilfs->ns_gc_dat);
 	nilfs_mdt_set_entry_size(nilfs->ns_cpfile, checkpoint_size);
 	nilfs_mdt_set_entry_size(nilfs->ns_sufile, segment_usage_size);
-
-	inode_size = nilfs->ns_inode_size;
 
 	err = nilfs_mdt_read_inode_direct(
 		nilfs->ns_dat, bh_sr, NILFS_SR_DAT_OFFSET(inode_size));
 	if (unlikely(err))
-		goto failed_su;
+		goto failed_sufile;
 
 	err = nilfs_mdt_read_inode_direct(
 		nilfs->ns_cpfile, bh_sr, NILFS_SR_CPFILE_OFFSET(inode_size));
 	if (unlikely(err))
-		goto failed_su;
+		goto failed_sufile;
 
 	err = nilfs_mdt_read_inode_direct(
 		nilfs->ns_sufile, bh_sr, NILFS_SR_SUFILE_OFFSET(inode_size));
 	if (unlikely(err))
-		goto failed_su;
+		goto failed_sufile;
 
 	raw_sr = (struct nilfs_super_root *)bh_sr->b_data;
 	nilfs->ns_nongc_ctime = le64_to_cpu(raw_sr->sr_nongc_ctime);
 
- out:
+ failed:
 	brelse(bh_sr);
 	nilfs_debug(2, "done (err=%d)\n", err);
 	return err;
 
- failed_su:
+ failed_sufile:
 	nilfs_mdt_destroy(nilfs->ns_sufile);
 
- failed_checkpoint:
+ failed_cpfile:
 	nilfs_mdt_destroy(nilfs->ns_cpfile);
 
  failed_gc_dat:
@@ -202,7 +211,7 @@ static int nilfs_load_super_root(struct the_nilfs *nilfs,
 
  failed_dat:
 	nilfs_mdt_destroy(nilfs->ns_dat);
-	goto out;
+	goto failed;
 }
 
 static void nilfs_init_recovery_info(struct nilfs_recovery_info *ri)
