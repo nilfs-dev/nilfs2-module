@@ -3018,7 +3018,7 @@ nilfs_remove_written_gcinodes(struct the_nilfs *nilfs, struct list_head *head)
 	}
 }
 
-int nilfs_clean_segments(struct super_block *sb, unsigned long arg)
+int nilfs_clean_segments(struct super_block *sb, void __user *argp)
 {
 	struct nilfs_sb_info *sbi = NILFS_SB(sb);
 	struct nilfs_sc_info *sci = NILFS_SC(sbi);
@@ -3035,7 +3035,7 @@ int nilfs_clean_segments(struct super_block *sb, unsigned long arg)
 	err = nilfs_init_gcdat_inode(nilfs);
 	if (unlikely(err))
 		goto out_unlock;
-	err = nilfs_ioctl_prepare_clean_segments(nilfs, arg);
+	err = nilfs_ioctl_prepare_clean_segments(nilfs, argp);
 	if (unlikely(err))
 		goto out_unlock;
 
