@@ -109,7 +109,7 @@ static void nilfs_ifile_commit_free_ino(struct inode *ifile,
 
 	desc = nilfs_persistent_get_group_desc(ifile, group, req->pr_desc_bh);
 	spin_lock(nilfs_mdt_bgl_lock(ifile, group));
-	desc->pg_nfrees = cpu_to_le32(le32_to_cpu(desc->pg_nfrees) + 1);
+	le32_add_cpu(&desc->pg_nfrees, 1);
 	spin_unlock(nilfs_mdt_bgl_lock(ifile, group));
 
 	nilfs_mdt_mark_buffer_dirty(req->pr_entry_bh);

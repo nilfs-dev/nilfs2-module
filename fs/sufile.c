@@ -167,10 +167,8 @@ int nilfs_sufile_alloc(struct inode *sufile, __u64 *segnump)
 						    KM_USER0);
 				header = nilfs_sufile_block_get_header(
 					sufile, header_bh, kaddr);
-				header->sh_ncleansegs = cpu_to_le64(
-					le64_to_cpu(header->sh_ncleansegs) - 1);
-				header->sh_ndirtysegs =	cpu_to_le64(
-					le64_to_cpu(header->sh_ndirtysegs) + 1);
+				le64_add_cpu(&header->sh_ncleansegs, -1);
+				le64_add_cpu(&header->sh_ndirtysegs, 1);
 				header->sh_last_alloc = cpu_to_le64(segnum);
 				kunmap_atomic(kaddr, KM_USER0);
 
@@ -220,7 +218,6 @@ int nilfs_sufile_cancel_free(struct inode *sufile, __u64 segnum)
 	struct nilfs_sufile_header *header;
 	struct nilfs_segment_usage *su;
 	void *kaddr;
-	unsigned long ncleansegs, ndirtysegs;
 	int ret;
 
 	down_write(&NILFS_MDT(sufile)->mi_sem);
@@ -248,10 +245,8 @@ int nilfs_sufile_cancel_free(struct inode *sufile, __u64 segnum)
 
 	kaddr = kmap_atomic(header_bh->b_page, KM_USER0);
 	header = nilfs_sufile_block_get_header(sufile, header_bh, kaddr);
-	ncleansegs = le64_to_cpu(header->sh_ncleansegs) - 1;
-	ndirtysegs = le64_to_cpu(header->sh_ndirtysegs) + 1;
-	header->sh_ncleansegs =	cpu_to_le64(ncleansegs);
-	header->sh_ndirtysegs =	cpu_to_le64(ndirtysegs);
+	le64_add_cpu(&header->sh_ncleansegs, -1);
+	le64_add_cpu(&header->sh_ndirtysegs, 1);
 	kunmap_atomic(kaddr, KM_USER0);
 
 	nilfs_mdt_mark_buffer_dirty(header_bh);
@@ -294,7 +289,6 @@ int nilfs_sufile_freev(struct inode *sufile, __u64 *segnum, size_t nsegs)
 	struct nilfs_sufile_header *header;
 	struct nilfs_segment_usage *su;
 	void *kaddr;
-	unsigned long ncleansegs, ndirtysegs;
 	int ret, i;
 
 	down_write(&NILFS_MDT(sufile)->mi_sem);
@@ -340,10 +334,8 @@ int nilfs_sufile_freev(struct inode *sufile, __u64 *segnum, size_t nsegs)
 	}
 	kaddr = kmap_atomic(header_bh->b_page, KM_USER0);
 	header = nilfs_sufile_block_get_header(sufile, header_bh, kaddr);
-	ncleansegs = le64_to_cpu(header->sh_ncleansegs) + nsegs;
-	ndirtysegs = le64_to_cpu(header->sh_ndirtysegs) - nsegs;
-	header->sh_ncleansegs = cpu_to_le64(ncleansegs);
-	header->sh_ndirtysegs = cpu_to_le64(ndirtysegs);
+	le64_add_cpu(&header->sh_ncleansegs, nsegs);
+	le64_add_cpu(&header->sh_ndirtysegs, -nsegs);
 	kunmap_atomic(kaddr, KM_USER0);
 	nilfs_mdt_mark_buffer_dirty(header_bh);
 	nilfs_mdt_mark_dirty(sufile);
@@ -596,8 +588,7 @@ int nilfs_sufile_set_error(struct inode *sufile, __u64 segnum)
 
 	kaddr = kmap_atomic(header_bh->b_page, KM_USER0);
 	header = nilfs_sufile_block_get_header(sufile, header_bh, kaddr);
-	header->sh_ndirtysegs =
-		cpu_to_le64(le64_to_cpu(header->sh_ndirtysegs) - 1);
+	le64_add_cpu(&header->sh_ndirtysegs, -1);
 	kunmap_atomic(kaddr, KM_USER0);
 	nilfs_mdt_mark_buffer_dirty(header_bh);
 	nilfs_mdt_mark_buffer_dirty(su_bh);

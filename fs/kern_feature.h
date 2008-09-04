@@ -50,6 +50,13 @@
 	(LINUX_VERSION_CODE > KERNEL_VERSION(2, 6, 26))
 #endif
 /*
+ * linux-2.6.25 and the later kernels have le32_add_cpu() and le64_add_cpu().
+ */
+#ifndef HAVE_LE32_64_ADD_CPU
+# define HAVE_LE32_64_ADD_CPU \
+	(LINUX_VERSION_CODE > KERNEL_VERSION(2, 6, 24))
+#endif
+/*
  * The definition of init_once() callback function used by kmem_cache_create()
  * changed again in linux-2.6.27; kmem_cache struct dropped from the arguments.
  */
@@ -516,6 +523,18 @@ static inline void inode_dec_link_count(struct inode *inode)
 {
 	drop_nlink(inode);
 	mark_inode_dirty(inode);
+}
+#endif
+
+#if !HAVE_LE32_64_ADD_CPU
+static inline void le32_add_cpu(__le32 *var, u32 val)
+{
+	*var = cpu_to_le32(le32_to_cpu(*var) + val);
+}
+
+static inline void le64_add_cpu(__le64 *var, u64 val)
+{
+	*var = cpu_to_le64(le64_to_cpu(*var) + val);
 }
 #endif
 

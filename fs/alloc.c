@@ -181,8 +181,7 @@ int nilfs_persistent_prepare_alloc_entry(struct inode *inode,
 			if (pos >= 0) {
 				/* found a free inode number */
 				spin_lock(nilfs_mdt_bgl_lock(inode, group));
-				desc->pg_nfrees = cpu_to_le32(
-					le32_to_cpu(desc->pg_nfrees) - 1);
+				le32_add_cpu(&desc->pg_nfrees, -1);
 				spin_unlock(nilfs_mdt_bgl_lock(inode, group));
 
 				*group_p = group;
@@ -234,7 +233,7 @@ void nilfs_persistent_abort_alloc_entry(struct inode *inode,
 		       req->pr_ino);
 
 	spin_lock(nilfs_mdt_bgl_lock(inode, group));
-	desc->pg_nfrees = cpu_to_le32(le32_to_cpu(desc->pg_nfrees) + 1);
+	le32_add_cpu(&desc->pg_nfrees, 1);
 	spin_unlock(nilfs_mdt_bgl_lock(inode, group));
 
 	nilfs_persistent_put_group_bitmap_buffer(inode, req->pr_bitmap_bh);

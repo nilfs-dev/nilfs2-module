@@ -152,36 +152,26 @@ nilfs_dat_group_desc_set_nfrees(const struct inode *dat,
 	desc->dg_nfrees = cpu_to_le32(nfrees);
 }
 
-static inline unsigned long
+static inline void
 nilfs_dat_group_desc_add_entries(struct inode *dat,
 				 unsigned long group,
 				 struct nilfs_dat_group_desc *desc,
 				 unsigned long n)
 {
-	unsigned long nfrees;
-
 	spin_lock(nilfs_mdt_bgl_lock(dat, group));
-	nfrees = le32_to_cpu(desc->dg_nfrees) + n;
-	desc->dg_nfrees = cpu_to_le32(nfrees);
+	le32_add_cpu(&desc->dg_nfrees, n);
 	spin_unlock(nilfs_mdt_bgl_lock(dat, group));
-
-	return nfrees;
 }
 
-static inline unsigned long
+static inline void
 nilfs_dat_group_desc_sub_entries(struct inode *dat,
 				 unsigned long group,
 				 struct nilfs_dat_group_desc *desc,
 				 unsigned long n)
 {
-	unsigned long nfrees;
-
 	spin_lock(nilfs_mdt_bgl_lock(dat, group));
-	nfrees = le32_to_cpu(desc->dg_nfrees) - n;
-	desc->dg_nfrees = cpu_to_le32(nfrees);
+	le32_add_cpu(&desc->dg_nfrees, -n);
 	spin_unlock(nilfs_mdt_bgl_lock(dat, group));
-
-	return nfrees;
 }
 
 static inline __u64

@@ -161,56 +161,6 @@ static inline int nilfs_cpfile_delete_checkpoint_block(struct inode *cpfile,
 				      nilfs_cpfile_get_blkoff(cpfile, cno));
 }
 
-static inline unsigned long
-nilfs_cpfile_header_add_checkpoints(const struct inode *cpfile,
-				    struct nilfs_cpfile_header *header,
-				    unsigned long n)
-{
-	unsigned long ns;
-
-	ns = le64_to_cpu(header->ch_ncheckpoints) + n;
-	header->ch_ncheckpoints = cpu_to_le64(ns);
-	return ns;
-}
-
-static inline unsigned long
-nilfs_cpfile_header_sub_checkpoints(const struct inode *cpfile,
-				    struct nilfs_cpfile_header *header,
-				    unsigned long n)
-{
-	unsigned long ns;
-
-	BUG_ON(le64_to_cpu(header->ch_ncheckpoints) < n);
-	ns = le64_to_cpu(header->ch_ncheckpoints) - n;
-	header->ch_ncheckpoints = cpu_to_le64(ns);
-	return ns;
-}
-
-static inline unsigned long
-nilfs_cpfile_header_add_snapshots(const struct inode *cpfile,
-				  struct nilfs_cpfile_header *header,
-				  unsigned long n)
-{
-	unsigned long ns;
-
-	ns = le64_to_cpu(header->ch_nsnapshots) + n;
-	header->ch_nsnapshots = cpu_to_le64(ns);
-	return ns;
-}
-
-static inline unsigned long
-nilfs_cpfile_header_sub_snapshots(const struct inode *cpfile,
-				  struct nilfs_cpfile_header *header,
-				  unsigned long n)
-{
-	unsigned long ns;
-
-	BUG_ON(le64_to_cpu(header->ch_nsnapshots) < n);
-	ns = le64_to_cpu(header->ch_nsnapshots) - n;
-	header->ch_nsnapshots = cpu_to_le64(ns);
-	return ns;
-}
-
 /**
  * nilfs_cpfile_get_checkpoint - get a checkpoint
  * @cpfile: inode of checkpoint file
@@ -277,7 +227,7 @@ int nilfs_cpfile_get_checkpoint(struct inode *cpfile,
 		kaddr = kmap_atomic(header_bh->b_page, KM_USER0);
 		header = nilfs_cpfile_block_get_header(cpfile, header_bh,
 						       kaddr);
-		nilfs_cpfile_header_add_checkpoints(cpfile, header, 1);
+		le64_add_cpu(&header->ch_ncheckpoints, 1);
 		kunmap_atomic(kaddr, KM_USER0);
 		nilfs_mdt_mark_buffer_dirty(header_bh);
 
@@ -418,7 +368,7 @@ int nilfs_cpfile_delete_checkpoints(struct inode *cpfile,
 		kaddr = kmap_atomic(header_bh->b_page, KM_USER0);
 		header = nilfs_cpfile_block_get_header(cpfile, header_bh,
 						       kaddr);
-		nilfs_cpfile_header_sub_checkpoints(cpfile, header, tnicps);
+		le64_add_cpu(&header->ch_ncheckpoints, -tnicps);
 		nilfs_mdt_mark_buffer_dirty(header_bh);
 		nilfs_mdt_mark_dirty(cpfile);
 		kunmap_atomic(kaddr, KM_USER0);
@@ -771,7 +721,7 @@ static int nilfs_cpfile_set_snapshot(struct inode *cpfile, __u64 cno)
 
 	kaddr = kmap_atomic(header_bh->b_page, KM_USER0);
 	header = nilfs_cpfile_block_get_header(cpfile, header_bh, kaddr);
-	nilfs_cpfile_header_add_snapshots(cpfile, header, 1);
+	le64_add_cpu(&header->ch_nsnapshots, 1);
 	kunmap_atomic(kaddr, KM_USER0);
 
 	nilfs_mdt_mark_buffer_dirty(prev_bh);
@@ -872,7 +822,7 @@ static int nilfs_cpfile_clear_snapshot(struct inode *cpfile, __u64 cno)
 
 	kaddr = kmap_atomic(header_bh->b_page, KM_USER0);
 	header = nilfs_cpfile_block_get_header(cpfile, header_bh, kaddr);
-	nilfs_cpfile_header_sub_snapshots(cpfile, header, 1);
+	le64_add_cpu(&header->ch_nsnapshots, -1);
 	kunmap_atomic(kaddr, KM_USER0);
 
 	nilfs_mdt_mark_buffer_dirty(next_bh);
