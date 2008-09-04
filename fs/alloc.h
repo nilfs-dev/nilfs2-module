@@ -29,8 +29,6 @@
 #include <linux/bitops.h>
 
 
-#define NILFS_PERSISTENT_CHAR_BIT	8
-
 #define nilfs_persistent_set_bit_atomic		ext2_set_bit_atomic
 #define nilfs_persistent_clear_bit_atomic	ext2_clear_bit_atomic
 #define nilfs_persistent_test_bit		ext2_test_bit
@@ -38,7 +36,7 @@
 
 static inline int nilfs_persistent_entries_per_group(struct inode *inode)
 {
-	return (1UL << inode->i_blkbits) * NILFS_PERSISTENT_CHAR_BIT;
+	return (1UL << inode->i_blkbits) * 8 /* CHAR_BIT */;
 }
 
 static inline int nilfs_persistent_group_descs_per_block(struct inode *inode)

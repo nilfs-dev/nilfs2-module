@@ -48,9 +48,6 @@ struct nilfs_dat_req {
 	struct buffer_head *dr_entry_bh;
 };
 
-
-#define NILFS_DAT_CHAR_BIT	8
-
 #define nilfs_dat_set_bit_atomic	ext2_set_bit_atomic
 #define nilfs_dat_clear_bit_atomic	ext2_clear_bit_atomic
 #define nilfs_dat_test_bit		ext2_test_bit
@@ -65,9 +62,8 @@ nilfs_dat_entries_per_block(const struct inode *dat)
 static inline unsigned long
 nilfs_dat_entries_per_group(const struct inode *dat)
 {
-	return (1UL << dat->i_blkbits) * NILFS_DAT_CHAR_BIT;
+	return (1UL << dat->i_blkbits) * 8 /* CHAR_BIT */;
 }
-
 
 int nilfs_dat_translate(struct inode *, __u64, sector_t *);
 
