@@ -128,14 +128,6 @@ nilfs_mdt_get_page_block(struct inode *inode, unsigned long blkoff)
 	return bh;
 }
 
-static void
-nilfs_mdt_put_page_block(struct inode *inode, struct buffer_head *bh)
-{
-	unlock_page(bh->b_page);
-	page_cache_release(bh->b_page);
-	brelse(bh);
-}
-
 static int nilfs_mdt_create_block(struct inode *inode, unsigned long block,
 				  struct buffer_head **out_bh,
 				  nilfs_mdt_init_block_t *init_block)
@@ -184,7 +176,9 @@ static int nilfs_mdt_create_block(struct inode *inode, unsigned long block,
 	}
 
  failed_bh:
-	nilfs_mdt_put_page_block(inode, bh);
+	unlock_page(bh->b_page);
+	page_cache_release(bh->b_page);
+	brelse(bh);
 
  failed_unlock:
 	nilfs_transaction_end(sb, !err);
@@ -249,7 +243,9 @@ nilfs_mdt_submit_block(struct inode *inode, unsigned long blkoff,
 	*out_bh = bh;
 
  failed_bh:
-	nilfs_mdt_put_page_block(inode, bh);
+	unlock_page(bh->b_page);
+	page_cache_release(bh->b_page);
+	brelse(bh);
  failed:
 	return ret;
 }
