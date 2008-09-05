@@ -259,10 +259,10 @@ nilfs_dat_group_find_available_vblocknr(struct inode *dat,
 		end = (target + BITS_PER_LONG - 1) & ~(BITS_PER_LONG - 1);
 		if (end > size)
 			end = size;
-		result = nilfs_dat_find_next_zero_bit(bitmap, end, target);
+		result = nilfs_find_next_zero_bit(bitmap, end, target);
 		if ((result < end) &&
-		    !nilfs_dat_set_bit_atomic(nilfs_mdt_bgl_lock(dat, group),
-					      result, bitmap))
+		    !nilfs_set_bit_atomic(nilfs_mdt_bgl_lock(dat, group),
+					  result, bitmap))
 			return result;
 	} else
 		end = 0;
@@ -278,10 +278,9 @@ nilfs_dat_group_find_available_vblocknr(struct inode *dat,
 			end = curr + BITS_PER_LONG;
 			if (end > size)
 				end = size;
-			result = nilfs_dat_find_next_zero_bit(
-				bitmap, end, curr);
+			result = nilfs_find_next_zero_bit(bitmap, end, curr);
 			if ((result < end) &&
-			    !nilfs_dat_set_bit_atomic(
+			    !nilfs_set_bit_atomic(
 				    nilfs_mdt_bgl_lock(dat, group),
 				    result, bitmap))
 				return result;
@@ -397,8 +396,8 @@ static void nilfs_dat_abort_alloc_vblocknr(struct inode *dat,
 	bitmap = nilfs_dat_block_get_bitmap(dat, req->dr_bitmap_bh,
 					    bitmap_kaddr);
 
-	if (!nilfs_dat_clear_bit_atomic(nilfs_mdt_bgl_lock(dat, group),
-					group_offset, bitmap)) {
+	if (!nilfs_clear_bit_atomic(nilfs_mdt_bgl_lock(dat, group),
+				    group_offset, bitmap)) {
 		/*
 		nilfs_error(dat->i_sb, __func__,
 			    "virtual block number %llu already freed",
@@ -463,8 +462,8 @@ static void nilfs_dat_commit_free_vblocknr(struct inode *dat,
 	bitmap = nilfs_dat_block_get_bitmap(
 		dat, req->dr_bitmap_bh, bitmap_kaddr);
 
-	if (!nilfs_dat_clear_bit_atomic(nilfs_mdt_bgl_lock(dat, group),
-					group_offset, bitmap)) {
+	if (!nilfs_clear_bit_atomic(nilfs_mdt_bgl_lock(dat, group),
+				    group_offset, bitmap)) {
 		/*
 		nilfs_error(dat->i_sb, __func__,
 			    "virtual block number %llu already freed",
@@ -871,7 +870,7 @@ int nilfs_dat_freev(struct inode *dat, __u64 *vblocknrs, size_t nitems)
 		     j++, n++) {
 			group_offset = nilfs_dat_group_offset(
 				dat, vblocknrs[j]);
-			if (!nilfs_dat_clear_bit_atomic(
+			if (!nilfs_clear_bit_atomic(
 				    nilfs_mdt_bgl_lock(dat, group),
 				    group_offset, bitmap)) {
 				printk(KERN_CRIT

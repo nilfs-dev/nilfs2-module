@@ -29,11 +29,6 @@
 #include <linux/bitops.h>
 
 
-#define nilfs_persistent_set_bit_atomic		ext2_set_bit_atomic
-#define nilfs_persistent_clear_bit_atomic	ext2_clear_bit_atomic
-#define nilfs_persistent_test_bit		ext2_test_bit
-#define nilfs_persistent_find_next_zero_bit	ext2_find_next_zero_bit
-
 static inline int nilfs_persistent_entries_per_group(struct inode *inode)
 {
 	return (1UL << inode->i_blkbits) * 8 /* CHAR_BIT */;

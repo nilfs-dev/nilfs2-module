@@ -106,9 +106,9 @@ nilfs_persistent_group_find_available_slot(struct inode *inode,
 		end = (target + BITS_PER_LONG - 1) & ~(BITS_PER_LONG - 1);
 		if (end > bsize)
 			end = bsize;
-		pos = nilfs_persistent_find_next_zero_bit(bitmap, end, target);
+		pos = nilfs_find_next_zero_bit(bitmap, end, target);
 		if ((pos < end) &&
-		    !nilfs_persistent_set_bit_atomic(
+		    !nilfs_set_bit_atomic(
 			    nilfs_mdt_bgl_lock(inode, group), pos, bitmap))
 			return pos;
 	} else
@@ -125,10 +125,9 @@ nilfs_persistent_group_find_available_slot(struct inode *inode,
 			end = curr + BITS_PER_LONG;
 			if (end > bsize)
 				end = bsize;
-			pos = nilfs_persistent_find_next_zero_bit(bitmap, end,
-								  curr);
+			pos = nilfs_find_next_zero_bit(bitmap, end, curr);
 			if ((pos < end) &&
-			    !nilfs_persistent_set_bit_atomic(
+			    !nilfs_set_bit_atomic(
 				    nilfs_mdt_bgl_lock(inode, group), pos,
 				    bitmap))
 				return pos;
@@ -226,7 +225,7 @@ void nilfs_persistent_abort_alloc_entry(struct inode *inode,
 	bitmap_buffer = nilfs_persistent_get_group_bitmap_buffer(
 		inode, req->pr_bitmap_bh);
 
-	if (!nilfs_persistent_clear_bit_atomic(
+	if (!nilfs_clear_bit_atomic(
 		    nilfs_mdt_bgl_lock(inode, group), grpoff, bitmap_buffer))
 		printk(KERN_WARNING
 		       "persistent entry numer %lu already freed\n",

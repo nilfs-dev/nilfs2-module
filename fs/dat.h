@@ -48,11 +48,6 @@ struct nilfs_dat_req {
 	struct buffer_head *dr_entry_bh;
 };
 
-#define nilfs_dat_set_bit_atomic	ext2_set_bit_atomic
-#define nilfs_dat_clear_bit_atomic	ext2_clear_bit_atomic
-#define nilfs_dat_test_bit		ext2_test_bit
-#define nilfs_dat_find_next_zero_bit	ext2_find_next_zero_bit
-
 static inline unsigned long
 nilfs_dat_entries_per_block(const struct inode *dat)
 {

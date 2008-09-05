@@ -129,6 +129,11 @@ enum {
 #define NILFS_VALID_INODE(sb, ino) \
   ((ino) >= NILFS_FIRST_INO(sb) || (NILFS_SYS_INO_BITS & (1 << (ino))))
 
+
+#define nilfs_set_bit_atomic		ext2_set_bit_atomic
+#define nilfs_clear_bit_atomic		ext2_clear_bit_atomic
+#define nilfs_find_next_zero_bit	ext2_find_next_zero_bit
+
 /*
  * Extended buffer state bits
  */
