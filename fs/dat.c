@@ -24,7 +24,7 @@
 #include <linux/buffer_head.h>
 #include <linux/string.h>
 #include <linux/errno.h>
-#include "nilfs.h"	/* XXX: nilfs_error() */
+#include "nilfs.h"
 #include "sb.h"
 #include "mdt.h"
 #include "dat.h"
@@ -45,25 +45,21 @@ nilfs_dat_groups_per_desc_block(const struct inode *dat)
 	return (1UL << dat->i_blkbits) / sizeof(struct nilfs_dat_group_desc);
 }
 
-static inline unsigned long
-nilfs_dat_blocks_per_group(const struct inode *dat)
+static unsigned long nilfs_dat_blocks_per_group(const struct inode *dat)
 {
 	/* including a bitmap block */
 	return (nilfs_dat_entries_per_group(dat) - 1) /
-		nilfs_dat_entries_per_block(dat) + 1 +
-		1;
+		nilfs_dat_entries_per_block(dat) + 1 + 1;
 }
 
-static inline unsigned long
-nilfs_dat_blocks_per_desc_block(const struct inode *dat)
+static unsigned long nilfs_dat_blocks_per_desc_block(const struct inode *dat)
 {
 	/* including a group descriptor block and group bitmap blocks */
 	return nilfs_dat_groups_per_desc_block(dat) *
 		nilfs_dat_blocks_per_group(dat) + 1;
 }
 
-static inline unsigned long
-nilfs_dat_group(const struct inode *dat, __u64 vblocknr)
+static unsigned long nilfs_dat_group(const struct inode *dat, __u64 vblocknr)
 {
 	__u64 group = vblocknr;
 
@@ -71,38 +67,38 @@ nilfs_dat_group(const struct inode *dat, __u64 vblocknr)
 	return group;
 }
 
-static inline unsigned long
+static unsigned long
 nilfs_dat_group_offset(const struct inode *dat, __u64 vblocknr)
 {
 	return do_div(vblocknr, nilfs_dat_entries_per_group(dat));
 }
 
-static inline unsigned long
+static unsigned long
 nilfs_dat_desc_block(const struct inode *dat, unsigned long group)
 {
 	return group / nilfs_dat_groups_per_desc_block(dat);
 }
 
-static inline unsigned long
+static unsigned long
 nilfs_dat_desc_offset(const struct inode *dat, unsigned long group)
 {
 	return group % nilfs_dat_groups_per_desc_block(dat);
 }
 
-static inline unsigned long
+static unsigned long
 nilfs_dat_entry_block(const struct inode *dat, unsigned long group_offset)
 {
 	return group_offset / nilfs_dat_entries_per_block(dat);
 }
 
-static inline unsigned long
+static unsigned long
 nilfs_dat_entry_offset(const struct inode *dat, __u64 vblocknr)
 {
 	return nilfs_dat_group_offset(dat, vblocknr) %
 		nilfs_dat_entries_per_block(dat);
 }
 
-static inline unsigned long
+static unsigned long
 nilfs_dat_rest_groups_in_desc_block(const struct inode *dat,
 				    unsigned long curr, unsigned long max)
 {
@@ -112,14 +108,14 @@ nilfs_dat_rest_groups_in_desc_block(const struct inode *dat,
 		     max - curr + 1);
 }
 
-static inline unsigned long
+static unsigned long
 nilfs_dat_desc_blkoff(const struct inode *dat, unsigned long group)
 {
 	return nilfs_dat_desc_block(dat, group) *
 		nilfs_dat_blocks_per_desc_block(dat);
 }
 
-static inline unsigned long
+static unsigned long
 nilfs_dat_bitmap_blkoff(const struct inode *dat, unsigned long group)
 {
 	return nilfs_dat_desc_blkoff(dat, group) + 1 +
@@ -127,7 +123,7 @@ nilfs_dat_bitmap_blkoff(const struct inode *dat, unsigned long group)
 		nilfs_dat_blocks_per_group(dat);
 }
 
-static inline unsigned long
+static unsigned long
 nilfs_dat_entry_blkoff(const struct inode *dat, __u64 vblocknr)
 {
 	return nilfs_dat_bitmap_blkoff(dat, nilfs_dat_group(dat, vblocknr)) +
@@ -136,9 +132,8 @@ nilfs_dat_entry_blkoff(const struct inode *dat, __u64 vblocknr)
 				      nilfs_dat_group_offset(dat, vblocknr));
 }
 
-static inline unsigned long
-nilfs_dat_group_desc_get_nfrees(struct inode *dat,
-				unsigned long group,
+static unsigned long
+nilfs_dat_group_desc_get_nfrees(struct inode *dat, unsigned long group,
 				const struct nilfs_dat_group_desc *desc)
 {
 	unsigned long nfree;
@@ -150,30 +145,20 @@ nilfs_dat_group_desc_get_nfrees(struct inode *dat,
 	return nfree;
 }
 
-static inline void
-nilfs_dat_group_desc_set_nfrees(const struct inode *dat,
-				struct nilfs_dat_group_desc *desc,
-				unsigned long nfrees)
-{
-	desc->dg_nfrees = cpu_to_le32(nfrees);
-}
-
-static inline void
-nilfs_dat_group_desc_add_entries(struct inode *dat,
-				 unsigned long group,
-				 struct nilfs_dat_group_desc *desc,
-				 unsigned long n)
+static void nilfs_dat_group_desc_add_entries(struct inode *dat,
+					     unsigned long group,
+					     struct nilfs_dat_group_desc *desc,
+					     unsigned long n)
 {
 	spin_lock(nilfs_mdt_bgl_lock(dat, group));
 	le32_add_cpu(&desc->dg_nfrees, n);
 	spin_unlock(nilfs_mdt_bgl_lock(dat, group));
 }
 
-static inline void
-nilfs_dat_group_desc_sub_entries(struct inode *dat,
-				 unsigned long group,
-				 struct nilfs_dat_group_desc *desc,
-				 unsigned long n)
+static void nilfs_dat_group_desc_sub_entries(struct inode *dat,
+					     unsigned long group,
+					     struct nilfs_dat_group_desc *desc,
+					     unsigned long n)
 {
 	spin_lock(nilfs_mdt_bgl_lock(dat, group));
 	le32_add_cpu(&desc->dg_nfrees, -n);
@@ -181,53 +166,42 @@ nilfs_dat_group_desc_sub_entries(struct inode *dat,
 }
 
 static void nilfs_dat_desc_block_init(struct inode *dat,
-				      struct buffer_head *bh,
-				      void *kaddr)
+				      struct buffer_head *bh, void *kaddr)
 {
-	struct nilfs_dat_group_desc *desc;
-	unsigned long i;
+	struct nilfs_dat_group_desc *desc = kaddr + bh_offset(bh);
+	unsigned long entries_per_group = nilfs_dat_entries_per_group(dat);
+	unsigned long n = nilfs_dat_groups_per_desc_block(dat);
 
-	for (i = 0, desc = (struct nilfs_dat_group_desc *)
-		     (kaddr + bh_offset(bh));
-	     i < nilfs_dat_groups_per_desc_block(dat);
-	     i++, desc++)
-		nilfs_dat_group_desc_set_nfrees(
-			dat, desc, nilfs_dat_entries_per_group(dat));
+	while (n-- > 0) {
+		desc->dg_nfrees = cpu_to_le32(entries_per_group);
+		desc++;
+	}
 }
 
-#define nilfs_dat_bitmap_block_init	NULL
-
-static inline int nilfs_dat_get_desc_block(struct inode *dat,
-					   unsigned long group,
-					   int create,
-					   struct buffer_head **bhp)
+static int nilfs_dat_get_desc_block(struct inode *dat, unsigned long group,
+				    int create, struct buffer_head **bhp)
 {
 	return nilfs_mdt_get_block(dat, nilfs_dat_desc_blkoff(dat, group),
 				   create, nilfs_dat_desc_block_init, bhp);
 }
 
-static inline int nilfs_dat_get_bitmap_block(struct inode *dat,
-					     unsigned long group,
-					     int create,
-					     struct buffer_head **bhp)
+static int nilfs_dat_get_bitmap_block(struct inode *dat, unsigned long group,
+				      int create, struct buffer_head **bhp)
 {
 	return nilfs_mdt_get_block(dat, nilfs_dat_bitmap_blkoff(dat, group),
-				   create, nilfs_dat_bitmap_block_init, bhp);
+				   create, NULL, bhp);
 }
 
-static inline int
-nilfs_dat_get_entry_block(struct inode *dat, __u64 vblocknr, int create,
-			  struct buffer_head **bhp)
+static int nilfs_dat_get_entry_block(struct inode *dat, __u64 vblocknr,
+				     int create, struct buffer_head **bhp)
 {
 	return nilfs_mdt_get_block(dat, nilfs_dat_entry_blkoff(dat, vblocknr),
 				   create, NULL, bhp);
 }
 
-static inline struct nilfs_dat_group_desc *
-nilfs_dat_block_get_group_desc(const struct inode *dat,
-			       unsigned long group,
-			       const struct buffer_head *bh,
-			       void *kaddr)
+static struct nilfs_dat_group_desc *
+nilfs_dat_block_get_group_desc(const struct inode *dat, unsigned long group,
+			       const struct buffer_head *bh, void *kaddr)
 {
 	return (struct nilfs_dat_group_desc *)(kaddr + bh_offset(bh)) +
 		nilfs_dat_desc_offset(dat, group);
@@ -235,23 +209,19 @@ nilfs_dat_block_get_group_desc(const struct inode *dat,
 
 static inline unsigned char *
 nilfs_dat_block_get_bitmap(const struct inode *dat,
-			   const struct buffer_head *bh,
-			   void *kaddr)
+			   const struct buffer_head *bh, void *kaddr)
 {
 	return (unsigned char *)(kaddr + bh_offset(bh));
 }
 
-static inline struct nilfs_dat_entry *
-nilfs_dat_block_get_entry(const struct inode *dat,
-			  __u64 vblocknr,
-			  const struct buffer_head *bh,
-			  void *kaddr)
+static struct nilfs_dat_entry *
+nilfs_dat_block_get_entry(const struct inode *dat, __u64 vblocknr,
+			  const struct buffer_head *bh, void *kaddr)
 {
 	return kaddr + bh_offset(bh) +
 		nilfs_dat_entry_offset(dat, vblocknr) *
 		NILFS_MDT(dat)->mi_entry_size;
 }
-
 
 static int
 nilfs_dat_group_find_available_vblocknr(struct inode *dat,
@@ -267,7 +237,7 @@ nilfs_dat_group_find_available_vblocknr(struct inode *dat,
 		if (end > size)
 			end = size;
 		result = nilfs_find_next_zero_bit(bitmap, end, target);
-		if ((result < end) &&
+		if (result < end &&
 		    !nilfs_set_bit_atomic(nilfs_mdt_bgl_lock(dat, group),
 					  result, bitmap))
 			return result;
@@ -286,7 +256,7 @@ nilfs_dat_group_find_available_vblocknr(struct inode *dat,
 			if (end > size)
 				end = size;
 			result = nilfs_find_next_zero_bit(bitmap, end, curr);
-			if ((result < end) &&
+			if (result < end &&
 			    !nilfs_set_bit_atomic(
 				    nilfs_mdt_bgl_lock(dat, group),
 				    result, bitmap))
@@ -316,6 +286,7 @@ static int nilfs_dat_prepare_alloc_vblocknr(struct inode *dat,
 	group_offset = nilfs_dat_group_offset(dat, req->dr_vblocknr);
 	entries_per_group = nilfs_dat_entries_per_group(dat);
 	groups_per_desc_block = nilfs_dat_groups_per_desc_block(dat);
+
 	for (i = 0; i < ngroups; i += n) {
 		if (group >= ngroups) {
 			/* wrap around */
@@ -405,11 +376,6 @@ static void nilfs_dat_abort_alloc_vblocknr(struct inode *dat,
 
 	if (!nilfs_clear_bit_atomic(nilfs_mdt_bgl_lock(dat, group),
 				    group_offset, bitmap)) {
-		/*
-		nilfs_error(dat->i_sb, __func__,
-			    "virtual block number %llu already freed",
-			    (unsigned long long)req->dr_vblocknr);
-		*/
 		printk(KERN_CRIT
 		       "%s: virtual block number %llu already freed\n",
 		       __func__, (unsigned long long)req->dr_vblocknr);
@@ -471,11 +437,6 @@ static void nilfs_dat_commit_free_vblocknr(struct inode *dat,
 
 	if (!nilfs_clear_bit_atomic(nilfs_mdt_bgl_lock(dat, group),
 				    group_offset, bitmap)) {
-		/*
-		nilfs_error(dat->i_sb, __func__,
-			    "virtual block number %llu already freed",
-			    (unsigned long long)req->dr_vblocknr);
-		*/
 		printk(KERN_CRIT
 		       "%s: virtual block number %llu already freed\n",
 		       __func__, (unsigned long long)req->dr_vblocknr);
@@ -528,11 +489,6 @@ static void nilfs_dat_abort_entry(struct inode *dat,
 	brelse(req->dr_entry_bh);
 }
 
-/**
- * nilfs_dat_prepare_alloc -
- * @dat:
- * @req:
- */
 int nilfs_dat_prepare_alloc(struct inode *dat, struct nilfs_dat_req *req)
 {
 	int ret;
@@ -552,11 +508,6 @@ int nilfs_dat_prepare_alloc(struct inode *dat, struct nilfs_dat_req *req)
 	return ret;
 }
 
-/**
- * nilfs_dat_commit_alloc -
- * @dat:
- * @req:
- */
 void nilfs_dat_commit_alloc(struct inode *dat, struct nilfs_dat_req *req)
 {
 	struct nilfs_dat_entry *entry;
@@ -576,22 +527,12 @@ void nilfs_dat_commit_alloc(struct inode *dat, struct nilfs_dat_req *req)
 	nilfs_dat_commit_entry(dat, req);
 }
 
-/**
- * nilfs_dat_abort_alloc -
- * @dat:
- * @req:
- */
 void nilfs_dat_abort_alloc(struct inode *dat, struct nilfs_dat_req *req)
 {
 	nilfs_dat_abort_entry(dat, req);
 	nilfs_dat_abort_alloc_vblocknr(dat, req);
 }
 
-/**
- * nilfs_dat_prepare_free -
- * @dat:
- * @req:
- */
 int nilfs_dat_prepare_free(struct inode *dat, struct nilfs_dat_req *req)
 {
 	int ret;
@@ -608,11 +549,6 @@ int nilfs_dat_prepare_free(struct inode *dat, struct nilfs_dat_req *req)
 	return 0;
 }
 
-/**
- * nilfs_dat_commit_free -
- * @dat:
- * @req:
- */
 void nilfs_dat_commit_free(struct inode *dat, struct nilfs_dat_req *req)
 {
 	struct nilfs_dat_entry *entry;
@@ -630,22 +566,12 @@ void nilfs_dat_commit_free(struct inode *dat, struct nilfs_dat_req *req)
 	nilfs_dat_commit_free_vblocknr(dat, req);
 }
 
-/**
- * nilfs_dat_abort_free -
- * @dat:
- * @req:
- */
 void nilfs_dat_abort_free(struct inode *dat, struct nilfs_dat_req *req)
 {
 	nilfs_dat_abort_entry(dat, req);
 	nilfs_dat_abort_free_vblocknr(dat, req);
 }
 
-/**
- * nilfs_dat_prepare_start -
- * @dat:
- * @req:
- */
 int nilfs_dat_prepare_start(struct inode *dat, struct nilfs_dat_req *req)
 {
 	int ret;
@@ -655,12 +581,6 @@ int nilfs_dat_prepare_start(struct inode *dat, struct nilfs_dat_req *req)
 	return ret;
 }
 
-/**
- * nilfs_dat_commit_start -
- * @dat:
- * @req:
- * @blocknr:
- */
 void nilfs_dat_commit_start(struct inode *dat,
 			    struct nilfs_dat_req *req,
 			    sector_t blocknr)
@@ -688,21 +608,11 @@ void nilfs_dat_commit_start(struct inode *dat,
 	nilfs_dat_commit_entry(dat, req);
 }
 
-/**
- * nilfs_dat_abort_start -
- * @dat:
- * @req:
- */
 void nilfs_dat_abort_start(struct inode *dat, struct nilfs_dat_req *req)
 {
 	nilfs_dat_abort_entry(dat, req);
 }
 
-/**
- * nilfs_dat_prepare_end -
- * @dat:
- * @req:
- */
 int nilfs_dat_prepare_end(struct inode *dat, struct nilfs_dat_req *req)
 {
 	struct nilfs_dat_entry *entry;
@@ -735,12 +645,6 @@ int nilfs_dat_prepare_end(struct inode *dat, struct nilfs_dat_req *req)
 	return 0;
 }
 
-/**
- * nilfs_dat_commit_end -
- * @dat:
- * @req:
- * @dead:
- */
 void nilfs_dat_commit_end(struct inode *dat, struct nilfs_dat_req *req,
 			  int dead)
 {
@@ -767,11 +671,6 @@ void nilfs_dat_commit_end(struct inode *dat, struct nilfs_dat_req *req,
 		nilfs_dat_commit_entry(dat, req);
 }
 
-/**
- * nilfs_dat_abort_end -
- * @dat:
- * @req:
- */
 void nilfs_dat_abort_end(struct inode *dat, struct nilfs_dat_req *req)
 {
 	struct nilfs_dat_entry *entry;
@@ -817,7 +716,7 @@ int nilfs_dat_mark_dirty(struct inode *dat, __u64 vblocknr)
 	return ret;
 }
 
-static inline int
+static int
 nilfs_dat_group_is_in(struct inode *dat, unsigned long group, __u64 vblocknr)
 {
 	__u64 first, last;
@@ -1010,23 +909,16 @@ int nilfs_dat_translate(struct inode *dat, __u64 vblocknr, sector_t *blocknrp)
 	return ret;
 }
 
-/**
- * nilfs_dat_get_vinfo -
- * @vinfo:
- * @nvinfo:
- */
-ssize_t nilfs_dat_get_vinfo(struct inode *dat,
-			    struct nilfs_vinfo *vinfo,
+ssize_t nilfs_dat_get_vinfo(struct inode *dat, struct nilfs_vinfo *vinfo,
 			    size_t nvi)
 {
 	struct buffer_head *entry_bh;
 	struct nilfs_dat_entry *entry;
 	__u64 first, last;
 	void *kaddr;
-	unsigned long entries_per_block;
+	unsigned long entries_per_block = nilfs_dat_entries_per_block(dat);
 	int i, j, n, ret;
 
-	entries_per_block = nilfs_dat_entries_per_block(dat);
 	for (i = 0; i < nvi; i += n) {
 		ret = nilfs_dat_get_entry_block(dat, vinfo[i].vi_vblocknr, 0,
 						&entry_bh);
@@ -1039,8 +931,8 @@ ssize_t nilfs_dat_get_vinfo(struct inode *dat,
 		first *= entries_per_block;
 		last = first + entries_per_block - 1;
 		for (j = i, n = 0;
-		     (j < nvi) && (vinfo[j].vi_vblocknr >= first) &&
-			     (vinfo[j].vi_vblocknr <= last);
+		     j < nvi && vinfo[j].vi_vblocknr >= first &&
+			     vinfo[j].vi_vblocknr <= last;
 		     j++, n++) {
 			entry = nilfs_dat_block_get_entry(
 				dat, vinfo[j].vi_vblocknr, entry_bh, kaddr);
