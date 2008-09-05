@@ -75,15 +75,13 @@ static inline struct inode *NILFS_ORIG_I(struct inode *inode)
 	return (mdi && mdi->mi_orig_inode) ? mdi->mi_orig_inode : NULL;
 }
 
-typedef void (nilfs_mdt_init_block_t)(struct inode *, struct buffer_head *,
-				      void *);
-
-
 /* Default GFP flags using highmem */
 #define NILFS_MDT_GFP      (__GFP_WAIT | __GFP_IO | __GFP_HIGHMEM)
 
 int nilfs_mdt_get_block(struct inode *, unsigned long, int,
-			nilfs_mdt_init_block_t *, struct buffer_head **);
+			void (*init_block)(struct inode *,
+					   struct buffer_head *, void *),
+			struct buffer_head **);
 int nilfs_mdt_delete_block(struct inode *, unsigned long);
 int nilfs_mdt_forget_block(struct inode *, unsigned long);
 int nilfs_mdt_mark_block_dirty(struct inode *, unsigned long);

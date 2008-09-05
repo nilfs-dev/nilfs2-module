@@ -47,7 +47,8 @@ void nilfs_mdt_mark_buffer_dirty(struct buffer_head *bh)
 static int
 nilfs_mdt_insert_new_block(struct inode *inode, unsigned long block,
 			   struct buffer_head *bh,
-			   nilfs_mdt_init_block_t *init_block)
+			   void (*init_block)(struct inode *,
+					      struct buffer_head *, void *))
 {
 	struct nilfs_inode_info *ii = NILFS_I(inode);
 	void *kaddr;
@@ -130,7 +131,9 @@ nilfs_mdt_get_page_block(struct inode *inode, unsigned long blkoff)
 
 static int nilfs_mdt_create_block(struct inode *inode, unsigned long block,
 				  struct buffer_head **out_bh,
-				  nilfs_mdt_init_block_t *init_block)
+				  void (*init_block)(struct inode *,
+						     struct buffer_head *,
+						     void *))
 {
 	struct the_nilfs *nilfs = NILFS_MDT(inode)->mi_nilfs;
 	struct nilfs_sb_info *writer = NULL;
@@ -337,7 +340,8 @@ static int nilfs_mdt_read_block(struct inode *inode, unsigned long block,
  * %-EROFS - Read only filesystem (for create mode)
  */
 int nilfs_mdt_get_block(struct inode *inode, unsigned long blkoff, int create,
-			nilfs_mdt_init_block_t *init_block,
+			void (*init_block)(struct inode *,
+					   struct buffer_head *, void *),
 			struct buffer_head **out_bh)
 {
 	int ret;
