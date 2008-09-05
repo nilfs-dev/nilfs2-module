@@ -81,7 +81,7 @@ nilfs_mdt_insert_new_block(struct inode *inode, unsigned long block,
 	return 0;
 }
 
-static struct buffer_head *
+struct buffer_head *
 nilfs_mdt_get_page_block(struct inode *inode, unsigned long blkoff)
 {
 	int blkbits = inode->i_blkbits;

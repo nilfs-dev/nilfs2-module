@@ -63,19 +63,12 @@ int nilfs_gccache_submit_read_data(struct inode *inode, sector_t blkoff,
 				   sector_t pbn, __u64 vbn,
 				   struct buffer_head **out_bh)
 {
-	struct page *page;
 	struct buffer_head *bh;
-	int blkbits = inode->i_blkbits;
-	unsigned long index = blkoff >> (PAGE_CACHE_SHIFT - blkbits);
-	int err = -ENOMEM;
+	int err;
 
-	page = grab_cache_page(inode->i_mapping, index);
-	if (unlikely(!page))
-		return err;
-
-	bh = nilfs_get_page_block(page, blkoff, index, blkbits);
+	bh = nilfs_mdt_get_page_block(inode, blkoff);
 	if (unlikely(!bh))
-		goto failed;
+		return -ENOMEM;
 
 	if (buffer_uptodate(bh))
 		goto out;
@@ -111,8 +104,8 @@ int nilfs_gccache_submit_read_data(struct inode *inode, sector_t blkoff,
 	*out_bh = bh;
 
  failed:
-	unlock_page(page);
-	page_cache_release(page);
+	unlock_page(bh->b_page);
+	page_cache_release(bh->b_page);
 	return err;
 }
 

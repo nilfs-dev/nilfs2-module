@@ -97,6 +97,7 @@ void nilfs_mdt_destroy(struct inode *);
 void nilfs_mdt_clear(struct inode *);
 void nilfs_mdt_set_entry_size(struct inode *, unsigned, unsigned);
 int nilfs_mdt_init_blockgroup(struct inode *, unsigned, unsigned long);
+struct buffer_head *nilfs_mdt_get_page_block(struct inode *, unsigned long);
 
 #if NEED_OLD_MARK_BUFFER_DIRTY
 void nilfs_mdt_mark_buffer_dirty(struct buffer_head *bh);
