@@ -380,64 +380,6 @@ int nilfs_cpfile_delete_checkpoints(struct inode *cpfile,
 	return ret;
 }
 
-/**
- * nilfs_cpfile_get_checkpoints -
- * @cpfile: inode of checkpoint file
- * @cno: checkpoint number to start looking
- * @cps: array of checkpoint
- * @size: size of checkpoint array
- *
- * Description:
- *
- * Return Value: On success, 0 is returned and .... On error, one of the
- * following negative error codes is returned.
- *
- * %-EIO - I/O error.
- *
- * %-ENOMEM - Insufficient amount of memory available.
- */
-int nilfs_cpfile_get_checkpoints(struct inode *cpfile,
-				 __u64 cno,
-				 struct nilfs_checkpoint *cps,
-				 unsigned long *size)
-{
-	struct nilfs_checkpoint *cp;
-	struct buffer_head *bh;
-	void *kaddr;
-	unsigned long n;
-	int ncps, ret, i;
-
-	down_read(&NILFS_MDT(cpfile)->mi_sem);
-
-	ret = 0;
-	for (n = 0; (cno < nilfs_mdt_cno(cpfile)) && (n < *size); cno += ncps) {
-		ncps = nilfs_cpfile_checkpoints_in_block(
-			cpfile, cno, nilfs_mdt_cno(cpfile));
-		ret = nilfs_cpfile_get_checkpoint_block(cpfile, cno, 0, &bh);
-		if (ret < 0) {
-			if (ret != -ENOENT)
-				goto out;
-			/* skip hole */
-			continue;
-		}
-
-		kaddr = kmap_atomic(bh->b_page, KM_USER0);
-		cp = nilfs_cpfile_block_get_checkpoint(cpfile, cno, bh, kaddr);
-		for (i = 0; (i < ncps) && (n < *size); i++, cp++) {
-			if (!nilfs_checkpoint_invalid(cp))
-				cps[n++] = *cp;	/* copy structure */
-		}
-		kunmap_atomic(kaddr, KM_USER0);
-		brelse(bh);
-	}
-
- out:
-	*size = n;
-
-	up_read(&NILFS_MDT(cpfile)->mi_sem);
-	return ret;
-}
-
 static void nilfs_cpfile_checkpoint_to_cpinfo(struct inode *cpfile,
 					      struct nilfs_checkpoint *cp,
 					      struct nilfs_cpinfo *ci)

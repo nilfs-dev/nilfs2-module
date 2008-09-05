@@ -36,8 +36,6 @@ int nilfs_cpfile_get_checkpoint(struct inode *, __u64, int,
 void nilfs_cpfile_put_checkpoint(struct inode *, __u64, struct buffer_head *);
 int nilfs_cpfile_delete_checkpoints(struct inode *, __u64, __u64);
 int nilfs_cpfile_delete_checkpoint(struct inode *, __u64);
-int nilfs_cpfile_get_checkpoints(struct inode *, __u64,
-				 struct nilfs_checkpoint *, unsigned long *);
 int nilfs_cpfile_change_cpmode(struct inode *, __u64, int);
 int nilfs_cpfile_is_snapshot(struct inode *, __u64);
 int nilfs_cpfile_get_stat(struct inode *, struct nilfs_cpstat *);
