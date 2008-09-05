@@ -29,13 +29,13 @@
 #include "kern_feature.h"
 
 /**
- * struct nilfs_mdt_info - on-memory private data of an meta data file
+ * struct nilfs_mdt_info - on-memory private data of meta data files
  * @mi_nilfs: back pointer to the_nilfs struct
- * @mi_sem: reader/writer semaphore for contents
+ * @mi_sem: reader/writer semaphore for meta data operations
  * @mi_bgl: per-blockgroup locking
  * @mi_orig_inode: original inode (only valid for shadow)
  * @mi_entry_size: size of an entry
- * @mi_first_entry_offset: offset of the first entry
+ * @mi_first_entry_offset: offset to the first entry
  * @mi_entries_per_block: number of entries in a block
  * @mi_blocks_per_group: number of blocks in a group
  * @mi_groups_count: number of groups
