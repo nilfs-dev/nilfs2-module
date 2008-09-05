@@ -33,29 +33,25 @@
 static inline unsigned long
 nilfs_sufile_segment_usages_per_block(const struct inode *sufile)
 {
-	return (1UL << sufile->i_blkbits) / sizeof(struct nilfs_segment_usage);
+	return NILFS_MDT(sufile)->mi_entries_per_block;
 }
 
-static inline unsigned long
+static unsigned long
 nilfs_sufile_get_blkoff(const struct inode *sufile, __u64 segnum)
 {
-	__u64 t;
-
-	t = segnum + NILFS_SUFILE_FIRST_SEGMENT_USAGE_OFFSET;
+	__u64 t = segnum + NILFS_MDT(sufile)->mi_first_entry_offset;
 	do_div(t, nilfs_sufile_segment_usages_per_block(sufile));
 	return (unsigned long)t;
 }
 
-static inline unsigned long
+static unsigned long
 nilfs_sufile_get_offset(const struct inode *sufile, __u64 segnum)
 {
-	__u64 t;
-
-	t = segnum + NILFS_SUFILE_FIRST_SEGMENT_USAGE_OFFSET;
+	__u64 t = segnum + NILFS_MDT(sufile)->mi_first_entry_offset;
 	return do_div(t, nilfs_sufile_segment_usages_per_block(sufile));
 }
 
-static inline unsigned long
+static unsigned long
 nilfs_sufile_segment_usages_in_block(const struct inode *sufile, __u64 curr,
 				     __u64 max)
 {
@@ -70,15 +66,16 @@ nilfs_sufile_block_get_header(const struct inode *sufile,
 			      struct buffer_head *bh,
 			      void *kaddr)
 {
-	return (struct nilfs_sufile_header *)(kaddr + bh_offset(bh));
+	return kaddr + bh_offset(bh);
 }
 
-static inline struct nilfs_segment_usage *
+static struct nilfs_segment_usage *
 nilfs_sufile_block_get_segment_usage(const struct inode *sufile, __u64 segnum,
 				     struct buffer_head *bh, void *kaddr)
 {
-	return (struct nilfs_segment_usage *)(kaddr + bh_offset(bh)) +
-		nilfs_sufile_get_offset(sufile, segnum);
+	return kaddr + bh_offset(bh) +
+		nilfs_sufile_get_offset(sufile, segnum) *
+		NILFS_MDT(sufile)->mi_entry_size;
 }
 
 static inline int nilfs_sufile_get_header_block(struct inode *sufile,
@@ -119,6 +116,7 @@ int nilfs_sufile_alloc(struct inode *sufile, __u64 *segnump)
 	struct the_nilfs *nilfs;
 	struct nilfs_sufile_header *header;
 	struct nilfs_segment_usage *su;
+	size_t susz = NILFS_MDT(sufile)->mi_entry_size;
 	__u64 segnum, maxsegnum, last_alloc;
 	void *kaddr;
 	unsigned long nsegments, ncleansegs, nsus;
@@ -156,30 +154,28 @@ int nilfs_sufile_alloc(struct inode *sufile, __u64 *segnump)
 
 		nsus = nilfs_sufile_segment_usages_in_block(
 			sufile, segnum, maxsegnum);
-		for (j = 0; j < nsus; j++, su++, segnum++) {
-			if (nilfs_segment_usage_clean(su)) {
-				/* found a clean segment */
-				nilfs_segment_usage_set_active(su);
-				nilfs_segment_usage_set_dirty(su);
-				kunmap_atomic(kaddr, KM_USER0);
+		for (j = 0; j < nsus; j++, su = (void *)su + susz, segnum++) {
+			if (!nilfs_segment_usage_clean(su))
+				continue;
+			/* found a clean segment */
+			nilfs_segment_usage_set_active(su);
+			nilfs_segment_usage_set_dirty(su);
+			kunmap_atomic(kaddr, KM_USER0);
 
-				kaddr = kmap_atomic(header_bh->b_page,
-						    KM_USER0);
-				header = nilfs_sufile_block_get_header(
-					sufile, header_bh, kaddr);
-				le64_add_cpu(&header->sh_ncleansegs, -1);
-				le64_add_cpu(&header->sh_ndirtysegs, 1);
-				header->sh_last_alloc = cpu_to_le64(segnum);
-				kunmap_atomic(kaddr, KM_USER0);
+			kaddr = kmap_atomic(header_bh->b_page, KM_USER0);
+			header = nilfs_sufile_block_get_header(
+				sufile, header_bh, kaddr);
+			le64_add_cpu(&header->sh_ncleansegs, -1);
+			le64_add_cpu(&header->sh_ndirtysegs, 1);
+			header->sh_last_alloc = cpu_to_le64(segnum);
+			kunmap_atomic(kaddr, KM_USER0);
 
-				nilfs_mdt_mark_buffer_dirty(header_bh);
-				nilfs_mdt_mark_buffer_dirty(su_bh);
-				nilfs_mdt_mark_dirty(sufile);
-				brelse(su_bh);
-				BUG_ON(segnump == NULL);
-				*segnump = segnum;
-				goto out_header;
-			}
+			nilfs_mdt_mark_buffer_dirty(header_bh);
+			nilfs_mdt_mark_buffer_dirty(su_bh);
+			nilfs_mdt_mark_dirty(sufile);
+			brelse(su_bh);
+			*segnump = segnum;
+			goto out_header;
 		}
 
 		kunmap_atomic(kaddr, KM_USER0);
@@ -412,7 +408,6 @@ int nilfs_sufile_get_segment_usage(struct inode *sufile, __u64 segnum,
 
 	if (sup != NULL)
 		*sup = su;
-	BUG_ON(bhp == NULL);
 	*bhp = bh;
 
  out_sem:
@@ -433,7 +428,6 @@ int nilfs_sufile_get_segment_usage(struct inode *sufile, __u64 segnum,
 void nilfs_sufile_put_segment_usage(struct inode *sufile, __u64 segnum,
 				    struct buffer_head *bh)
 {
-	/* XXX: must check segnum */
 	kunmap(bh->b_page);
 	brelse(bh);
 }
@@ -504,11 +498,9 @@ int nilfs_sufile_get_ncleansegs(struct inode *sufile, unsigned long *nsegsp)
 	int ret;
 
 	ret = nilfs_sufile_get_stat(sufile, &sustat);
-	if (ret < 0)
-		return ret;
-	BUG_ON(nsegsp == NULL);
-	*nsegsp = sustat.ss_ncleansegs;
-	return 0;
+	if (ret == 0)
+		*nsegsp = sustat.ss_ncleansegs;
+	return ret;
 }
 
 /**
@@ -595,6 +587,7 @@ ssize_t nilfs_sufile_get_suinfo(struct inode *sufile, __u64 segnum,
 {
 	struct buffer_head *su_bh;
 	struct nilfs_segment_usage *su;
+	size_t susz = NILFS_MDT(sufile)->mi_entry_size;
 	void *kaddr;
 	unsigned long nsegs, segusages_per_block;
 	ssize_t n;
@@ -624,7 +617,7 @@ ssize_t nilfs_sufile_get_suinfo(struct inode *sufile, __u64 segnum,
 		kaddr = kmap_atomic(su_bh->b_page, KM_USER0);
 		su = nilfs_sufile_block_get_segment_usage(
 			sufile, segnum, su_bh, kaddr);
-		for (j = 0; j < n; j++, su++) {
+		for (j = 0; j < n; j++, su = (void *)su + susz) {
 			si[i + j].sui_lastmod = le64_to_cpu(su->su_lastmod);
 			si[i + j].sui_nblocks = le32_to_cpu(su->su_nblocks);
 			si[i + j].sui_flags = le32_to_cpu(su->su_flags);
