@@ -512,35 +512,6 @@ int nilfs_sufile_get_ncleansegs(struct inode *sufile, unsigned long *nsegsp)
 }
 
 /**
- * nilfs_sufile_get_ndirtysegs - get the number of dirty segments
- * @sufile: inode of segment usage file
- * @nsegsp: pointer to the number of dirty segments
- *
- * Description: nilfs_sufile_get_ndirtysegs() acquires the number of dirty
- * segments.
- *
- * Return Value: On success, 0 is returned and the number of dirty segments is
- * stored in the place pointed by @nsegsp. On error, one of the following
- * negative error codes is returned.
- *
- * %-EIO - I/O error.
- *
- * %-ENOMEM - Insufficient amount of memory available.
- */
-int nilfs_sufile_get_ndirtysegs(struct inode *sufile, unsigned long *nsegsp)
-{
-	struct nilfs_sustat sustat;
-	int ret;
-
-	ret = nilfs_sufile_get_stat(sufile, &sustat);
-	if (ret < 0)
-		return ret;
-	BUG_ON(nsegsp == NULL);
-	*nsegsp = sustat.ss_ndirtysegs;
-	return 0;
-}
-
-/**
  * nilfs_sufile_set_error - mark a segment as erroneous
  * @sufile: inode of segment usage file
  * @segnum: segment number
