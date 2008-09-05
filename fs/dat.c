@@ -174,48 +174,6 @@ nilfs_dat_group_desc_sub_entries(struct inode *dat,
 	spin_unlock(nilfs_mdt_bgl_lock(dat, group));
 }
 
-static inline __u64
-nilfs_dat_entry_get_start(const struct inode *dat,
-			  const struct nilfs_dat_entry *entry)
-{
-	return le64_to_cpu(entry->de_start);
-}
-
-static inline void nilfs_dat_entry_set_start(const struct inode *dat,
-					     struct nilfs_dat_entry *entry,
-					     __u64 start)
-{
-	entry->de_start = cpu_to_le64(start);
-}
-
-static inline __u64
-nilfs_dat_entry_get_end(const struct inode *dat,
-			const struct nilfs_dat_entry *entry)
-{
-	return le64_to_cpu(entry->de_end);
-}
-
-static inline void nilfs_dat_entry_set_end(const struct inode *dat,
-					   struct nilfs_dat_entry *entry,
-					   __u64 end)
-{
-	entry->de_end = cpu_to_le64(end);
-}
-
-static inline sector_t
-nilfs_dat_entry_get_blocknr(const struct inode *dat,
-			    const struct nilfs_dat_entry *entry)
-{
-	return le64_to_cpu(entry->de_blocknr);
-}
-
-static inline void nilfs_dat_entry_set_blocknr(const struct inode *dat,
-					       struct nilfs_dat_entry *entry,
-					       sector_t blocknr)
-{
-	entry->de_blocknr = cpu_to_le64(blocknr);
-}
-
 static void nilfs_dat_desc_block_init(struct inode *dat,
 				      struct buffer_head *bh,
 				      void *kaddr)
@@ -603,10 +561,9 @@ void nilfs_dat_commit_alloc(struct inode *dat, struct nilfs_dat_req *req)
 	entry_kaddr = kmap_atomic(req->dr_entry_bh->b_page, KM_USER0);
 	entry = nilfs_dat_block_get_entry(dat, req->dr_vblocknr,
 					  req->dr_entry_bh, entry_kaddr);
-	nilfs_dat_entry_set_start(dat, entry, NILFS_CNO_MIN);
-	nilfs_dat_entry_set_end(dat, entry, NILFS_CNO_MAX);
-	nilfs_dat_entry_set_blocknr(dat, entry, 0);
-
+	entry->de_start = cpu_to_le64(NILFS_CNO_MIN);
+	entry->de_end = cpu_to_le64(NILFS_CNO_MAX);
+	entry->de_blocknr = cpu_to_le64(0);
 	kunmap_atomic(entry_kaddr, KM_USER0);
 
 	nilfs_dat_commit_alloc_vblocknr(dat, req);
@@ -658,10 +615,9 @@ void nilfs_dat_commit_free(struct inode *dat, struct nilfs_dat_req *req)
 	entry_kaddr = kmap_atomic(req->dr_entry_bh->b_page, KM_USER0);
 	entry = nilfs_dat_block_get_entry(dat, req->dr_vblocknr,
 					  req->dr_entry_bh, entry_kaddr);
-
-	nilfs_dat_entry_set_start(dat, entry, NILFS_CNO_MIN);
-	nilfs_dat_entry_set_end(dat, entry, NILFS_CNO_MIN);
-	nilfs_dat_entry_set_blocknr(dat, entry, 0);
+	entry->de_start = cpu_to_le64(NILFS_CNO_MIN);
+	entry->de_end = cpu_to_le64(NILFS_CNO_MIN);
+	entry->de_blocknr = cpu_to_le64(0);
 	kunmap_atomic(entry_kaddr, KM_USER0);
 
 	nilfs_dat_commit_entry(dat, req);
@@ -709,20 +665,18 @@ void nilfs_dat_commit_start(struct inode *dat,
 	entry_kaddr = kmap_atomic(req->dr_entry_bh->b_page, KM_USER0);
 	entry = nilfs_dat_block_get_entry(dat, req->dr_vblocknr,
 					  req->dr_entry_bh, entry_kaddr);
-	nilfs_dat_entry_set_start(dat, entry, nilfs_mdt_cno(dat));
-	if ((nilfs_dat_entry_get_blocknr(dat, entry) != 0) ||
-	    (nilfs_dat_entry_get_end(dat, entry) != NILFS_CNO_MAX)) {
+	entry->de_start = cpu_to_le64(nilfs_mdt_cno(dat));
+	if (entry->de_blocknr != cpu_to_le64(0) ||
+	    entry->de_end != cpu_to_le64(NILFS_CNO_MAX)) {
 		printk(KERN_CRIT
 		       "%s: vbn = %llu, start = %llu, end = %llu, pbn = %llu\n",
 		       __func__, (unsigned long long)req->dr_vblocknr,
-		       (unsigned long long)nilfs_dat_entry_get_start(dat,
-								     entry),
-		       (unsigned long long)nilfs_dat_entry_get_end(dat, entry),
-		       (unsigned long long)nilfs_dat_entry_get_blocknr(dat,
-								       entry));
+		       (unsigned long long)le64_to_cpu(entry->de_start),
+		       (unsigned long long)le64_to_cpu(entry->de_end),
+		       (unsigned long long)le64_to_cpu(entry->de_blocknr));
 		BUG();
 	}
-	nilfs_dat_entry_set_blocknr(dat, entry, blocknr);
+	entry->de_blocknr = cpu_to_le64(blocknr);
 	kunmap_atomic(entry_kaddr, KM_USER0);
 
 	nilfs_dat_commit_entry(dat, req);
@@ -760,8 +714,8 @@ int nilfs_dat_prepare_end(struct inode *dat, struct nilfs_dat_req *req)
 	entry_kaddr = kmap_atomic(req->dr_entry_bh->b_page, KM_USER0);
 	entry = nilfs_dat_block_get_entry(dat, req->dr_vblocknr,
 					  req->dr_entry_bh, entry_kaddr);
-	start = nilfs_dat_entry_get_start(dat, entry);
-	blocknr = nilfs_dat_entry_get_blocknr(dat, entry);
+	start = le64_to_cpu(entry->de_start);
+	blocknr = le64_to_cpu(entry->de_blocknr);
 	kunmap_atomic(entry_kaddr, KM_USER0);
 
 	if (blocknr == 0) {
@@ -792,13 +746,13 @@ void nilfs_dat_commit_end(struct inode *dat, struct nilfs_dat_req *req,
 	entry_kaddr = kmap_atomic(req->dr_entry_bh->b_page, KM_USER0);
 	entry = nilfs_dat_block_get_entry(dat, req->dr_vblocknr,
 					  req->dr_entry_bh, entry_kaddr);
-	end = start = nilfs_dat_entry_get_start(dat, entry);
+	end = start = le64_to_cpu(entry->de_start);
 	if (!dead) {
 		end = nilfs_mdt_cno(dat);
 		BUG_ON(start > end);
 	}
-	nilfs_dat_entry_set_end(dat, entry, end);
-	blocknr = nilfs_dat_entry_get_blocknr(dat, entry);
+	entry->de_end = cpu_to_le64(end);
+	blocknr = le64_to_cpu(entry->de_blocknr);
 	kunmap_atomic(entry_kaddr, KM_USER0);
 
 	if (blocknr == 0)
@@ -822,11 +776,11 @@ void nilfs_dat_abort_end(struct inode *dat, struct nilfs_dat_req *req)
 	entry_kaddr = kmap_atomic(req->dr_entry_bh->b_page, KM_USER0);
 	entry = nilfs_dat_block_get_entry(dat, req->dr_vblocknr,
 					  req->dr_entry_bh, entry_kaddr);
-	start = nilfs_dat_entry_get_start(dat, entry);
-	blocknr = nilfs_dat_entry_get_blocknr(dat, entry);
+	start = le64_to_cpu(entry->de_start);
+	blocknr = le64_to_cpu(entry->de_blocknr);
 	kunmap_atomic(entry_kaddr, KM_USER0);
 
-	if ((start == nilfs_mdt_cno(dat)) && (blocknr == 0))
+	if (start == nilfs_mdt_cno(dat) && blocknr == 0)
 		nilfs_dat_abort_free_vblocknr(dat, req);
 	nilfs_dat_abort_entry(dat, req);
 }
@@ -1005,17 +959,15 @@ int nilfs_dat_move(struct inode *dat, __u64 vblocknr, sector_t blocknr)
 	entry_kaddr = kmap_atomic(entry_bh->b_page, KM_USER0);
 	entry = nilfs_dat_block_get_entry(
 		dat, vblocknr, entry_bh, entry_kaddr);
-	if (nilfs_dat_entry_get_blocknr(dat, entry) == 0) {
-		printk(KERN_CRIT "%s: vbn = %llu, [%llu, %llu)\n",
-		       __func__,
+	if (entry->de_blocknr == cpu_to_le64(0)) {
+		printk(KERN_CRIT "%s: vbn = %llu, [%llu, %llu)\n", __func__,
 		       (unsigned long long)vblocknr,
-		       (unsigned long long)nilfs_dat_entry_get_start(dat,
-								     entry),
-		       (unsigned long long)nilfs_dat_entry_get_end(dat, entry));
+		       (unsigned long long)le64_to_cpu(entry->de_start),
+		       (unsigned long long)le64_to_cpu(entry->de_end));
 		BUG();
 	}
 	BUG_ON(blocknr == 0);
-	nilfs_dat_entry_set_blocknr(dat, entry, blocknr);
+	entry->de_blocknr = cpu_to_le64(blocknr);
 	kunmap_atomic(entry_kaddr, KM_USER0);
 
 	nilfs_mdt_mark_buffer_dirty(entry_bh);
@@ -1061,7 +1013,7 @@ int nilfs_dat_translate(struct inode *dat, __u64 vblocknr, sector_t *blocknrp)
 	}
 	entry_kaddr = kmap_atomic(entry_bh->b_page, KM_USER0);
 	entry = nilfs_dat_block_get_entry(dat, vblocknr, entry_bh, entry_kaddr);
-	blocknr = nilfs_dat_entry_get_blocknr(dat, entry);
+	blocknr = le64_to_cpu(entry->de_blocknr);
 	if (blocknr == 0) {
 #ifdef CONFIG_NILFS_DEBUG
 		printk(KERN_DEBUG "%s: invalid virtual block number: %llu\n",
@@ -1118,11 +1070,9 @@ ssize_t nilfs_dat_get_vinfo(struct inode *dat,
 		     j++, n++) {
 			entry = nilfs_dat_block_get_entry(
 				dat, vinfo[j].vi_vblocknr, entry_bh, kaddr);
-			vinfo[j].vi_start =
-				nilfs_dat_entry_get_start(dat, entry);
-			vinfo[j].vi_end = nilfs_dat_entry_get_end(dat, entry);
-			vinfo[j].vi_blocknr =
-				nilfs_dat_entry_get_blocknr(dat, entry);
+			vinfo[j].vi_start = le64_to_cpu(entry->de_start);
+			vinfo[j].vi_end = le64_to_cpu(entry->de_end);
+			vinfo[j].vi_blocknr = le64_to_cpu(entry->de_blocknr);
 		}
 		kunmap_atomic(kaddr, KM_USER0);
 		brelse(entry_bh);
