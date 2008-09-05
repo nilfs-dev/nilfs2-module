@@ -82,9 +82,6 @@ typedef void (nilfs_mdt_init_block_t)(struct inode *, struct buffer_head *,
 /* Default GFP flags using highmem */
 #define NILFS_MDT_GFP      (__GFP_WAIT | __GFP_IO | __GFP_HIGHMEM)
 
-int nilfs_mdt_create_block(struct inode *, unsigned long,
-			   struct buffer_head **, nilfs_mdt_init_block_t *);
-int nilfs_mdt_read_block(struct inode *, unsigned long, struct buffer_head **);
 int nilfs_mdt_get_block(struct inode *, unsigned long, int,
 			nilfs_mdt_init_block_t *, struct buffer_head **);
 int nilfs_mdt_delete_block(struct inode *, unsigned long);

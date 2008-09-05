@@ -136,29 +136,9 @@ nilfs_mdt_put_page_block(struct inode *inode, struct buffer_head *bh)
 	brelse(bh);
 }
 
-/**
- * nilfs_mdt_create_block - allocate a data block of the meta data file
- * @inode: inode of the meta data file
- * @block: block offset
- * @out_bh: output of a pointer to the buffer_head
- * @init_block: initializer of newly allocated block
- *
- * Return Value: On success, it returns 0.  On error, the following negative
- * error code is returned.
- *
- * %-ENOMEM - Insufficient memory available.
- *
- * %-EIO - I/O error
- *
- * %-EEXIST - the specified block already exists.
- *
- * %-EINVAL - bmap is broken. (the caller should call nilfs_error())
- *
- * %-EROFS - Read only filesystem.
- */
-int nilfs_mdt_create_block(struct inode *inode, unsigned long block,
-			   struct buffer_head **out_bh,
-			   nilfs_mdt_init_block_t *init_block)
+static int nilfs_mdt_create_block(struct inode *inode, unsigned long block,
+				  struct buffer_head **out_bh,
+				  nilfs_mdt_init_block_t *init_block)
 {
 	struct the_nilfs *nilfs = NILFS_MDT(inode)->mi_nilfs;
 	struct nilfs_sb_info *writer = NULL;
@@ -274,31 +254,8 @@ nilfs_mdt_submit_block(struct inode *inode, unsigned long blkoff,
 	return ret;
 }
 
-
-/**
- * nilfs_mdt_read_block - read a block on the meta data file.
- * @inode: inode of the meta data file
- * @block: block offset
- * @out_bh: output of a pointer to the buffer_head
- *
- * nilfs_mdt_read_block() looks up the specified buffer.
- * When the block is not mapped on disk, it returns ERR_PTR(-ENOENT).
- * Since the buffer is taken exclusively by a page and buffer lock, it is
- * assured to be either existing or formatted through nilfs_mdt_create_block().
- *
- * Return Value: On success, it returns 0. On error, the following negative
- * error code is returned.
- *
- * %-ENOMEM - Insufficient memory available.
- *
- * %-EIO - I/O error
- *
- * %-ENOENT - the specified block does not exist (hole block)
- *
- * %-EINVAL - bmap is broken. (the caller should call nilfs_error())
- */
-int nilfs_mdt_read_block(struct inode *inode, unsigned long block,
-			 struct buffer_head **out_bh)
+static int nilfs_mdt_read_block(struct inode *inode, unsigned long block,
+				struct buffer_head **out_bh)
 {
 	struct buffer_head *first_bh, *bh;
 	unsigned long blkoff;
@@ -358,25 +315,32 @@ int nilfs_mdt_read_block(struct inode *inode, unsigned long block,
 }
 
 /**
- * nilfs_mdt_get_block - read or create a block on the meta data file.
+ * nilfs_mdt_get_block - read or create a buffer on meta data file.
  * @inode: inode of the meta data file
- * @block: block offset
+ * @blkoff: block offset
  * @create: create flag
  * @init_block: initializer used for newly allocated block
  * @out_bh: output of a pointer to the buffer_head
  *
- * The returned buffer is assured to be either existing or formatted using
- * a buffer lock on success. out_bh is substituted only when zero is returned.
+ * nilfs_mdt_get_block() looks up the specified buffer and tries to create
+ * a new buffer if @create is not zero.  On success, the returned buffer is
+ * assured to be either existing or formatted using a buffer lock on success.
+ * @out_bh is substituted only when zero is returned.
+ *
+ * Return Value: On success, it returns 0. On error, the following negative
+ * error code is returned.
  *
  * %-ENOMEM - Insufficient memory available.
  *
  * %-EIO - I/O error
  *
- * %-ENOENT - the specified block does not exist
+ * %-ENOENT - the specified block does not exist (hole block)
  *
  * %-EINVAL - bmap is broken. (the caller should call nilfs_error())
+ *
+ * %-EROFS - Read only filesystem (for create mode)
  */
-int nilfs_mdt_get_block(struct inode *inode, unsigned long block, int create,
+int nilfs_mdt_get_block(struct inode *inode, unsigned long blkoff, int create,
 			nilfs_mdt_init_block_t *init_block,
 			struct buffer_head **out_bh)
 {
@@ -384,11 +348,11 @@ int nilfs_mdt_get_block(struct inode *inode, unsigned long block, int create,
 
 	/* Should be rewritten with merging nilfs_mdt_read_block() */
  retry:
-	ret = nilfs_mdt_read_block(inode, block, out_bh);
+	ret = nilfs_mdt_read_block(inode, blkoff, out_bh);
 	if (!create || ret != -ENOENT)
 		return ret;
 
-	ret = nilfs_mdt_create_block(inode, block, out_bh, init_block);
+	ret = nilfs_mdt_create_block(inode, blkoff, out_bh, init_block);
 	if (unlikely(ret == -EEXIST)) {
 		/* create = 0; */  /* limit read-create loop retries */
 		goto retry;

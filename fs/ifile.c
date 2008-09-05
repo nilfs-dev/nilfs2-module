@@ -247,7 +247,7 @@ int nilfs_ifile_get_inode_block(struct inode *ifile, ino_t ino,
 	}
 
 	blkoff = nilfs_ifile_entry_blkoff(ifile, ino);
-	err = nilfs_mdt_read_block(ifile, blkoff, out_bh);
+	err = nilfs_mdt_get_block(ifile, blkoff, 0, NULL, out_bh);
 	if (unlikely(err)) {
 		if (err == -EINVAL)
 			nilfs_error(sb, __func__, "ifile is broken");
