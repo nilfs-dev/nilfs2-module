@@ -645,12 +645,9 @@ static int match_bool(substring_t *s, int *result)
 {
 	int len = s->to - s->from;
 
-	if (strncmp(s->from, "on", len) == 0 ||
-	    strncmp(s->from, "true", len) == 0)
+	if (strncmp(s->from, "on", len) == 0)
 		*result = 1;
-	else if (strncmp(s->from, "off", len) == 0 ||
-		 strncmp(s->from, "false", len) == 0 ||
-		 strncmp(s->from, "none", len) == 0)
+	else if (strncmp(s->from, "off", len) == 0)
 		*result = 0;
 	else
 		return 1;
