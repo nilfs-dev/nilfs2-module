@@ -33,33 +33,30 @@
 static inline unsigned long
 nilfs_cpfile_checkpoints_per_block(const struct inode *cpfile)
 {
-	return (1UL << cpfile->i_blkbits) / sizeof(struct nilfs_checkpoint);
+	return NILFS_MDT(cpfile)->mi_entries_per_block;
 }
 
 /* block number from the beginning of the file */
-static inline unsigned long
+static unsigned long
 nilfs_cpfile_get_blkoff(const struct inode *cpfile, __u64 cno)
 {
 	__u64 tcno;
 
-	/* checkpoint number 0 is invalid */
-	BUG_ON(cno == 0);
-	tcno = cno + NILFS_CPFILE_FIRST_CHECKPOINT_OFFSET - 1;
+	BUG_ON(cno == 0); /* checkpoint number 0 is invalid */
+	tcno = cno + NILFS_MDT(cpfile)->mi_first_entry_offset - 1;
 	do_div(tcno, nilfs_cpfile_checkpoints_per_block(cpfile));
 	return (unsigned long)tcno;
 }
 
 /* offset in block */
-static inline unsigned long
+static unsigned long
 nilfs_cpfile_get_offset(const struct inode *cpfile, __u64 cno)
 {
-	__u64 tcno;
-
-	tcno = cno + NILFS_CPFILE_FIRST_CHECKPOINT_OFFSET - 1;
+	__u64 tcno = cno + NILFS_MDT(cpfile)->mi_first_entry_offset - 1;
 	return do_div(tcno, nilfs_cpfile_checkpoints_per_block(cpfile));
 }
 
-static inline unsigned long
+static unsigned long
 nilfs_cpfile_checkpoints_in_block(const struct inode *cpfile,
 				  __u64 curr,
 				  __u64 max)
@@ -82,10 +79,9 @@ nilfs_cpfile_block_add_valid_checkpoints(const struct inode *cpfile,
 					 void *kaddr,
 					 unsigned int n)
 {
-	struct nilfs_checkpoint *cp;
+	struct nilfs_checkpoint *cp = kaddr + bh_offset(bh);
 	unsigned int count;
 
-	cp = (struct nilfs_checkpoint *)(kaddr + bh_offset(bh));
 	count = le32_to_cpu(cp->cp_checkpoints_count) + n;
 	cp->cp_checkpoints_count = cpu_to_le32(count);
 	return count;
@@ -97,10 +93,9 @@ nilfs_cpfile_block_sub_valid_checkpoints(const struct inode *cpfile,
 					 void *kaddr,
 					 unsigned int n)
 {
-	struct nilfs_checkpoint *cp;
+	struct nilfs_checkpoint *cp = kaddr + bh_offset(bh);
 	unsigned int count;
 
-	cp = (struct nilfs_checkpoint *)(kaddr + bh_offset(bh));
 	BUG_ON(le32_to_cpu(cp->cp_checkpoints_count) < n);
 	count = le32_to_cpu(cp->cp_checkpoints_count) - n;
 	cp->cp_checkpoints_count = cpu_to_le32(count);
@@ -112,30 +107,30 @@ nilfs_cpfile_block_get_header(const struct inode *cpfile,
 			      struct buffer_head *bh,
 			      void *kaddr)
 {
-	return (struct nilfs_cpfile_header *)(kaddr + bh_offset(bh));
+	return kaddr + bh_offset(bh);
 }
 
-static inline struct nilfs_checkpoint *
-nilfs_cpfile_block_get_checkpoint(const struct inode *cpfile,
-				  __u64 cno,
+static struct nilfs_checkpoint *
+nilfs_cpfile_block_get_checkpoint(const struct inode *cpfile, __u64 cno,
 				  struct buffer_head *bh,
 				  void *kaddr)
 {
-	return (struct nilfs_checkpoint *)(kaddr + bh_offset(bh)) +
-		nilfs_cpfile_get_offset(cpfile, cno);
+	return kaddr + bh_offset(bh) + nilfs_cpfile_get_offset(cpfile, cno) *
+		NILFS_MDT(cpfile)->mi_entry_size;
 }
 
 static void nilfs_cpfile_block_init(struct inode *cpfile,
 				    struct buffer_head *bh,
 				    void *kaddr)
 {
-	struct nilfs_checkpoint *cp;
-	int i;
+	struct nilfs_checkpoint *cp = kaddr + bh_offset(bh);
+	size_t cpsz = NILFS_MDT(cpfile)->mi_entry_size;
+	int n = nilfs_cpfile_checkpoints_per_block(cpfile);
 
-	for (i = 0, cp = (struct nilfs_checkpoint *)(kaddr + bh_offset(bh));
-	     i < nilfs_cpfile_checkpoints_per_block(cpfile);
-	     i++, cp++)
+	while (n-- > 0) {
 		nilfs_checkpoint_set_invalid(cp);
+		cp = (void *)cp + cpsz;
+	}
 }
 
 static inline int nilfs_cpfile_get_header_block(struct inode *cpfile,
@@ -196,9 +191,8 @@ int nilfs_cpfile_get_checkpoint(struct inode *cpfile,
 	void *kaddr;
 	int ret;
 
-	BUG_ON((cno < 1) ||
-	       (cno > nilfs_mdt_cno(cpfile)) ||
-	       ((cno < nilfs_mdt_cno(cpfile)) && create));
+	BUG_ON(cno < 1 || cno > nilfs_mdt_cno(cpfile) ||
+	       (cno < nilfs_mdt_cno(cpfile) && create));
 
 	down_write(&NILFS_MDT(cpfile)->mi_sem);
 
@@ -230,13 +224,11 @@ int nilfs_cpfile_get_checkpoint(struct inode *cpfile,
 		le64_add_cpu(&header->ch_ncheckpoints, 1);
 		kunmap_atomic(kaddr, KM_USER0);
 		nilfs_mdt_mark_buffer_dirty(header_bh);
-
 		nilfs_mdt_mark_dirty(cpfile);
 	}
 
 	if (cpp != NULL)
 		*cpp = cp;
-	BUG_ON(bhp == NULL);
 	*bhp = cp_bh;
 
  out_header:
@@ -257,11 +249,9 @@ int nilfs_cpfile_get_checkpoint(struct inode *cpfile,
  * specified by @cno. @bh must be the buffer head which has been returned by
  * a previous call to nilfs_cpfile_get_checkpoint() with @cno.
  */
-void nilfs_cpfile_put_checkpoint(struct inode *cpfile,
-				 __u64 cno,
+void nilfs_cpfile_put_checkpoint(struct inode *cpfile, __u64 cno,
 				 struct buffer_head *bh)
 {
-	/* XXX: must check cno */
 	kunmap(bh->b_page);
 	brelse(bh);
 }
@@ -292,6 +282,7 @@ int nilfs_cpfile_delete_checkpoints(struct inode *cpfile,
 	struct buffer_head *header_bh, *cp_bh;
 	struct nilfs_cpfile_header *header;
 	struct nilfs_checkpoint *cp;
+	size_t cpsz = NILFS_MDT(cpfile)->mi_entry_size;
 	__u64 cno;
 	void *kaddr;
 	unsigned long tnicps;
@@ -331,7 +322,7 @@ int nilfs_cpfile_delete_checkpoints(struct inode *cpfile,
 		cp = nilfs_cpfile_block_get_checkpoint(
 			cpfile, cno, cp_bh, kaddr);
 		nicps = 0;
-		for (i = 0; i < ncps; i++, cp++) {
+		for (i = 0; i < ncps; i++, cp = (void *)cp + cpsz) {
 			BUG_ON(nilfs_checkpoint_snapshot(cp));
 			if (!nilfs_checkpoint_invalid(cp)) {
 				nilfs_checkpoint_set_invalid(cp);
@@ -343,20 +334,18 @@ int nilfs_cpfile_delete_checkpoints(struct inode *cpfile,
 			nilfs_mdt_mark_buffer_dirty(cp_bh);
 			nilfs_mdt_mark_dirty(cpfile);
 			if (!nilfs_cpfile_is_in_first(cpfile, cno) &&
-			    ((count = nilfs_cpfile_block_sub_valid_checkpoints(
-				      cpfile, cp_bh, kaddr, nicps)) == 0)) {
+			    (count = nilfs_cpfile_block_sub_valid_checkpoints(
+				    cpfile, cp_bh, kaddr, nicps)) == 0) {
 				/* make hole */
 				kunmap_atomic(kaddr, KM_USER0);
 				brelse(cp_bh);
 				ret = nilfs_cpfile_delete_checkpoint_block(
 					cpfile, cno);
-				if (ret < 0) {
-					printk(KERN_ERR
-					       "%s: cannot delete block\n",
-					       __func__);
-					goto out_sem;
-				}
-				continue;
+				if (ret == 0)
+					continue;
+				printk(KERN_ERR "%s: cannot delete block\n",
+				       __func__);
+				goto out_sem;
 			}
 		}
 
@@ -393,32 +382,31 @@ static void nilfs_cpfile_checkpoint_to_cpinfo(struct inode *cpfile,
 	ci->ci_next = le64_to_cpu(cp->cp_snapshot_list.ssl_next);
 }
 
-static ssize_t
-nilfs_cpfile_do_get_cpinfo(struct inode *cpfile, __u64 cno,
-			   struct nilfs_cpinfo *ci, size_t nci)
+static ssize_t nilfs_cpfile_do_get_cpinfo(struct inode *cpfile, __u64 cno,
+					  struct nilfs_cpinfo *ci, size_t nci)
 {
 	struct nilfs_checkpoint *cp;
 	struct buffer_head *bh;
+	size_t cpsz = NILFS_MDT(cpfile)->mi_entry_size;
+	__u64 cur_cno = nilfs_mdt_cno(cpfile);
 	void *kaddr;
 	int n, ret;
 	int ncps, i;
 
 	down_read(&NILFS_MDT(cpfile)->mi_sem);
 
-	for (n = 0; (cno < nilfs_mdt_cno(cpfile)) && (n < nci); cno += ncps) {
-		ncps = nilfs_cpfile_checkpoints_in_block(
-			cpfile, cno, nilfs_mdt_cno(cpfile));
+	for (n = 0; cno < cur_cno && n < nci; cno += ncps) {
+		ncps = nilfs_cpfile_checkpoints_in_block(cpfile, cno, cur_cno);
 		ret = nilfs_cpfile_get_checkpoint_block(cpfile, cno, 0, &bh);
 		if (ret < 0) {
 			if (ret != -ENOENT)
 				goto out;
-			/* skip hole */
-			continue;
+			continue; /* skip hole */
 		}
 
 		kaddr = kmap_atomic(bh->b_page, KM_USER0);
 		cp = nilfs_cpfile_block_get_checkpoint(cpfile, cno, bh, kaddr);
-		for (i = 0; (i < ncps) && (n < nci); i++, cp++) {
+		for (i = 0; i < ncps && n < nci; i++, cp = (void *)cp + cpsz) {
 			if (!nilfs_checkpoint_invalid(cp))
 				nilfs_cpfile_checkpoint_to_cpinfo(
 					cpfile, cp, &ci[n++]);
@@ -434,9 +422,8 @@ nilfs_cpfile_do_get_cpinfo(struct inode *cpfile, __u64 cno,
 	return ret;
 }
 
-static ssize_t
-nilfs_cpfile_do_get_ssinfo(struct inode *cpfile, __u64 cno,
-			   struct nilfs_cpinfo *ci, size_t nci)
+static ssize_t nilfs_cpfile_do_get_ssinfo(struct inode *cpfile, __u64 cno,
+					  struct nilfs_cpinfo *ci, size_t nci)
 {
 	struct buffer_head *bh;
 	struct nilfs_cpfile_header *header;
@@ -538,14 +525,14 @@ int nilfs_cpfile_delete_checkpoint(struct inode *cpfile, __u64 cno)
 	nci = nilfs_cpfile_do_get_cpinfo(cpfile, cno, &ci, 1);
 	if (nci < 0)
 		return nci;
-	else if ((nci == 0) || (ci.ci_cno != cno))
+	else if (nci == 0 || ci.ci_cno != cno)
 		return -ENOENT;
 
 	/* cannot delete the latest checkpoint nor snapshots */
 	ret = nilfs_cpinfo_snapshot(&ci);
 	if (ret < 0)
 		return ret;
-	else if ((ret > 0) || (cno == nilfs_mdt_cno(cpfile) - 1))
+	else if (ret > 0 || cno == nilfs_mdt_cno(cpfile) - 1)
 		return -EPERM;
 
 	return nilfs_cpfile_delete_checkpoints(cpfile, cno, cno + 1);

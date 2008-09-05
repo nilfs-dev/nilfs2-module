@@ -52,7 +52,7 @@ struct nilfs_mdt_info {
 	unsigned long		mi_groups_count;
 };
 
-static inline struct nilfs_mdt_info *NILFS_MDT(struct inode *inode)
+static inline struct nilfs_mdt_info *NILFS_MDT(const struct inode *inode)
 {
 #if NEED_INODE_GENERIC_IP
 	return inode->u.generic_ip;
