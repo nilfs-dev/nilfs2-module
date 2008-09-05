@@ -49,12 +49,6 @@ struct nilfs_dat_req {
 };
 
 static inline unsigned long
-nilfs_dat_entries_per_block(const struct inode *dat)
-{
-	return (1UL << dat->i_blkbits) / sizeof(struct nilfs_dat_entry);
-}
-
-static inline unsigned long
 nilfs_dat_entries_per_group(const struct inode *dat)
 {
 	return (1UL << dat->i_blkbits) * 8 /* CHAR_BIT */;

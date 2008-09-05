@@ -34,6 +34,12 @@
 #define NILFS_CNO_MAX	(~(__u64)0)
 
 static inline unsigned long
+nilfs_dat_entries_per_block(const struct inode *dat)
+{
+	return NILFS_MDT(dat)->mi_entries_per_block;
+}
+
+static inline unsigned long
 nilfs_dat_groups_per_desc_block(const struct inode *dat)
 {
 	return (1UL << dat->i_blkbits) / sizeof(struct nilfs_dat_group_desc);
@@ -241,8 +247,9 @@ nilfs_dat_block_get_entry(const struct inode *dat,
 			  const struct buffer_head *bh,
 			  void *kaddr)
 {
-	return (struct nilfs_dat_entry *)(kaddr + bh_offset(bh)) +
-		nilfs_dat_entry_offset(dat, vblocknr);
+	return kaddr + bh_offset(bh) +
+		nilfs_dat_entry_offset(dat, vblocknr) *
+		NILFS_MDT(dat)->mi_entry_size;
 }
 
 
