@@ -105,8 +105,8 @@ void nilfs_mdt_mark_buffer_dirty(struct buffer_head *bh);
 
 static inline void nilfs_mdt_mark_dirty(struct inode *inode)
 {
-	mdt_debug(3, "called (ino=%lu)\n", inode->i_ino);
-	set_bit(NILFS_I_DIRTY, &NILFS_I(inode)->i_state);
+	if (!test_bit(NILFS_I_DIRTY, &NILFS_I(inode)->i_state))
+		set_bit(NILFS_I_DIRTY, &NILFS_I(inode)->i_state);
 }
 
 static inline void nilfs_mdt_clear_dirty(struct inode *inode)
