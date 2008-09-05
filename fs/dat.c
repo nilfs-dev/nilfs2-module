@@ -811,38 +811,6 @@ int nilfs_dat_mark_dirty(struct inode *dat, __u64 vblocknr)
 	return ret;
 }
 
-/**
- * nilfs_dat_alloc - allocate a virtual block number
- * @dat: DAT file inode
- * @vblocknr: virtual block number
- *
- * Description: nilfs_dat_alloc() allocates a new virtual block number,
- * preferably @vblocknr.
- *
- * Return Value: On success, 0 is returned and the newly allocated virtual
- * block number is stored in the place pointed by @vblocknr. On error, one of
- * the following negative error codes is returned.
- *
- * %-EIO - I/O error.
- *
- * %-ENOMEM - Insufficient amount of memory available.
- *
- * %-ENOSPC - No virtual block number left.
- */
-int nilfs_dat_alloc(struct inode *dat, __u64 *vblocknr)
-{
-	struct nilfs_dat_req req;
-	int ret;
-
-	req.dr_vblocknr = *vblocknr;
-	ret = nilfs_dat_prepare_alloc(dat, &req);
-	if (ret < 0)
-		return ret;
-	nilfs_dat_commit_alloc(dat, &req);
-	*vblocknr = req.dr_vblocknr;
-	return 0;
-}
-
 static inline int
 nilfs_dat_group_is_in(struct inode *dat, unsigned long group, __u64 vblocknr)
 {

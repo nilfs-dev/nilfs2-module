@@ -77,8 +77,6 @@ int nilfs_dat_prepare_end(struct inode *, struct nilfs_dat_req *);
 void nilfs_dat_commit_end(struct inode *, struct nilfs_dat_req *, int);
 void nilfs_dat_abort_end(struct inode *, struct nilfs_dat_req *);
 
-int nilfs_dat_alloc(struct inode *, __u64 *);
-
 int nilfs_dat_mark_dirty(struct inode *, __u64);
 int nilfs_dat_freev(struct inode *, __u64 *, size_t);
 int nilfs_dat_move(struct inode *, __u64, sector_t);
