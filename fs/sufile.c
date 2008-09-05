@@ -575,69 +575,6 @@ int nilfs_sufile_set_error(struct inode *sufile, __u64 segnum)
 }
 
 /**
- * nilfs_sufile_get_segment_usages -
- * @sufile: inode of segment usage file
- * @segnum: segment number to start looking
- * @sus: array of segment usage
- * @size: size of segment usage array
- *
- * Description:
- *
- * Return Value: On success, 0 is returned and .... On error, one of the
- * following negative error codes is returned.
- *
- * %-EIO - I/O error.
- *
- * %-ENOMEM - Insufficient amount of memory available.
- */
-ssize_t nilfs_sufile_get_segment_usages(struct inode *sufile, __u64 segnum,
-					struct nilfs_segment_usage *sus,
-					size_t size)
-{
-	struct buffer_head *su_bh;
-	struct nilfs_segment_usage *su;
-	void *kaddr;
-	unsigned long nsegs, segusages_per_block;
-	ssize_t n;
-	int ret, i;
-
-	down_read(&NILFS_MDT(sufile)->mi_sem);
-
-	segusages_per_block = nilfs_sufile_segment_usages_per_block(sufile);
-	nsegs = min_t(unsigned long,
-		      nilfs_sufile_get_nsegments(sufile) - segnum,
-		      size);
-	for (i = 0; i < nsegs; i += n, segnum += n) {
-		n = min_t(unsigned long,
-			  segusages_per_block -
-				  nilfs_sufile_get_offset(sufile, segnum),
-			  nsegs - i);
-		ret = nilfs_sufile_get_segment_usage_block(sufile, segnum, 0,
-							   &su_bh);
-		if (ret < 0) {
-			if (ret != -ENOENT)
-				goto out;
-			/* hole */
-			memset(&sus[i], 0,
-			       sizeof(struct nilfs_segment_usage) * n);
-			continue;
-		}
-
-		kaddr = kmap_atomic(su_bh->b_page, KM_USER0);
-		su = nilfs_sufile_block_get_segment_usage(
-			sufile, segnum, su_bh, kaddr);
-		memcpy(&sus[i], su, sizeof(struct nilfs_segment_usage) * n);
-		kunmap_atomic(kaddr, KM_USER0);
-		brelse(su_bh);
-	}
-	ret = nsegs;
-
- out:
-	up_read(&NILFS_MDT(sufile)->mi_sem);
-	return ret;
-}
-
-/**
  * nilfs_sufile_get_suinfo -
  * @sufile: inode of segment usage file
  * @segnum: segment number to start looking

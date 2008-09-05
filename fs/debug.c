@@ -543,7 +543,8 @@ void nilfs_print_segment_list(const char *name, struct list_head *head,
 
 	printk(KERN_DEBUG "segment list: %s\n", name);
 	list_for_each_entry(ent, head, list) {
-		struct nilfs_segment_usage segusage;
+		struct nilfs_segment_usage *raw_su;
+		struct buffer_head *bh_su;
 		char b[MSIZ];
 		int n = 0, len = 0;
 		unsigned flags = ent->flags;
@@ -557,12 +558,13 @@ void nilfs_print_segment_list(const char *name, struct list_head *head,
 		} else {
 			TEST_SLH_FLAG(flags, FREED, b, MSIZ, n, len);
 		}
-		err = nilfs_sufile_get_segment_usages(sufile, ent->segnum,
-						      &segusage, 1);
+		err = nilfs_sufile_get_segment_usage(sufile, ent->segnum,
+						     &raw_su, &bh_su);
 		if (likely(!err)) {
 			len += snprintf(b + len, MSIZ - len, " su-flags=");
-			len += snprint_su_flags(b + len, MSIZ - len,
-						&segusage);
+			len += snprint_su_flags(b + len, MSIZ - len, raw_su);
+			nilfs_sufile_put_segment_usage(sufile, ent->segnum,
+						       bh_su);
 		}
 		printk(KERN_DEBUG "SLH(segnum=%llu) %s bh_su=%p raw_su=%p\n",
 		       (unsigned long long)ent->segnum, b, ent->bh_su,
