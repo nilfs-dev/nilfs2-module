@@ -17,7 +17,8 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  *
- * Written by Amagai Yoshiji <amagai@osrg.net>
+ * Written by Amagai Yoshiji <amagai@osrg.net>,
+ *            Ryusuke Konishi <ryusuke@osrg.net>.
  */
 
 #ifndef _NILFS_ALLOC_H
@@ -29,7 +30,13 @@
 #include <linux/bitops.h>
 
 
-static inline int nilfs_palloc_entries_per_group(struct inode *inode)
+static inline unsigned long nilfs_palloc_groups_count(struct inode *inode)
+{
+	return 1UL << (BITS_PER_LONG - (inode->i_blkbits + 3 /* log2(8) */));
+}
+
+static inline unsigned long
+nilfs_palloc_entries_per_group(struct inode *inode)
 {
 	return (1UL << inode->i_blkbits) * 8 /* CHAR_BIT */;
 }
@@ -105,6 +112,7 @@ static inline void nilfs_palloc_put_entry_block(const struct inode *inode,
 	brelse(bh);
 }
 
+int nilfs_palloc_init_blockgroup(struct inode *, unsigned);
 int nilfs_palloc_prepare_alloc_entry(struct inode *, struct nilfs_palloc_req *,
 				     unsigned long *, int *);
 void nilfs_palloc_abort_alloc_entry(struct inode *, struct nilfs_palloc_req *,

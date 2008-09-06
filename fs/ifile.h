@@ -41,7 +41,5 @@ int nilfs_ifile_delete_inode(struct inode *, ino_t);
 int nilfs_ifile_get_inode_block(struct inode *, ino_t, struct buffer_head **);
 
 #define NILFS_IFILE_GFP  NILFS_MDT_GFP
-#define NILFS_IFILE_GROUPS_COUNT(blkbits) \
-	(1UL << (BITS_PER_LONG - ((blkbits) + 3 /* log2(8) */)))
 
 #endif	/* _NILFS_IFILE_H */

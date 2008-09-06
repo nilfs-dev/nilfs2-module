@@ -31,8 +31,6 @@
 
 
 #define NILFS_DAT_GFP	NILFS_MDT_GFP
-#define NILFS_DAT_GROUPS_COUNT(blkbits) \
-	(1UL << (BITS_PER_LONG - ((blkbits) + 3 /* log2(8) */)))
 
 /**
  * nilfs_dat_req - request to DAT

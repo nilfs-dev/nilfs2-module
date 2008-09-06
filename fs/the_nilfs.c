@@ -31,6 +31,7 @@
 #include "sufile.h"
 #include "seglist.h"
 #include "segbuf.h"
+#include "alloc.h"
 
 void nilfs_set_last_segment(struct the_nilfs *nilfs,
 			    sector_t start_blocknr, u64 seq, __u64 cno)
@@ -123,7 +124,6 @@ static int nilfs_load_super_root(struct the_nilfs *nilfs,
 	struct buffer_head *bh_sr;
 	struct nilfs_super_root *raw_sr;
 	unsigned dat_entry_size, segment_usage_size, checkpoint_size;
-	unsigned long dat_groups_count;
 	unsigned inode_size;
 	int err;
 
@@ -139,7 +139,6 @@ static int nilfs_load_super_root(struct the_nilfs *nilfs,
 	segment_usage_size = le16_to_cpu(nilfs->ns_sbp->s_segment_usage_size);
 	up_read(&nilfs->ns_sem);
 
-	dat_groups_count = NILFS_DAT_GROUPS_COUNT(nilfs->ns_blocksize_bits);
 	inode_size = nilfs->ns_inode_size;
 
 	err = -ENOMEM;
@@ -163,13 +162,11 @@ static int nilfs_load_super_root(struct the_nilfs *nilfs,
 	if (unlikely(!nilfs->ns_sufile))
 		goto failed_cpfile;
 
-	err = nilfs_mdt_init_blockgroup(
-		nilfs->ns_dat, dat_entry_size, dat_groups_count);
+	err = nilfs_palloc_init_blockgroup(nilfs->ns_dat, dat_entry_size);
 	if (unlikely(err))
 		goto failed_sufile;
 
-	err = nilfs_mdt_init_blockgroup(
-		nilfs->ns_gc_dat, dat_entry_size, dat_groups_count);
+	err = nilfs_palloc_init_blockgroup(nilfs->ns_gc_dat, dat_entry_size);
 	if (unlikely(err))
 		goto failed_sufile;
 

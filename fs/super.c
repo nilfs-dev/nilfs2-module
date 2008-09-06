@@ -420,9 +420,7 @@ int nilfs_attach_checkpoint(struct nilfs_sb_info *sbi, __u64 cno)
 	if (!sbi->s_ifile)
 		return -ENOMEM;
 
-	err = nilfs_mdt_init_blockgroup(
-		sbi->s_ifile, nilfs->ns_inode_size,
-		NILFS_IFILE_GROUPS_COUNT(nilfs->ns_blocksize_bits));
+	err = nilfs_palloc_init_blockgroup(sbi->s_ifile, nilfs->ns_inode_size);
 	if (unlikely(err))
 		goto failed;
 

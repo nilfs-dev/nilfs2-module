@@ -22,6 +22,25 @@
 #include "mdt.h"
 #include "alloc.h"
 
+
+int nilfs_palloc_init_blockgroup(struct inode *inode, unsigned entry_size)
+{
+	struct nilfs_mdt_info *mi = NILFS_MDT(inode);
+
+	mi->mi_bgl = kmalloc(sizeof(*mi->mi_bgl), GFP_NOFS);
+	if (!mi->mi_bgl)
+		return -ENOMEM;
+
+	bgl_lock_init(mi->mi_bgl);
+
+	nilfs_mdt_set_entry_size(inode, entry_size, 0);
+	mi->mi_blocks_per_group =
+		nilfs_palloc_entries_per_group(inode) /
+		mi->mi_entries_per_block + 1;
+	mi->mi_groups_count = nilfs_palloc_groups_count(inode);
+	return 0;
+}
+
 static inline unsigned long
 nilfs_palloc_desc_offset(struct inode *inode, unsigned long group)
 {
