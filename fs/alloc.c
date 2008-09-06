@@ -23,81 +23,75 @@
 #include "alloc.h"
 
 static inline unsigned long
-nilfs_persistent_desc_offset(struct inode *inode, unsigned long group)
+nilfs_palloc_desc_offset(struct inode *inode, unsigned long group)
 {
-	return group % nilfs_persistent_group_descs_per_block(inode);
+	return group % nilfs_palloc_group_descs_per_block(inode);
 }
 
-
-struct nilfs_persistent_group_desc *
-nilfs_persistent_get_group_desc(struct inode *inode, unsigned long group,
-				const struct buffer_head *desc_bh)
+struct nilfs_palloc_group_desc *
+nilfs_palloc_get_group_desc(struct inode *inode, unsigned long group,
+			    const struct buffer_head *desc_bh)
 {
 	void *kaddr = kmap(desc_bh->b_page);
 
-	return (struct nilfs_persistent_group_desc *)
+	return (struct nilfs_palloc_group_desc *)
 		(kaddr + bh_offset(desc_bh)) +
-		nilfs_persistent_desc_offset(inode, group);
+		nilfs_palloc_desc_offset(inode, group);
 }
 
 static void
-nilfs_persistent_desc_block_init(struct inode *inode, struct buffer_head *bh,
-				 void *kaddr)
+nilfs_palloc_desc_block_init(struct inode *inode, struct buffer_head *bh,
+			     void *kaddr)
 {
-	struct nilfs_persistent_group_desc *desc = kaddr + bh_offset(bh);
+	struct nilfs_palloc_group_desc *desc = kaddr + bh_offset(bh);
 	int i;
 
-	for (i = 0; i < nilfs_persistent_group_descs_per_block(inode); i++) {
+	for (i = 0; i < nilfs_palloc_group_descs_per_block(inode); i++) {
 		desc->pg_nfrees =
-			cpu_to_le32(nilfs_persistent_entries_per_group(inode));
+			cpu_to_le32(nilfs_palloc_entries_per_group(inode));
 		desc++;
 	}
 }
 
 char *
-nilfs_persistent_get_group_bitmap_buffer(struct inode *inode,
-					 const struct buffer_head *bitmap_bh)
+nilfs_palloc_get_group_bitmap_buffer(struct inode *inode,
+				     const struct buffer_head *bitmap_bh)
 {
 	void *kaddr = kmap(bitmap_bh->b_page);
 
 	return (char *)(kaddr + bh_offset(bitmap_bh));
 }
 
-void
-nilfs_persistent_put_group_bitmap_buffer(struct inode *inode,
-					 const struct buffer_head *bitmap_bh)
+void nilfs_palloc_put_group_bitmap_buffer(struct inode *inode,
+					  const struct buffer_head *bitmap_bh)
 {
 	kunmap(bitmap_bh->b_page);
 }
 
-int
-nilfs_persistent_get_group_desc_block(struct inode *inode, unsigned long group,
+int nilfs_palloc_get_group_desc_block(struct inode *inode,
+				      unsigned long group,
 				      struct buffer_head **desc_bhp)
 {
-	unsigned long blkoff =
-		nilfs_persistent_group_desc_blkoff(inode, group);
+	unsigned long blkoff = nilfs_palloc_group_desc_blkoff(inode, group);
 
 	return nilfs_mdt_get_block(inode, blkoff, 1,
-				   nilfs_persistent_desc_block_init, desc_bhp);
+				   nilfs_palloc_desc_block_init, desc_bhp);
 }
 
 static int
-nilfs_persistent_get_group_bitmap_block(struct inode *inode,
-					unsigned long group,
-					struct buffer_head **bitmap_bhp)
+nilfs_palloc_get_group_bitmap_block(struct inode *inode, unsigned long group,
+				    struct buffer_head **bitmap_bhp)
 {
-	unsigned long blkoff =
-		nilfs_persistent_group_bitmap_blkoff(inode, group);
+	unsigned long blkoff = nilfs_palloc_group_bitmap_blkoff(inode, group);
 
 	return nilfs_mdt_get_block(inode, blkoff, 1, NULL, bitmap_bhp);
 }
 
-static int
-nilfs_persistent_group_find_available_slot(struct inode *inode,
-					   unsigned long group,
-					   unsigned long target,
-					   unsigned char *bitmap,
-					   int bsize)
+static int nilfs_palloc_group_find_available_slot(struct inode *inode,
+						  unsigned long group,
+						  unsigned long target,
+						  unsigned char *bitmap,
+						  int bsize)
 {
 	int curr, pos, end;
 	int i;
@@ -137,19 +131,19 @@ nilfs_persistent_group_find_available_slot(struct inode *inode,
 	return -ENOSPC;
 }
 
-int nilfs_persistent_prepare_alloc_entry(struct inode *inode,
-					 struct nilfs_persistent_req *req,
-					 unsigned long *group_p, int *target_p)
+int nilfs_palloc_prepare_alloc_entry(struct inode *inode,
+				     struct nilfs_palloc_req *req,
+				     unsigned long *group_p, int *target_p)
 {
 	struct buffer_head *desc_bh, *bitmap_bh;
-	struct nilfs_persistent_group_desc *desc;
+	struct nilfs_palloc_group_desc *desc;
 	unsigned long group;
 	unsigned long ngroups;
 	char *start;
 	int pos, target, ret, bsize;
 	unsigned long i;
 
-	bsize = nilfs_persistent_entries_per_group(inode);
+	bsize = nilfs_palloc_entries_per_group(inode);
 
 	group = *group_p;
 	target = *target_p;
@@ -159,23 +153,23 @@ int nilfs_persistent_prepare_alloc_entry(struct inode *inode,
 	for (i = 0; i < ngroups; i++, group++) {
 		if (group >= ngroups)
 			group = 0;
-		ret = nilfs_persistent_get_group_desc_block(inode, group,
+		ret = nilfs_palloc_get_group_desc_block(inode, group,
 							    &desc_bh);
 		if (ret < 0)
 			return ret;
-		desc = nilfs_persistent_get_group_desc(inode, group, desc_bh);
+		desc = nilfs_palloc_get_group_desc(inode, group, desc_bh);
 		if (le32_to_cpu(desc->pg_nfrees) > 0) {
-			ret = nilfs_persistent_get_group_bitmap_block(
+			ret = nilfs_palloc_get_group_bitmap_block(
 				inode, group, &bitmap_bh);
 			if (ret < 0) {
-				nilfs_persistent_put_group_desc(inode, desc_bh);
-				nilfs_persistent_put_group_desc_block(
+				nilfs_palloc_put_group_desc(inode, desc_bh);
+				nilfs_palloc_put_group_desc_block(
 					inode, desc_bh);
 				return ret;
 			}
-			start = nilfs_persistent_get_group_bitmap_buffer(
+			start = nilfs_palloc_get_group_bitmap_buffer(
 				inode, bitmap_bh);
-			pos = nilfs_persistent_group_find_available_slot(
+			pos = nilfs_palloc_group_find_available_slot(
 				inode, group, target, start, bsize);
 			if (pos >= 0) {
 				/* found a free inode number */
@@ -189,75 +183,75 @@ int nilfs_persistent_prepare_alloc_entry(struct inode *inode,
 				req->pr_bitmap_bh = bitmap_bh;
 				return 0;
 			}
-			nilfs_persistent_put_group_bitmap_buffer(inode,
+			nilfs_palloc_put_group_bitmap_buffer(inode,
 								 bitmap_bh);
-			nilfs_persistent_put_group_bitmap_block(inode,
+			nilfs_palloc_put_group_bitmap_block(inode,
 								bitmap_bh);
 		}
-		nilfs_persistent_put_group_desc(inode, desc_bh);
-		nilfs_persistent_put_group_desc_block(inode, desc_bh);
+		nilfs_palloc_put_group_desc(inode, desc_bh);
+		nilfs_palloc_put_group_desc_block(inode, desc_bh);
 		target = 0;
 	}
 
 	return -ENOSPC;
 }
 
-void nilfs_persistent_commit_alloc_entry(struct inode *inode,
-					 struct nilfs_persistent_req *req)
+void nilfs_palloc_commit_alloc_entry(struct inode *inode,
+				     struct nilfs_palloc_req *req)
 {
 	nilfs_mdt_mark_buffer_dirty(req->pr_bitmap_bh);
 	nilfs_mdt_mark_buffer_dirty(req->pr_desc_bh);
 
-	nilfs_persistent_put_group_bitmap_buffer(inode, req->pr_bitmap_bh);
-	nilfs_persistent_put_group_bitmap_block(inode, req->pr_bitmap_bh);
-	nilfs_persistent_put_group_desc(inode, req->pr_desc_bh);
-	nilfs_persistent_put_group_desc_block(inode, req->pr_desc_bh);
+	nilfs_palloc_put_group_bitmap_buffer(inode, req->pr_bitmap_bh);
+	nilfs_palloc_put_group_bitmap_block(inode, req->pr_bitmap_bh);
+	nilfs_palloc_put_group_desc(inode, req->pr_desc_bh);
+	nilfs_palloc_put_group_desc_block(inode, req->pr_desc_bh);
 }
 
-void nilfs_persistent_abort_alloc_entry(struct inode *inode,
-					struct nilfs_persistent_req *req,
-					unsigned long group, int grpoff)
+void nilfs_palloc_abort_alloc_entry(struct inode *inode,
+				    struct nilfs_palloc_req *req,
+				    unsigned long group, int grpoff)
 {
-	struct nilfs_persistent_group_desc *desc;
+	struct nilfs_palloc_group_desc *desc;
 	char *bitmap_buffer;
 
-	desc = nilfs_persistent_get_group_desc(inode, group, req->pr_desc_bh);
-	bitmap_buffer = nilfs_persistent_get_group_bitmap_buffer(
+	desc = nilfs_palloc_get_group_desc(inode, group, req->pr_desc_bh);
+	bitmap_buffer = nilfs_palloc_get_group_bitmap_buffer(
 		inode, req->pr_bitmap_bh);
 
 	if (!nilfs_clear_bit_atomic(
 		    nilfs_mdt_bgl_lock(inode, group), grpoff, bitmap_buffer))
 		printk(KERN_WARNING
-		       "persistent entry numer %lu already freed\n",
+		       "palloc entry numer %lu already freed\n",
 		       req->pr_ino);
 
 	spin_lock(nilfs_mdt_bgl_lock(inode, group));
 	le32_add_cpu(&desc->pg_nfrees, 1);
 	spin_unlock(nilfs_mdt_bgl_lock(inode, group));
 
-	nilfs_persistent_put_group_bitmap_buffer(inode, req->pr_bitmap_bh);
-	nilfs_persistent_put_group_bitmap_block(inode, req->pr_bitmap_bh);
-	nilfs_persistent_put_group_desc(inode, req->pr_desc_bh);
-	nilfs_persistent_put_group_desc_block(inode, req->pr_desc_bh);
+	nilfs_palloc_put_group_bitmap_buffer(inode, req->pr_bitmap_bh);
+	nilfs_palloc_put_group_bitmap_block(inode, req->pr_bitmap_bh);
+	nilfs_palloc_put_group_desc(inode, req->pr_desc_bh);
+	nilfs_palloc_put_group_desc_block(inode, req->pr_desc_bh);
 
 	req->pr_nslot = 0;
 	req->pr_bitmap_bh = NULL;
 	req->pr_desc_bh = NULL;
 }
 
-int nilfs_persistent_prepare_free_entry(struct inode *inode,
-					struct nilfs_persistent_req *req,
-					unsigned long group)
+int nilfs_palloc_prepare_free_entry(struct inode *inode,
+				    struct nilfs_palloc_req *req,
+				    unsigned long group)
 {
 	struct buffer_head *desc_bh, *bitmap_bh;
 	int ret;
 
-	ret = nilfs_persistent_get_group_desc_block(inode, group, &desc_bh);
+	ret = nilfs_palloc_get_group_desc_block(inode, group, &desc_bh);
 	if (ret < 0)
 		return ret;
-	ret = nilfs_persistent_get_group_bitmap_block(inode, group, &bitmap_bh);
+	ret = nilfs_palloc_get_group_bitmap_block(inode, group, &bitmap_bh);
 	if (ret < 0) {
-		nilfs_persistent_put_group_desc_block(inode, desc_bh);
+		nilfs_palloc_put_group_desc_block(inode, desc_bh);
 		return ret;
 	}
 
@@ -267,13 +261,13 @@ int nilfs_persistent_prepare_free_entry(struct inode *inode,
 	return 0;
 }
 
-void nilfs_persistent_abort_free_entry(struct inode *inode,
-				       struct nilfs_persistent_req *req)
+void nilfs_palloc_abort_free_entry(struct inode *inode,
+				   struct nilfs_palloc_req *req)
 {
-	nilfs_persistent_put_group_bitmap_buffer(inode, req->pr_bitmap_bh);
-	nilfs_persistent_put_group_bitmap_block(inode, req->pr_bitmap_bh);
-	nilfs_persistent_put_group_desc(inode, req->pr_desc_bh);
-	nilfs_persistent_put_group_desc_block(inode, req->pr_desc_bh);
+	nilfs_palloc_put_group_bitmap_buffer(inode, req->pr_bitmap_bh);
+	nilfs_palloc_put_group_bitmap_block(inode, req->pr_bitmap_bh);
+	nilfs_palloc_put_group_desc(inode, req->pr_desc_bh);
+	nilfs_palloc_put_group_desc_block(inode, req->pr_desc_bh);
 
 	req->pr_nslot = 0;
 	req->pr_bitmap_bh = NULL;

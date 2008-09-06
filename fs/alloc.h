@@ -29,54 +29,54 @@
 #include <linux/bitops.h>
 
 
-static inline int nilfs_persistent_entries_per_group(struct inode *inode)
+static inline int nilfs_palloc_entries_per_group(struct inode *inode)
 {
 	return (1UL << inode->i_blkbits) * 8 /* CHAR_BIT */;
 }
 
-static inline int nilfs_persistent_group_descs_per_block(struct inode *inode)
+static inline int nilfs_palloc_group_descs_per_block(struct inode *inode)
 {
 	return (1UL << inode->i_blkbits) /
-		sizeof(struct nilfs_persistent_group_desc);
+		sizeof(struct nilfs_palloc_group_desc);
 }
 
 static inline int
-nilfs_persistent_blocks_per_groups(struct inode *inode)
+nilfs_palloc_blocks_per_groups(struct inode *inode)
 {
 	/* including block descriptor block */
 	return NILFS_MDT(inode)->mi_blocks_per_group
-		* nilfs_persistent_group_descs_per_block(inode) + 1;
+		* nilfs_palloc_group_descs_per_block(inode) + 1;
 }
 
 static inline unsigned long
-nilfs_persistent_group_desc_blkoff(struct inode *inode, unsigned long group)
+nilfs_palloc_group_desc_blkoff(struct inode *inode, unsigned long group)
 {
 	unsigned long g =
-		group / nilfs_persistent_group_descs_per_block(inode);
-	return g * (nilfs_persistent_group_descs_per_block(inode) *
-		 (nilfs_persistent_entries_per_group(inode) /
+		group / nilfs_palloc_group_descs_per_block(inode);
+	return g * (nilfs_palloc_group_descs_per_block(inode) *
+		 (nilfs_palloc_entries_per_group(inode) /
 		  NILFS_MDT(inode)->mi_entries_per_block + 1) + 1);
 }
 
 static inline unsigned long
-nilfs_persistent_group_bitmap_blkoff(struct inode *inode, unsigned long group)
+nilfs_palloc_group_bitmap_blkoff(struct inode *inode, unsigned long group)
 {
 	unsigned long group_offset =
-		group % nilfs_persistent_group_descs_per_block(inode);
+		group % nilfs_palloc_group_descs_per_block(inode);
 
-	return nilfs_persistent_group_desc_blkoff(inode, group) + 1 +
-		group_offset * (nilfs_persistent_entries_per_group(inode) /
+	return nilfs_palloc_group_desc_blkoff(inode, group) + 1 +
+		group_offset * (nilfs_palloc_entries_per_group(inode) /
 				NILFS_MDT(inode)->mi_entries_per_block + 1);
 }
 
 /**
- * nilfs_persistent_req - request and reply
+ * nilfs_palloc_req - request and reply
  * @nr: vblocknr or inode number
  * @pr_desc_bh: buffer head of the buffer containing block group descriptors
  * @pr_bitmap_bh: buffer head of the buffer containing a block group bitmap
  * @pr_entry_bh: buffer head of the buffer containing translation entries
  */
-struct nilfs_persistent_req {
+struct nilfs_palloc_req {
 	struct buffer_head *pr_desc_bh;
 	struct buffer_head *pr_bitmap_bh;
 	struct buffer_head *pr_entry_bh;
@@ -92,54 +92,47 @@ struct nilfs_persistent_req {
 #define pr_nslot nr.pr_nslot
 
 static inline void
-nilfs_persistent_put_group_bitmap_block(const struct inode *inode,
-					struct buffer_head *bitmap_bh)
+nilfs_palloc_put_group_bitmap_block(const struct inode *inode,
+				    struct buffer_head *bitmap_bh)
 {
 	brelse(bitmap_bh);
 }
 
 
-static inline void
-nilfs_persistent_put_entry_block(const struct inode *inode,
-				 struct buffer_head *bh)
+static inline void nilfs_palloc_put_entry_block(const struct inode *inode,
+						struct buffer_head *bh)
 {
 	brelse(bh);
 }
 
-extern int nilfs_persistent_prepare_alloc_entry(struct inode *,
-						struct nilfs_persistent_req *,
-						unsigned long *, int *);
-extern void nilfs_persistent_abort_alloc_entry(struct inode *,
-					       struct nilfs_persistent_req *,
-					       unsigned long, int);
-extern void nilfs_persistent_commit_alloc_entry(struct inode *,
-						struct nilfs_persistent_req *);
-extern int nilfs_persistent_prepare_free_entry(struct inode *,
-					       struct nilfs_persistent_req *,
-					       unsigned long);
-extern void nilfs_persistent_abort_free_entry(struct inode *,
-					      struct nilfs_persistent_req *);
-extern char *
-nilfs_persistent_get_group_bitmap_buffer(struct inode *,
-					 const struct buffer_head *);
+int nilfs_palloc_prepare_alloc_entry(struct inode *, struct nilfs_palloc_req *,
+				     unsigned long *, int *);
+void nilfs_palloc_abort_alloc_entry(struct inode *, struct nilfs_palloc_req *,
+				    unsigned long, int);
+void nilfs_palloc_commit_alloc_entry(struct inode *,
+				     struct nilfs_palloc_req *);
+int nilfs_palloc_prepare_free_entry(struct inode *, struct nilfs_palloc_req *,
+				    unsigned long);
+void nilfs_palloc_abort_free_entry(struct inode *, struct nilfs_palloc_req *);
+char *nilfs_palloc_get_group_bitmap_buffer(struct inode *,
+					   const struct buffer_head *);
 
-extern struct nilfs_persistent_group_desc *
-nilfs_persistent_get_group_desc(struct inode *, unsigned long,
-				const struct buffer_head *);
-extern void
-nilfs_persistent_put_group_bitmap_buffer(struct inode *,
-					 const struct buffer_head *);
+struct nilfs_palloc_group_desc *
+nilfs_palloc_get_group_desc(struct inode *, unsigned long,
+			    const struct buffer_head *);
+void nilfs_palloc_put_group_bitmap_buffer(struct inode *,
+					  const struct buffer_head *);
 
 static inline void
-nilfs_persistent_put_group_desc(struct inode *inode,
-				const struct buffer_head *desc_bh)
+nilfs_palloc_put_group_desc(struct inode *inode,
+			    const struct buffer_head *desc_bh)
 {
 	kunmap(desc_bh->b_page);
 }
 
 static inline void
-nilfs_persistent_put_group_desc_block(const struct inode *inode,
-				      struct buffer_head *desc_bh)
+nilfs_palloc_put_group_desc_block(const struct inode *inode,
+				  struct buffer_head *desc_bh)
 {
 	brelse(desc_bh);
 }

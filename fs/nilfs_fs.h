@@ -410,10 +410,10 @@ struct nilfs_segment_summary {
 #define NILFS_SS_GC     0x0010  /* segment written for cleaner operation */
 
 /**
- * struct nilfs_persistent_group_desc - block group descriptor
+ * struct nilfs_palloc_group_desc - block group descriptor
  * @pg_nfrees: number of free entries in block group
  */
-struct nilfs_persistent_group_desc {
+struct nilfs_palloc_group_desc {
 	__le32 pg_nfrees;
 };
 

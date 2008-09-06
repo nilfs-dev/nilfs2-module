@@ -45,42 +45,41 @@ void nilfs_ifile_unmap_inode(struct inode *ifile, ino_t ino,
 }
 
 static int nilfs_ifile_prepare_alloc_ino(struct inode *ifile,
-					 struct nilfs_persistent_req *req)
+					 struct nilfs_palloc_req *req)
 {
-	int entries_per_group = nilfs_persistent_entries_per_group(ifile);
+	int entries_per_group = nilfs_palloc_entries_per_group(ifile);
 	unsigned long group = req->pr_ino / entries_per_group;
 	int target = req->pr_ino % entries_per_group;
 	int ret;
 
-	ret = nilfs_persistent_prepare_alloc_entry(ifile, req, &group,
-						   &target);
+	ret = nilfs_palloc_prepare_alloc_entry(ifile, req, &group, &target);
 	if (!ret)
 		req->pr_ino = entries_per_group * group + target;
 	return ret;
 }
 
 static void nilfs_ifile_abort_alloc_ino(struct inode *ifile,
-					struct nilfs_persistent_req *req)
+					struct nilfs_palloc_req *req)
 {
-	int entries_per_group = nilfs_persistent_entries_per_group(ifile);
+	int entries_per_group = nilfs_palloc_entries_per_group(ifile);
 	unsigned long group = req->pr_ino / entries_per_group;
 	int grpoff = req->pr_ino % entries_per_group;
 
-	nilfs_persistent_abort_alloc_entry(ifile, req, group, grpoff);
+	nilfs_palloc_abort_alloc_entry(ifile, req, group, grpoff);
 }
 
 static unsigned long nilfs_ifile_entry_blkoff(struct inode *ifile, ino_t ino)
 {
-	int entries_per_group = nilfs_persistent_entries_per_group(ifile);
+	int entries_per_group = nilfs_palloc_entries_per_group(ifile);
 	unsigned long group = ino / entries_per_group;
 	int grpoff = ino % entries_per_group;
 
-	return nilfs_persistent_group_bitmap_blkoff(ifile, group) + 1 +
+	return nilfs_palloc_group_bitmap_blkoff(ifile, group) + 1 +
 		grpoff / NILFS_MDT(ifile)->mi_entries_per_block;
 }
 
 static int nilfs_ifile_prepare_entry(struct inode *ifile,
-				     struct nilfs_persistent_req *req)
+				     struct nilfs_palloc_req *req)
 {
 	unsigned long blkoff = nilfs_ifile_entry_blkoff(ifile, req->pr_ino);
 
@@ -88,25 +87,24 @@ static int nilfs_ifile_prepare_entry(struct inode *ifile,
 }
 
 static void nilfs_ifile_commit_free_ino(struct inode *ifile,
-					struct nilfs_persistent_req *req)
+					struct nilfs_palloc_req *req)
 {
-	struct nilfs_persistent_group_desc *desc;
+	struct nilfs_palloc_group_desc *desc;
 	unsigned long group;
 	char *bitmap_buffer;
 	int grpoff;
 
-	group = req->pr_ino / nilfs_persistent_entries_per_group(ifile);
-	grpoff = req->pr_ino % nilfs_persistent_entries_per_group(ifile);
+	group = req->pr_ino / nilfs_palloc_entries_per_group(ifile);
+	grpoff = req->pr_ino % nilfs_palloc_entries_per_group(ifile);
 	bitmap_buffer =
-		nilfs_persistent_get_group_bitmap_buffer(ifile,
-							 req->pr_bitmap_bh);
+		nilfs_palloc_get_group_bitmap_buffer(ifile, req->pr_bitmap_bh);
 
 	if (!nilfs_clear_bit_atomic(nilfs_mdt_bgl_lock(ifile, group),
 				    grpoff, bitmap_buffer))
 		printk(KERN_WARNING "inode number %lu already freed\n",
 		       req->pr_ino);
 
-	desc = nilfs_persistent_get_group_desc(ifile, group, req->pr_desc_bh);
+	desc = nilfs_palloc_get_group_desc(ifile, group, req->pr_desc_bh);
 	spin_lock(nilfs_mdt_bgl_lock(ifile, group));
 	le32_add_cpu(&desc->pg_nfrees, 1);
 	spin_unlock(nilfs_mdt_bgl_lock(ifile, group));
@@ -114,14 +112,14 @@ static void nilfs_ifile_commit_free_ino(struct inode *ifile,
 	nilfs_mdt_mark_buffer_dirty(req->pr_entry_bh);
 	nilfs_mdt_mark_buffer_dirty(req->pr_bitmap_bh);
 
-	nilfs_persistent_put_group_bitmap_buffer(ifile, req->pr_bitmap_bh);
-	nilfs_persistent_put_group_bitmap_block(ifile, req->pr_bitmap_bh);
-	nilfs_persistent_put_group_desc(ifile, req->pr_desc_bh);
-	nilfs_persistent_put_group_desc_block(ifile, req->pr_desc_bh);
+	nilfs_palloc_put_group_bitmap_buffer(ifile, req->pr_bitmap_bh);
+	nilfs_palloc_put_group_bitmap_block(ifile, req->pr_bitmap_bh);
+	nilfs_palloc_put_group_desc(ifile, req->pr_desc_bh);
+	nilfs_palloc_put_group_desc_block(ifile, req->pr_desc_bh);
 }
 
 static void
-nilfs_ifile_commit_free(struct inode *ifile, struct nilfs_persistent_req *req)
+nilfs_ifile_commit_free(struct inode *ifile, struct nilfs_palloc_req *req)
 {
 	struct nilfs_inode *entry;
 
@@ -159,7 +157,7 @@ nilfs_ifile_commit_free(struct inode *ifile, struct nilfs_persistent_req *req)
 int nilfs_ifile_create_inode(struct inode *ifile, ino_t *out_ino,
 			     struct buffer_head **out_bh)
 {
-	struct nilfs_persistent_req req;
+	struct nilfs_palloc_req req;
 	int ret;
 
 	req.pr_ino = 0;	/* 0 says find free inode from beginning of
@@ -177,7 +175,7 @@ int nilfs_ifile_create_inode(struct inode *ifile, ino_t *out_ino,
 		brelse(req.pr_entry_bh);
 		return ret;
 	}
-	nilfs_persistent_commit_alloc_entry(ifile, &req);
+	nilfs_palloc_commit_alloc_entry(ifile, &req);
 	nilfs_mdt_mark_buffer_dirty(req.pr_entry_bh);
 	nilfs_mdt_mark_dirty(ifile);
 	*out_ino = req.pr_ino;
@@ -206,17 +204,17 @@ int nilfs_ifile_create_inode(struct inode *ifile, ino_t *out_ino,
  */
 int nilfs_ifile_delete_inode(struct inode *ifile, ino_t ino)
 {
-	struct nilfs_persistent_req req = {
+	struct nilfs_palloc_req req = {
 		.pr_ino = ino, .pr_entry_bh = NULL
 	};
-	unsigned long group = ino / nilfs_persistent_entries_per_group(ifile);
+	unsigned long group = ino / nilfs_palloc_entries_per_group(ifile);
 	int ret;
 
-	ret = nilfs_persistent_prepare_free_entry(ifile, &req, group);
+	ret = nilfs_palloc_prepare_free_entry(ifile, &req, group);
 	if (!ret) {
 		ret = nilfs_ifile_prepare_entry(ifile, &req);
 		if (ret < 0)
-			nilfs_persistent_abort_free_entry(ifile, &req);
+			nilfs_palloc_abort_free_entry(ifile, &req);
 	}
 	if (ret < 0) {
 		brelse(req.pr_entry_bh);
