@@ -109,7 +109,7 @@ static void store_segsum_info(struct nilfs_segsum_info *ssi,
 	ssi->nfinfo = le32_to_cpu(sum->ss_nfinfo);
 	ssi->sumbytes = le32_to_cpu(sum->ss_sumbytes);
 
-	ssi->nsumblk = (ssi->sumbytes - 1) / blocksize + 1;
+	ssi->nsumblk = DIV_ROUND_UP(ssi->sumbytes, blocksize);
 	ssi->nfileblk = ssi->nblocks - ssi->nsumblk - !!NILFS_SEG_HAS_SR(ssi);
 }
 
@@ -312,7 +312,7 @@ static void segsum_skip(struct super_block *sb, struct buffer_head **pbh,
 		unsigned int bcnt;
 
 		count -= rest_item_in_current_block;
-		bcnt = (count - 1) / nitem_per_block + 1;
+		bcnt = DIV_ROUND_UP(count, nitem_per_block);
 		*offset = bytes * (count - (bcnt - 1) * nitem_per_block);
 
 		brelse(*pbh);

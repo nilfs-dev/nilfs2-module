@@ -333,10 +333,10 @@ nilfs_store_disk_layout(struct the_nilfs *nilfs, struct super_block *sb,
 	nilfs->ns_nsegments = le64_to_cpu(sbp->s_nsegments);
 	nilfs->ns_r_segments_percentage =
 		le32_to_cpu(sbp->s_r_segments_percentage);
-	nilfs->ns_nrsvsegs = max_t(unsigned long, NILFS_MIN_NRSVSEGS,
-				   (nilfs->ns_nsegments *
-				    nilfs->ns_r_segments_percentage - 1) /
-				   100 + 1);
+	nilfs->ns_nrsvsegs =
+		max_t(unsigned long, NILFS_MIN_NRSVSEGS,
+		      DIV_ROUND_UP(nilfs->ns_nsegments *
+				   nilfs->ns_r_segments_percentage, 100));
 	nilfs->ns_crc_seed = le32_to_cpu(sbp->s_crc_seed);
 	return 0;
 }

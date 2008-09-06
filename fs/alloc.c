@@ -19,6 +19,11 @@
  *
  */
 
+#include <linux/types.h>
+#include <linux/buffer_head.h>
+#include <linux/fs.h>
+#include <linux/bitops.h>
+#include "kern_feature.h"
 #include "mdt.h"
 #include "alloc.h"
 
@@ -35,8 +40,10 @@ int nilfs_palloc_init_blockgroup(struct inode *inode, unsigned entry_size)
 
 	nilfs_mdt_set_entry_size(inode, entry_size, 0);
 	mi->mi_blocks_per_group =
-		nilfs_palloc_entries_per_group(inode) /
-		mi->mi_entries_per_block + 1;
+		DIV_ROUND_UP(nilfs_palloc_entries_per_group(inode),
+			     mi->mi_entries_per_block) + 1;
+		/* Number of blocks in a group including entry blocks and 
+		   a bitmap block */
 	mi->mi_groups_count = nilfs_palloc_groups_count(inode);
 	return 0;
 }

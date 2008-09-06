@@ -631,7 +631,7 @@ void nilfs_mdt_set_entry_size(struct inode *inode, unsigned entry_size,
 
 	mi->mi_entry_size = entry_size;
 	mi->mi_entries_per_block = (1 << inode->i_blkbits) / entry_size;
-	mi->mi_first_entry_offset = (header_size + entry_size - 1) / entry_size;
+	mi->mi_first_entry_offset = DIV_ROUND_UP(header_size, entry_size);
 }
 
 void nilfs_mdt_clear(struct inode *inode)

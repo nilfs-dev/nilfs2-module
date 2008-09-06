@@ -643,4 +643,8 @@ static inline void list_replace_init(struct list_head *old,
 	     pos = n, n = list_entry(n->member.next, typeof(*n), member))
 #endif
 
+#ifndef DIV_ROUND_UP
+# define DIV_ROUND_UP(n, d) (((n) + (d) - 1) / (d))
+#endif
+
 #endif /* NILFS_KERN_FEATURE_H */
