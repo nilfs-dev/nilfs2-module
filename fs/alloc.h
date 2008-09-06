@@ -47,14 +47,6 @@ static inline int nilfs_palloc_group_descs_per_block(struct inode *inode)
 		sizeof(struct nilfs_palloc_group_desc);
 }
 
-static inline int
-nilfs_palloc_blocks_per_groups(struct inode *inode)
-{
-	/* including block descriptor block */
-	return NILFS_MDT(inode)->mi_blocks_per_group
-		* nilfs_palloc_group_descs_per_block(inode) + 1;
-}
-
 static inline unsigned long
 nilfs_palloc_group_desc_blkoff(struct inode *inode, unsigned long group)
 {
