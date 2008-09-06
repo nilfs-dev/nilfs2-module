@@ -642,10 +642,9 @@ int nilfs_mdt_init_blockgroup(struct inode *inode, unsigned entry_size,
 	unsigned long entries_per_group = blocksize * 8 /* CHAR_BIT */;
 
 	mi->mi_bgl = kmalloc(sizeof(*mi->mi_bgl), GFP_NOFS);
-	if (!mi->mi_bgl) {
-		nilfs_mdt_destroy(inode);
+	if (!mi->mi_bgl)
 		return -ENOMEM;
-	}
+
 	bgl_lock_init(mi->mi_bgl);
 
 	nilfs_mdt_set_entry_size(inode, entry_size, 0);
