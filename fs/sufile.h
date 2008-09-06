@@ -35,16 +35,6 @@ static inline unsigned long nilfs_sufile_get_nsegments(struct inode *sufile)
 	return NILFS_MDT(sufile)->mi_nilfs->ns_nsegments;
 }
 
-static inline unsigned long nilfs_sufile_get_nrsvsegs(struct inode *sufile)
-{
-	unsigned long nsegments, rsvpercent, nrsvsegs;
-
-	nsegments = NILFS_MDT(sufile)->mi_nilfs->ns_nsegments;
-	rsvpercent = NILFS_MDT(sufile)->mi_nilfs->ns_r_segments_percentage;
-	nrsvsegs = (nsegments * rsvpercent - 1) / 100 + 1;
-	return max_t(unsigned long, nrsvsegs, NILFS_MIN_NRSVSEGS);
-}
-
 int nilfs_sufile_alloc(struct inode *, __u64 *);
 int nilfs_sufile_cancel_free(struct inode *, __u64);
 int nilfs_sufile_freev(struct inode *, __u64 *, size_t);
