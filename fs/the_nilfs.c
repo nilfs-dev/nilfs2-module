@@ -27,11 +27,12 @@
 #include <linux/backing-dev.h>
 #include "nilfs.h"
 #include "segment.h"
+#include "alloc.h"
 #include "cpfile.h"
 #include "sufile.h"
+#include "dat.h"
 #include "seglist.h"
 #include "segbuf.h"
-#include "alloc.h"
 
 void nilfs_set_last_segment(struct the_nilfs *nilfs,
 			    sector_t start_blocknr, u64 seq, __u64 cno)

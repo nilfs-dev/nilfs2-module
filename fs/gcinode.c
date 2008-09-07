@@ -30,6 +30,7 @@
 #include "nilfs.h"
 #include "page.h"
 #include "mdt.h"
+#include "dat.h"
 #include "ifile.h"
 
 static struct address_space_operations def_gcinode_aops = {

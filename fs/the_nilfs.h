@@ -24,6 +24,13 @@
 #ifndef _THE_NILFS_H
 #define _THE_NILFS_H
 
+#include <linux/types.h>
+#include <linux/buffer_head.h>
+#include <linux/fs.h>
+#include <linux/blkdev.h>
+#include <linux/backing-dev.h>
+#include "sb.h"
+
 /* the_nilfs struct */
 enum {
 	THE_NILFS_INIT = 0,     /* Information from super_block is set */

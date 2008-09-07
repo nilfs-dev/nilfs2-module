@@ -25,6 +25,7 @@
 #include <linux/list.h>
 #include "nilfs.h"
 #include "mdt.h"
+#include "dat.h"
 #include "page.h"
 #include "btnode.h"
 

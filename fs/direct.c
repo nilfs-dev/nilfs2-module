@@ -23,7 +23,7 @@
 #include <linux/errno.h>
 #include "nilfs.h"
 #include "direct.h"
-
+#include "alloc.h"
 
 static inline __le64 *nilfs_direct_dptrs(const struct nilfs_direct *direct)
 {

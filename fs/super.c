@@ -54,6 +54,7 @@
 #endif
 #include "nilfs.h"
 #include "mdt.h"
+#include "alloc.h"
 #include "page.h"
 #include "cpfile.h"
 #include "ifile.h"

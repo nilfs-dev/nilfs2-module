@@ -24,11 +24,12 @@
 #include <linux/string.h>
 #include <linux/errno.h>
 #include "nilfs.h"
+#include "bmap.h"
 #include "sb.h"
 #include "btnode.h"
 #include "mdt.h"
 #include "dat.h"
-#include "bmap.h"
+#include "alloc.h"
 
 int nilfs_bmap_lookup_at_level(struct nilfs_bmap *bmap, __u64 key, int level,
 			       __u64 *ptrp)
@@ -512,16 +513,12 @@ static struct inode *nilfs_bmap_get_dat(const struct nilfs_bmap *bmap)
 __u64 nilfs_bmap_find_target_in_group(const struct nilfs_bmap *bmap)
 {
 	struct inode *dat = nilfs_bmap_get_dat(bmap);
-	unsigned long entries_per_group, group;
-
-	entries_per_group = nilfs_dat_entries_per_group(dat);
-	group = bmap->b_inode->i_ino / entries_per_group;
+	unsigned long entries_per_group = nilfs_palloc_entries_per_group(dat);
+	unsigned long group = bmap->b_inode->i_ino / entries_per_group;
 
 	return group * entries_per_group +
 		(bmap->b_inode->i_ino % NILFS_BMAP_GROUP_DIV) *
 		(entries_per_group / NILFS_BMAP_GROUP_DIV);
-	/* XXX: for user-land test */
-	/* return 0; */
 }
 
 static int nilfs_bmap_prepare_alloc_v(struct nilfs_bmap *bmap,

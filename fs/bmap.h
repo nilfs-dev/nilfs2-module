@@ -27,8 +27,7 @@
 #include <linux/fs.h>
 #include <linux/buffer_head.h>
 #include "nilfs_fs.h"
-#include "sb.h"
-#include "dat.h"
+#include "alloc.h"
 
 #define NILFS_BMAP_INVALID_PTR	0
 
@@ -44,12 +43,12 @@ struct nilfs_bmap;
 
 /**
  * union nilfs_bmap_ptr_req - request for bmap ptr
- * @bpr_ptr:
- * @bpr_req:
+ * @bpr_ptr: bmap pointer
+ * @bpr_req: request for persistent allocator
  */
 union nilfs_bmap_ptr_req {
 	__u64 bpr_ptr;
-	struct nilfs_dat_req bpr_req;
+	struct nilfs_palloc_req bpr_req;
 };
 
 /**

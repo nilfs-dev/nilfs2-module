@@ -454,7 +454,7 @@ void nilfs_free_inode(struct inode *inode)
 	struct nilfs_sb_info *sbi = NILFS_SB(sb);
 
 	clear_inode(inode);
-	/* XXX: check error code? Is there any thing can I do? */
+	/* XXX: check error code? Is there any thing I can do? */
 	(void) nilfs_ifile_delete_inode(sbi->s_ifile, inode->i_ino);
 	atomic_dec(&sbi->s_inodes_count);
 }
@@ -572,13 +572,6 @@ static int __nilfs_read_inode(struct super_block *sb, unsigned long ino,
 		goto bad_inode;
 
 	raw_inode = nilfs_ifile_map_inode(sbi->s_ifile, ino, bh);
-
-	if (unlikely(raw_inode->i_flags &
-		     cpu_to_le32(NILFS_INODE_NEW | NILFS_INODE_UNUSED))) {
-		nilfs_warning(sb, __func__,
-			      "read request for unused inode: %lu", ino);
-		goto failed_unmap;
-	}
 
 #ifdef CONFIG_NILFS_FS_POSIX_ACL
 	ii->i_acl = NILFS_ACL_NOT_CACHED;

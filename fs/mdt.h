@@ -38,7 +38,7 @@
  * @mi_first_entry_offset: offset to the first entry
  * @mi_entries_per_block: number of entries in a block
  * @mi_blocks_per_group: number of blocks in a group
- * @mi_groups_count: number of groups
+ * @mi_blocks_per_desc_block: number of blocks per descriptor block
  */
 struct nilfs_mdt_info {
 	struct the_nilfs       *mi_nilfs;
@@ -49,7 +49,7 @@ struct nilfs_mdt_info {
 	unsigned		mi_first_entry_offset;
 	unsigned long		mi_entries_per_block;
 	unsigned long		mi_blocks_per_group;
-	unsigned long		mi_groups_count;
+	unsigned long		mi_blocks_per_desc_block;
 };
 
 static inline struct nilfs_mdt_info *NILFS_MDT(const struct inode *inode)
