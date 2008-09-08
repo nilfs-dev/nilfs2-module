@@ -424,7 +424,7 @@ static void nilfs_copy_page(struct page *src, struct page *dst)
 
 	kaddr0 = kmap_atomic(src, KM_USER0);
 	kaddr1 = kmap_atomic(dst, KM_USER1);
-	memcpy(kaddr1, kaddr0, PAGE_SIZE);
+	copy_page(kaddr1, kaddr0);
 	kunmap_atomic(kaddr1, KM_USER1);
 	kunmap_atomic(kaddr0, KM_USER0);
 
