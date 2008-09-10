@@ -147,6 +147,7 @@ struct inode *nilfs_alloc_inode(struct super_block *sb)
 	ii->i_bh = NULL;
 	ii->i_state = 0;
 	ii->vfs_inode.i_version = 1;
+	nilfs_btnode_cache_init(&ii->i_btnode_cache);
 	return &ii->vfs_inode;
 }
 
@@ -1442,23 +1443,11 @@ struct file_system_type nilfs_fs_type = {
 	.fs_flags = FS_REQUIRES_DEV,
 };
 
-#ifdef NILFS_SHRINKER_ENABLE
-#if HAVE_REGISTER_SHRINKER
-static struct shrinker nilfs_shrinker = {
-	.shrink = nilfs_pages_shrink,
-	.seeks = DEFAULT_SEEKS,
-};
-#else
-struct shrinker *nilfs_shrinker;
-#endif
-#endif
-
 static int __init init_nilfs_fs(void)
 {
 	int err;
 
 	nilfs_init_debug_info();
-	nilfs_pages_init();
 
 	err = nilfs_init_inode_cache();
 	if (err)
@@ -1472,21 +1461,9 @@ static int __init init_nilfs_fs(void)
 	if (err)
 		goto failed_transaction_cache;
 
-#ifdef NILFS_SHRINKER_ENABLE
-#if HAVE_REGISTER_SHRINKER
-	register_shrinker(&nilfs_shrinker);
-#else
-	nilfs_shrinker = set_shrinker(DEFAULT_SEEKS, nilfs_pages_shrink);
-	if (!nilfs_shrinker) {
-		err = -ENOMEM;
-		goto failed_segbuf_cache;
-	}
-#endif
-#endif
-
 	err = nilfs_init_proc_entries();
 	if (err)
-		goto failed_set_shrink;
+		goto failed_segbuf_cache;
 
 	err = nilfs_btree_path_cache_init();
 	if (err)
@@ -1504,12 +1481,7 @@ static int __init init_nilfs_fs(void)
  failed_proc_entries:
 	nilfs_remove_proc_entries();
 
- failed_set_shrink:
-#if defined(NILFS_SHRINKER_ENABLE) && !HAVE_REGISTER_SHRINKER
-	remove_shrinker(nilfs_shrinker);
-
  failed_segbuf_cache:
-#endif
 	nilfs_destroy_segbuf_cache();
 
  failed_transaction_cache:
@@ -1519,24 +1491,15 @@ static int __init init_nilfs_fs(void)
 	nilfs_destroy_inode_cache();
 
  failed:
-	nilfs_pages_destroy();
 	return err;
 }
 
 static void __exit exit_nilfs_fs(void)
 {
 	nilfs_remove_proc_entries();
-#ifdef NILFS_SHRINKER_ENABLE
-#if HAVE_REGISTER_SHRINKER
-	unregister_shrinker(&nilfs_shrinker);
-#else
-	remove_shrinker(nilfs_shrinker);
-#endif
-#endif
 	nilfs_destroy_segbuf_cache();
 	nilfs_destroy_transaction_cache();
 	nilfs_destroy_inode_cache();
-	nilfs_pages_destroy();
 	nilfs_btree_path_cache_destroy();
 	unregister_filesystem(&nilfs_fs_type);
 }

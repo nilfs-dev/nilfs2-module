@@ -438,7 +438,10 @@ void nilfs_page_debug(const char *fname, int line, struct page *page,
 	len += snprintf(b + len, MSIZ - len, " %s(%d) flags=", fname, line);
 	len += snprint_page_flags(b + len, MSIZ - len, page);
 	if (mapping) {
-		inode = NILFS_AS_I(mapping);
+		if (buffer_nilfs_node(page_buffers(page)))
+			inode = NILFS_BTNC_I(mapping);
+		else
+			inode = NILFS_AS_I(mapping);
 		if (inode != NULL)
 			len += snprintf(b + len, MSIZ - len, " ino=%lu",
 					inode->i_ino);
@@ -641,18 +644,6 @@ static int proc_calc_metrics(char *page, char **start, off_t off,
 	return len;
 }
 
-static int nilfs_print_page_counters(char *page, char **start, off_t off,
-				     int count, int *eof, void *data)
-{
-	int len;
-	unsigned long counters[2];
-
-	nilfs_pages_read_counters(counters);
-	len = sprintf(page, "nr_active: %lu\n", counters[0]);
-	len += sprintf(page + len, "nr_inactive: %lu\n", counters[1]);
-	return proc_calc_metrics(page, start, off, count, eof, len);
-}
-
 int nilfs_init_proc_entries(void)
 {
 	struct proc_dir_entry *entry;
@@ -672,16 +663,11 @@ int nilfs_init_proc_entries(void)
 		entry->write_proc = nilfs_write_debug_option;
 	}
 
-	entry = create_proc_entry("page", 0, nilfs_proc_root);
-	if (entry)
-		entry->read_proc = nilfs_print_page_counters;
-
 	return 0;
 }
 
 void nilfs_remove_proc_entries(void)
 {
-	remove_proc_entry("page", nilfs_proc_root);
 	remove_proc_entry("debug_option", nilfs_proc_root);
 	remove_proc_entry("fs/nilfs2", NULL);
 }
@@ -800,46 +786,5 @@ void nilfs_check_radix_tree(const char *fname, int line,
 	}
 	pagevec_release(&pvec);
 	cond_resched();
-	goto repeat;
-}
-
-/*
- * btnode cache checker
- */
-#define S_N_PAGEVEC  16
-void nilfs_check_btnode_cache(const char *fname, int line,
-			      struct nilfs_btnode_cache *btnc, int tag)
-{
-	struct page *pages[S_N_PAGEVEC];
-	unsigned int i, n;
-	pgoff_t index = 0;
-	char *page_type;
-	int nr_found = 0;
-
-	if (tag == PAGECACHE_TAG_DIRTY)
-		page_type = "dirty";
-	else
-		page_type = "leaking";
-
- repeat:
-	if (tag < 0)
-		n = nilfs_btnode_find_get_pages(
-			btnc, pages, &index, S_N_PAGEVEC);
-	else
-		n = nilfs_btnode_find_get_pages_tag(
-			btnc, pages, &index, S_N_PAGEVEC, tag);
-	if (!n) {
-		if (nr_found)
-			printk(KERN_WARNING "%s: found %d %s node pages\n",
-			       fname, nr_found, page_type);
-		return;
-	}
-
-	for (i = 0; i < n; i++) {
-		nilfs_page_debug(fname, line, pages[i], "%s node page",
-				 page_type);
-		nr_found++;
-		page_cache_release(pages[i]);
-	}
 	goto repeat;
 }

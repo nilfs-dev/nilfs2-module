@@ -49,7 +49,6 @@ ifeq ($(EXTERNAL_BUILD),y)
 
   # Internal switches
   EXTRA_CFLAGS += -D NILFS_ATIME_DISABLE
-  EXTRA_CFLAGS += -D NILFS_SHRINKER_ENABLE    # enable shrinker for nilfs pages (disabled for debug purpose)
 endif
 
 else

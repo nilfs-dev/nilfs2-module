@@ -67,7 +67,7 @@ int nilfs_gccache_submit_read_data(struct inode *inode, sector_t blkoff,
 	struct buffer_head *bh;
 	int err;
 
-	bh = nilfs_mdt_get_page_block(inode, blkoff);
+	bh = nilfs_grab_buffer(inode, inode->i_mapping, blkoff, 0);
 	if (unlikely(!bh))
 		return -ENOMEM;
 

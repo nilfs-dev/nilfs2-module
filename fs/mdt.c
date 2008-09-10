@@ -35,15 +35,6 @@
 
 #define INIT_UNUSED_INODE_FIELDS
 
-
-#if NEED_OLD_MARK_BUFFER_DIRTY
-void nilfs_mdt_mark_buffer_dirty(struct buffer_head *bh)
-{
-	if (!buffer_dirty(bh) && !test_set_buffer_dirty(bh))
-		__set_page_dirty_nobuffers(bh->b_page);
-}
-#endif
-
 static int
 nilfs_mdt_insert_new_block(struct inode *inode, unsigned long block,
 			   struct buffer_head *bh,
@@ -77,56 +68,9 @@ nilfs_mdt_insert_new_block(struct inode *inode, unsigned long block,
 	kunmap_atomic(kaddr, KM_USER0);
 
 	set_buffer_uptodate(bh);
-	nilfs_mdt_mark_buffer_dirty(bh);
+	nilfs_mark_buffer_dirty(bh);
 	nilfs_mdt_mark_dirty(inode);
 	return 0;
-}
-
-struct buffer_head *
-nilfs_mdt_get_page_block(struct inode *inode, unsigned long blkoff)
-{
-	int blkbits = inode->i_blkbits;
-	pgoff_t index = blkoff >> (PAGE_CACHE_SHIFT - blkbits);
-	struct inode *orig_inode;
-	struct page *page, *opage;
-	struct buffer_head *bh, *obh;
-
-	page = grab_cache_page(inode->i_mapping, index);
-	if (unlikely(!page))
-		return NULL;
-
-	bh = nilfs_get_page_block(page, blkoff, index, blkbits);
-	if (unlikely(!bh)) {
-		unlock_page(page);
-		page_cache_release(page);
-		return NULL;
-	}
-	if (!buffer_uptodate(bh) &&
-	    (orig_inode = NILFS_MDT(inode)->mi_orig_inode) != NULL) {
-		/* check original cache */
-		opage = find_lock_page(orig_inode->i_mapping, index);
-		if (opage) {
-			obh = nilfs_get_page_block(opage, blkoff, index,
-						   blkbits);
-			if (buffer_uptodate(obh)) {
-				mdt_debug(3, "hit orig cache. (ino=%lu, "
-					  "blkoff=%lu)\n", inode->i_ino,
-					  blkoff);
-				nilfs_copy_buffer(obh, bh);
-				if (buffer_dirty(obh)) {
-					/* Since all dirty buffers are copied
-					   in preparation phase, the
-					   followings would be omissible. */
-					nilfs_mdt_mark_buffer_dirty(bh);
-					nilfs_mdt_mark_dirty(inode);
-				}
-			}
-			brelse(obh);
-			unlock_page(opage);
-			page_cache_release(opage);
-		}
-	}
-	return bh;
 }
 
 static int nilfs_mdt_create_block(struct inode *inode, unsigned long block,
@@ -156,7 +100,7 @@ static int nilfs_mdt_create_block(struct inode *inode, unsigned long block,
 	nilfs_transaction_begin(sb, &ti, 0);
 
 	err = -ENOMEM;
-	bh = nilfs_mdt_get_page_block(inode, block);
+	bh = nilfs_grab_buffer(inode, inode->i_mapping, block, 0);
 	if (unlikely(!bh))
 		goto failed_unlock;
 
@@ -200,7 +144,7 @@ nilfs_mdt_submit_block(struct inode *inode, unsigned long blkoff,
 	unsigned long blknum = 0;
 	int ret = -ENOMEM;
 
-	bh = nilfs_mdt_get_page_block(inode, blkoff);
+	bh = nilfs_grab_buffer(inode, inode->i_mapping, blkoff, 0);
 	if (unlikely(!bh))
 		goto failed;
 
@@ -426,20 +370,7 @@ int nilfs_mdt_forget_block(struct inode *inode, unsigned long block)
 		struct buffer_head *bh;
 
 		bh = nilfs_page_get_nth_block(page, block - first_block);
-		lock_buffer(bh);
-		if (test_clear_buffer_dirty(bh) &&
-		    nilfs_page_buffers_clean(page)) {
-#if HAVE_CLEAR_PAGE_DIRTY
-			clear_page_dirty(page);
-#else
-			cancel_dirty_page(page, PAGE_CACHE_SIZE);
-#endif
-		}
-		clear_buffer_uptodate(bh);
-		clear_buffer_mapped(bh);
-		ClearPageUptodate(page);
-		unlock_buffer(bh);
-		brelse(bh);
+		nilfs_forget_buffer(bh);
 	}
 	still_dirty = PageDirty(page);
 	unlock_page(page);
@@ -476,7 +407,7 @@ int nilfs_mdt_mark_block_dirty(struct inode *inode, unsigned long block)
 	err = nilfs_mdt_read_block(inode, block, &bh);
 	if (unlikely(err))
 		return err;
-	nilfs_mdt_mark_buffer_dirty(bh);
+	nilfs_mark_buffer_dirty(bh);
 	nilfs_mdt_mark_dirty(inode);
 	brelse(bh);
 	return 0;
@@ -632,6 +563,14 @@ void nilfs_mdt_set_entry_size(struct inode *inode, unsigned entry_size,
 	mi->mi_entry_size = entry_size;
 	mi->mi_entries_per_block = (1 << inode->i_blkbits) / entry_size;
 	mi->mi_first_entry_offset = DIV_ROUND_UP(header_size, entry_size);
+}
+
+void nilfs_mdt_set_shadow(struct inode *orig, struct inode *shadow)
+{
+	NILFS_MDT(shadow)->mi_orig_inode = orig;
+	shadow->i_mapping->assoc_mapping = orig->i_mapping;
+	NILFS_I(shadow)->i_btnode_cache.assoc_mapping =
+		&NILFS_I(orig)->i_btnode_cache;
 }
 
 void nilfs_mdt_clear(struct inode *inode)

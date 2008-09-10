@@ -27,6 +27,7 @@
 #include <linux/blockgroup_lock.h>
 #include "nilfs.h"
 #include "kern_feature.h"
+#include "page.h"
 
 /**
  * struct nilfs_mdt_info - on-memory private data of meta data files
@@ -94,13 +95,10 @@ struct inode *nilfs_mdt_new_common(struct the_nilfs *, struct super_block *,
 void nilfs_mdt_destroy(struct inode *);
 void nilfs_mdt_clear(struct inode *);
 void nilfs_mdt_set_entry_size(struct inode *, unsigned, unsigned);
-struct buffer_head *nilfs_mdt_get_page_block(struct inode *, unsigned long);
+void nilfs_mdt_set_shadow(struct inode *, struct inode *);
 
-#if NEED_OLD_MARK_BUFFER_DIRTY
-void nilfs_mdt_mark_buffer_dirty(struct buffer_head *bh);
-#else
-#define nilfs_mdt_mark_buffer_dirty(bh)		mark_buffer_dirty(bh)
-#endif
+
+#define nilfs_mdt_mark_buffer_dirty(bh)	nilfs_mark_buffer_dirty(bh)
 
 static inline void nilfs_mdt_mark_dirty(struct inode *inode)
 {
@@ -111,12 +109,6 @@ static inline void nilfs_mdt_mark_dirty(struct inode *inode)
 static inline void nilfs_mdt_clear_dirty(struct inode *inode)
 {
 	clear_bit(NILFS_I_DIRTY, &NILFS_I(inode)->i_state);
-}
-
-static inline void
-nilfs_mdt_set_shadow(struct inode *orig, struct inode *shadow)
-{
-	NILFS_MDT(shadow)->mi_orig_inode = orig;
 }
 
 static inline __u64 nilfs_mdt_cno(struct inode *inode)

@@ -177,14 +177,9 @@ extern void nilfs_invalidatepage(struct page *, unsigned long);
 #endif
 extern void nilfs_check_radix_tree(const char *, int, struct address_space *,
 				   int);
-struct nilfs_btnode_cache;
-extern void nilfs_check_btnode_cache(const char *, int,
-				     struct nilfs_btnode_cache *, int);
 
 #define NILFS_CHECK_PAGE_CACHE(mapping, tag)  \
 	nilfs_check_radix_tree(__func__, __LINE__, (mapping), (tag))
-#define NILFS_CHECK_BTNODE_CACHE(btnc, tag)  \
-	nilfs_check_btnode_cache(__func__, __LINE__, (btnc), (tag))
 
 #else /* CONFIG_NILFS_DEBUG */
 #define nilfs_init_proc_entries()  (0)
@@ -199,7 +194,6 @@ extern void nilfs_check_btnode_cache(const char *, int,
 #define nilfs_invalidatepage	block_invalidatepage
 
 #define NILFS_CHECK_PAGE_CACHE(mapping, tag)  do {} while (0)
-#define NILFS_CHECK_BTNODE_CACHE(btnc, tag)  do {} while (0)
 
 #endif /* CONFIG_NILFS_DEBUG*/
 #define nilfs_release_inode_page  NULL

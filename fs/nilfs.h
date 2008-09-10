@@ -55,7 +55,7 @@ struct nilfs_inode_info {
 	__u32 i_dtime;
 	__u32 i_dir_start_lookup;
 	__u64 i_cno;		/* check point number for GC inode */
-	struct nilfs_btnode_cache i_btnode_cache;
+	struct address_space i_btnode_cache;
 	struct list_head i_dirty;	/* List for connecting dirty files */
 
 #ifdef CONFIG_NILFS_XATTR
@@ -88,6 +88,13 @@ NILFS_BMAP_I(const struct nilfs_bmap *bmap)
 	return container_of((union nilfs_bmap_union *)bmap,
 			    struct nilfs_inode_info,
 			    i_bmap_union);
+}
+
+static inline struct inode *NILFS_BTNC_I(struct address_space *btnc)
+{
+	struct nilfs_inode_info *ii =
+		container_of(btnc, struct nilfs_inode_info, i_btnode_cache);
+	return &ii->vfs_inode;
 }
 
 static inline struct inode *NILFS_AS_I(struct address_space *mapping)
@@ -146,10 +153,6 @@ enum {
 BUFFER_FNS(NILFS_Allocated, nilfs_allocated)	/* nilfs private buffers */
 BUFFER_FNS(NILFS_Node, nilfs_node)		/* nilfs node buffers */
 BUFFER_FNS(NILFS_Volatile, nilfs_volatile)
-
-#define NILFS_BUFFER_INHERENT_BITS  \
-	((1UL << BH_Uptodate) | (1UL << BH_Mapped) | (1UL << BH_NILFS_Node) | \
-	 (1UL << BH_NILFS_Volatile) | (1UL << BH_NILFS_Allocated))
 
 /*
  * debug primitives

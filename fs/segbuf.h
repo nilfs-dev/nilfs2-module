@@ -167,15 +167,7 @@ nilfs_segbuf_add_file_buffer(struct nilfs_segment_buffer *segbuf,
 	segbuf->sb_sum.nfileblk++;
 }
 
-static inline void nilfs_release_buffers(struct list_head *list)
-{
-	struct buffer_head *bh, *n;
-
-	list_for_each_entry_safe(bh, n, list, b_assoc_buffers) {
-		list_del_init(&bh->b_assoc_buffers);
-		brelse(bh);
-	}
-}
+void nilfs_release_buffers(struct list_head *);
 
 static inline void nilfs_segbuf_clear(struct nilfs_segment_buffer *segbuf)
 {

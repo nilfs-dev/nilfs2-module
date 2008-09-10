@@ -27,37 +27,32 @@
 #include "nilfs.h"
 #include "kern_feature.h"
 
-extern struct buffer_head *nilfs_get_page_block(struct page *, unsigned long,
-						pgoff_t, int);
-
-extern void nilfs_pages_init(void);
-extern void nilfs_pages_destroy(void);
-extern void nilfs_pages_read_counters(unsigned long *);
-extern void nilfs_pages_disable_shrinker(void);
-extern void nilfs_pages_enable_shrinker(void);
-
-#ifdef NILFS_SHRINKER_ENABLE
-extern int nilfs_pages_shrink(int, GFP_T);
+#if NEED_OLD_MARK_BUFFER_DIRTY
+void nilfs_mark_buffer_dirty(struct buffer_head *bh);
+#else
+#define nilfs_mark_buffer_dirty(bh)	mark_buffer_dirty(bh)
 #endif
-extern void nilfs_page_add_to_lru(struct page *, int);
-extern void nilfs_page_delete_from_lru(struct page *);
-extern void nilfs_page_mark_accessed(struct page *);
-extern struct page *nilfs_alloc_buffer_page(struct block_device *, int,
-					    unsigned long);
-extern void nilfs_free_buffer_page(struct page *);
-extern void nilfs_copy_buffer_page(struct page *, struct page *, int);
-extern void nilfs_copy_buffer(struct buffer_head *, struct buffer_head *);
-
-extern int nilfs_page_buffers_clean(struct page *);
-extern unsigned nilfs_page_count_clean_buffers(struct page *, unsigned,
-					       unsigned);
-extern void nilfs_page_bug(struct page *);
 
 #if HAVE_CLEAR_PAGE_DIRTY
 #define __nilfs_clear_page_dirty(page)  test_clear_page_dirty(page)
 #else
 extern int __nilfs_clear_page_dirty(struct page *);
 #endif
+
+struct buffer_head *nilfs_grab_buffer(struct inode *, struct address_space *,
+				      unsigned long, unsigned long);
+void nilfs_forget_buffer(struct buffer_head *);
+void nilfs_copy_buffer(struct buffer_head *, struct buffer_head *);
+int nilfs_page_buffers_clean(struct page *);
+void nilfs_page_bug(struct page *);
+struct page *nilfs_alloc_private_page(struct block_device *, int,
+				      unsigned long);
+void nilfs_free_private_page(struct page *);
+
+int nilfs_copy_dirty_pages(struct address_space *, struct address_space *);
+void nilfs_copy_back_pages(struct address_space *, struct address_space *);
+void nilfs_clear_dirty_pages(struct address_space *);
+unsigned nilfs_page_count_clean_buffers(struct page *, unsigned, unsigned);
 
 static inline struct buffer_head *
 nilfs_page_get_nth_block(struct page *page, unsigned int count)
@@ -73,72 +68,5 @@ nilfs_page_get_nth_block(struct page *page, unsigned int count)
 	get_bh(bh);
 	return bh;
 }
-
-static inline void nilfs_set_page_writeback(struct page *page)
-{
-	if (buffer_nilfs_allocated(page_buffers(page))) {
-#if HAVE_SET_CLEAR_PAGE_WRITEBACK
-		SetPageWriteback(page);
-#else
-		if (!TestSetPageWriteback(page))
-			inc_zone_page_state(page, NR_WRITEBACK);
-#endif
-	} else
-		set_page_writeback(page);
-}
-
-static inline void nilfs_end_page_writeback(struct page *page)
-{
-	if (buffer_nilfs_allocated(page_buffers(page))) {
-#if HAVE_SET_CLEAR_PAGE_WRITEBACK
-		ClearPageWriteback(page);
-#else
-		if (TestClearPageWriteback(page))
-			dec_zone_page_state(page, NR_WRITEBACK);
-#endif
-	} else
-		end_page_writeback(page);
-}
-
-static inline void nilfs_clear_page_dirty_for_io(struct page *page)
-{
-	/* Page index must be fixed before calling this function. */
-	if (buffer_nilfs_node(page_buffers(page)))
-		nilfs_btnode_page_clear_dirty(page);
-	else
-		clear_page_dirty_for_io(page);
-}
-
-static inline void nilfs_redirty_page(struct page *page)
-{
-	if (buffer_nilfs_node(page_buffers(page)))
-		nilfs_btnode_set_page_dirty(page);
-	else
-		__set_page_dirty_nobuffers(page);
-}
-
-/* buffer_busy copied from fs/buffer.c */
-static inline int nilfs_buffer_busy(struct buffer_head *bh)
-{
-	return atomic_read(&bh->b_count) |
-		(bh->b_state & ((1 << BH_Dirty) | (1 << BH_Lock)));
-}
-
-static inline int nilfs_page_buffers_busy(struct page *page)
-{
-	struct buffer_head *head, *bh;
-
-	head = bh = page_buffers(page);
-	do {
-		if (nilfs_buffer_busy(bh))
-			return 1;
-		bh = bh->b_this_page;
-	} while (bh != head);
-	return 0;
-}
-
-#define nilfs_copy_buffer_state(dbh, sbh, mask)  \
-	do { (dbh)->b_state = ((sbh)->b_state & (mask)); } while (0)
-
 
 #endif /* _NILFS_PAGE_H */

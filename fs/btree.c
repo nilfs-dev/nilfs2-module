@@ -24,6 +24,7 @@
 #include <linux/string.h>
 #include <linux/errno.h>
 #include "nilfs.h"
+#include "page.h"
 #include "btnode.h"
 #include "btree.h"
 #include "alloc.h"
@@ -1979,66 +1980,37 @@ static void nilfs_btree_add_dirty_buffer(struct nilfs_btree *btree,
 	list_add_tail(&bh->b_assoc_buffers, head);
 }
 
-static void nilfs_btree_lookup_dirty_page_buffers(struct nilfs_btree *btree,
-						  struct page *page,
-						  struct list_head *lists)
-{
-	struct buffer_head *bh;
-
-	bh = page_buffers(page);
-	do {
-		if (buffer_dirty(bh))
-			nilfs_btree_add_dirty_buffer(btree, lists, bh);
-		bh = bh->b_this_page;
-	} while (bh != page_buffers(page));
-}
-
-#define NILFS_BTREE_GANG_LOOKUP_SIZE 16
-static void
-nilfs_btree_lookup_dirty_buffers_tag(struct nilfs_btree *btree,
-				     struct nilfs_btnode_cache *btcache,
-				     struct list_head *lists,
-				     int tag)
-{
-	struct page *pages[NILFS_BTREE_GANG_LOOKUP_SIZE];
-	__u64 index;
-	int i, n;
-
-	index = 0;
-	n = nilfs_btnode_gang_lookup_tag_nolock(btcache, pages, index,
-						NILFS_BTREE_GANG_LOOKUP_SIZE,
-						tag);
-	while (n > 0) {
-		index = page_index(pages[n - 1]) + 1;
-		for (i = 0; i < n; i++) {
-			nilfs_btree_lookup_dirty_page_buffers(
-				btree, pages[i], lists);
-		}
-		n = nilfs_btnode_gang_lookup_tag_nolock(
-			btcache, pages, index,
-			NILFS_BTREE_GANG_LOOKUP_SIZE, tag);
-	}
-}
-
 static void nilfs_btree_lookup_dirty_buffers(struct nilfs_bmap *bmap,
 					     struct list_head *listp)
 {
-	struct nilfs_btree *btree;
-	struct nilfs_btnode_cache *btcache;
+	struct nilfs_btree *btree = (struct nilfs_btree *)bmap;
+	struct address_space *btcache = &NILFS_BMAP_I(bmap)->i_btnode_cache;
 	struct list_head lists[NILFS_BTREE_LEVEL_MAX];
-	int level;
+	struct pagevec pvec;
+	struct buffer_head *bh, *head;
+	pgoff_t index = 0;
+	int level, i;
 
-	btree = (struct nilfs_btree *)bmap;
 	for (level = NILFS_BTREE_LEVEL_NODE_MIN;
 	     level < NILFS_BTREE_LEVEL_MAX;
 	     level++)
 		INIT_LIST_HEAD(&lists[level]);
 
-	btcache = &NILFS_BMAP_I(bmap)->i_btnode_cache;
-	nilfs_btnode_read_lock(btcache);
-	nilfs_btree_lookup_dirty_buffers_tag(btree, btcache, lists,
-					     PAGECACHE_TAG_DIRTY);
-	nilfs_btnode_read_unlock(btcache);
+	pagevec_init(&pvec, 0);
+
+	while (pagevec_lookup_tag(&pvec, btcache, &index, PAGECACHE_TAG_DIRTY,
+				  PAGEVEC_SIZE)) {
+		for (i = 0; i < pagevec_count(&pvec); i++) {
+			bh = head = page_buffers(pvec.pages[i]);
+			do {
+				if (buffer_dirty(bh))
+					nilfs_btree_add_dirty_buffer(btree,
+								     lists, bh);
+			} while ((bh = bh->b_this_page) != head);
+		}
+		pagevec_release(&pvec);
+		cond_resched();
+	}
 
 	for (level = NILFS_BTREE_LEVEL_NODE_MIN;
 	     level < NILFS_BTREE_LEVEL_MAX;

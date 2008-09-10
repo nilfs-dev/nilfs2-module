@@ -48,7 +48,6 @@
 /*
  * Segment constructor
  */
-#define SC_N_PAGEVEC	16   /* Size of locally allocated page vector */
 #define SC_N_INODEVEC	16   /* Size of locally allocated inode vector */
 
 #define SC_MAX_SEGDELTA 64   /* Upper limit of the number of segments
@@ -859,33 +858,32 @@ static void nilfs_lookup_dirty_node_buffers(struct inode *inode,
 					    struct list_head *listp)
 {
 	struct nilfs_inode_info *ii = NILFS_I(inode);
-	struct page *pages[SC_N_PAGEVEC];
+	struct address_space *mapping = &ii->i_btnode_cache;
+	struct pagevec pvec;
 	struct buffer_head *bh, *head;
-	unsigned int i, n;
+	unsigned int i;
 	pgoff_t index = 0;
 
 	seg_debug(3, "called (ino=%lu)\n", inode->i_ino);
 
- repeat:
-	n = nilfs_btnode_find_get_pages_tag(&ii->i_btnode_cache,
-					    pages, &index, SC_N_PAGEVEC,
-					    PAGECACHE_TAG_DIRTY);
-	if (!n)
-		return;
+	pagevec_init(&pvec, 0);
 
-	for (i = 0; i < n; i++) {
-		bh = head = page_buffers(pages[i]);
-		do {
-			if (buffer_dirty(bh)) {
-				get_bh(bh);
-				list_add_tail(&bh->b_assoc_buffers, listp);
-			}
-			bh = bh->b_this_page;
-		} while (bh != head);
-
-		page_cache_release(pages[i]);
+	while (pagevec_lookup_tag(&pvec, mapping, &index, PAGECACHE_TAG_DIRTY,
+				  PAGEVEC_SIZE)) {
+		for (i = 0; i < pagevec_count(&pvec); i++) {
+			bh = head = page_buffers(pvec.pages[i]);
+			do {
+				if (buffer_dirty(bh)) {
+					get_bh(bh);
+					list_add_tail(&bh->b_assoc_buffers,
+						      listp);
+				}
+				bh = bh->b_this_page;
+			} while (bh != head);
+		}
+		pagevec_release(&pvec);
+		cond_resched();
 	}
-	goto repeat;
 }
 
 static void nilfs_dispose_list(struct nilfs_sb_info *sbi,
@@ -1873,7 +1871,10 @@ nilfs_segctor_update_payload_blocknr(struct nilfs_sc_info *sci,
 			ndatablk = le32_to_cpu(finfo->fi_ndatablk);
 			nilfs_print_finfo(blocknr, ino, nblocks, ndatablk);
 
-			inode = NILFS_AS_I(bh->b_page->mapping);
+			if (buffer_nilfs_node(bh))
+				inode = NILFS_BTNC_I(bh->b_page->mapping);
+			else
+				inode = NILFS_AS_I(bh->b_page->mapping);
 
 			if (mode == SC_LSEG_DSYNC)
 				sc_op = &nilfs_sc_dsync_ops;
@@ -1942,9 +1943,9 @@ nilfs_copy_replace_page_buffers(struct page *page, struct list_head *out)
 	struct buffer_head *bh, *head, *bh2;
 	void *kaddr;
 
-	seg_debug(3, "freezing page (%p)\n", page);
 	bh = head = page_buffers(page);
-	clone_page = nilfs_alloc_buffer_page(bh->b_bdev, bh->b_size, 0);
+
+	clone_page = nilfs_alloc_private_page(bh->b_bdev, bh->b_size, 0);
 	if (unlikely(!clone_page))
 		return -ENOMEM;
 
@@ -1954,17 +1955,21 @@ nilfs_copy_replace_page_buffers(struct page *page, struct list_head *out)
 		if (list_empty(&bh->b_assoc_buffers))
 			continue;
 		get_bh(bh2);
+		page_cache_get(clone_page); /* for each bh */
 		memcpy(bh2->b_data, kaddr + bh_offset(bh), bh2->b_size);
-		/* bh2->b_blocknr = bh->b_blocknr; */
+		bh2->b_blocknr = bh->b_blocknr;
 		list_replace(&bh->b_assoc_buffers, &bh2->b_assoc_buffers);
 		list_add_tail(&bh->b_assoc_buffers, out);
 	} while (bh = bh->b_this_page, bh2 = bh2->b_this_page, bh != head);
 	kunmap_atomic(kaddr, KM_USER0);
 
-	nilfs_page_add_to_lru(clone_page, 1);
-	nilfs_set_page_writeback(clone_page);
+#if HAVE_SET_CLEAR_PAGE_WRITEBACK
+	SetPageWriteback(clone_page);
+#else
+	if (!TestSetPageWriteback(clone_page))
+		inc_zone_page_state(clone_page, NR_WRITEBACK);
+#endif
 	unlock_page(clone_page);
-	page_cache_release(clone_page);
 
 	return 0;
 }
@@ -1991,8 +1996,8 @@ static int nilfs_begin_page_io(struct page *page, struct list_head *out)
 		return 0;
 
 	lock_page(page);
-	nilfs_clear_page_dirty_for_io(page);
-	nilfs_set_page_writeback(page);
+	clear_page_dirty_for_io(page);
+	set_page_writeback(page);
 	unlock_page(page);
 
 	if (nilfs_test_page_to_be_frozen(page)) {
@@ -2104,13 +2109,22 @@ static void __nilfs_end_page_io(struct page *page, int err)
 	/* BUG_ON(err > 0); */
 	if (!err) {
 		if (!nilfs_page_buffers_clean(page))
-			nilfs_redirty_page(page);
+			__set_page_dirty_nobuffers(page);
 		ClearPageError(page);
 	} else {
-		nilfs_redirty_page(page);
+		__set_page_dirty_nobuffers(page);
 		SetPageError(page);
 	}
-	nilfs_end_page_writeback(page);
+
+	if (buffer_nilfs_allocated(page_buffers(page))) {
+#if HAVE_SET_CLEAR_PAGE_WRITEBACK
+		ClearPageWriteback(page);
+#else
+		if (TestClearPageWriteback(page))
+			dec_zone_page_state(page, NR_WRITEBACK);
+#endif
+	} else
+		end_page_writeback(page);
 }
 
 static void nilfs_end_page_io(struct page *page, int err)

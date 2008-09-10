@@ -259,6 +259,27 @@ void nilfs_segbuf_fill_in_data_crc(struct nilfs_segment_buffer *segbuf,
 	raw_sum->ss_datasum = cpu_to_le32(crc);
 }
 
+void nilfs_release_buffers(struct list_head *list)
+{
+	struct buffer_head *bh, *n;
+
+	list_for_each_entry_safe(bh, n, list, b_assoc_buffers) {
+		list_del_init(&bh->b_assoc_buffers);
+		if (buffer_nilfs_allocated(bh)) {
+			struct page *clone_page = bh->b_page;
+
+			/* remove clone page */
+			brelse(bh);
+			page_cache_release(clone_page); /* for each bh */
+			if (page_count(clone_page) <= 2) {
+				lock_page(clone_page);
+				nilfs_free_private_page(clone_page);
+			}
+			continue;
+		}
+		brelse(bh);
+	}
+}
 
 /*
  * BIO operations

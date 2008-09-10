@@ -151,15 +151,6 @@
 	(LINUX_VERSION_CODE > KERNEL_VERSION(2, 6, 22))
 #endif
 /*
- * set_shrinker() and remove_shrinker() were replaced with
- * register_shrinker() and unregister_shrinker(), respectively,
- * at linux-2.6.23.
- */
-#ifndef HAVE_REGISTER_SHRINKER
-# define HAVE_REGISTER_SHRINKER \
-	(LINUX_VERSION_CODE > KERNEL_VERSION(2, 6, 22))
-#endif
-/*
  * SLAB destructor argument was removed from kmem_cache_create()
  * at linux-2.6.23.
  */
@@ -576,7 +567,7 @@ extern void __nilfs_pagevec_release(struct pagevec *);
 #endif
 
 #if !HAVE_INVALIDATE_INODE_PAGES2_RANGE
-#define invalidate_inode_pages2_range(mapping, start, end)   (0)
+#define invalidate_inode_pages2_range(mapping, start, end)   (-EIO)
 #endif
 
 #if !HAVE_PURE_MUTEX
