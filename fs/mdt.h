@@ -34,7 +34,6 @@
  * @mi_nilfs: back pointer to the_nilfs struct
  * @mi_sem: reader/writer semaphore for meta data operations
  * @mi_bgl: per-blockgroup locking
- * @mi_orig_inode: original inode (only valid for shadow)
  * @mi_entry_size: size of an entry
  * @mi_first_entry_offset: offset to the first entry
  * @mi_entries_per_block: number of entries in a block
@@ -45,7 +44,6 @@ struct nilfs_mdt_info {
 	struct the_nilfs       *mi_nilfs;
 	struct rw_semaphore	mi_sem;
 	struct blockgroup_lock *mi_bgl;
-	struct inode	       *mi_orig_inode;
 	unsigned		mi_entry_size;
 	unsigned		mi_first_entry_offset;
 	unsigned long		mi_entries_per_block;
@@ -67,13 +65,6 @@ static inline struct the_nilfs *NILFS_I_NILFS(struct inode *inode)
 	struct super_block *sb = inode->i_sb;
 
 	return sb ? NILFS_SB(sb)->s_nilfs : NILFS_MDT(inode)->mi_nilfs;
-}
-
-static inline struct inode *NILFS_ORIG_I(struct inode *inode)
-{
-	struct nilfs_mdt_info *mdi = NILFS_MDT(inode);
-
-	return (mdi && mdi->mi_orig_inode) ? mdi->mi_orig_inode : NULL;
 }
 
 /* Default GFP flags using highmem */
