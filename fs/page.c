@@ -123,17 +123,14 @@ void nilfs_forget_buffer(struct buffer_head *bh)
 
 	lock_buffer(bh);
 	clear_buffer_nilfs_volatile(bh);
-	if (test_clear_buffer_dirty(bh) && nilfs_page_buffers_clean(page)) {
-#if HAVE_CLEAR_PAGE_DIRTY
-		clear_page_dirty(page);
-#else
-		cancel_dirty_page(page, PAGE_CACHE_SIZE);
-#endif
-	}
+	if (test_clear_buffer_dirty(bh) && nilfs_page_buffers_clean(page))
+		__nilfs_clear_page_dirty(page);
+
 	clear_buffer_uptodate(bh);
 	clear_buffer_mapped(bh);
 	bh->b_blocknr = -1;
 	ClearPageUptodate(page);
+	ClearPageMappedToDisk(page);
 	unlock_buffer(bh);
 	brelse(bh);
 }
