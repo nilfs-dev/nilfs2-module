@@ -327,6 +327,6 @@ void nilfs_btnode_abort_change_key(struct address_space *btnc,
 		radix_tree_delete(&btnc->page_tree, newkey);
 		WRITE_UNLOCK_IRQ(&btnc->tree_lock);
 		unlock_page(ctxt->bh->b_page);
-	} else 
+	} else
 		brelse(nbh);
 }

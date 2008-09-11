@@ -463,7 +463,8 @@ int nilfs_palloc_freev(struct inode *inode, __u64 *entry_nrs, size_t nitems)
 		ret = nilfs_palloc_get_desc_block(inode, group, 0, &desc_bh);
 		if (ret < 0)
 			return ret;
-		ret = nilfs_palloc_get_bitmap_block(inode, group, 0, &bitmap_bh);
+		ret = nilfs_palloc_get_bitmap_block(inode, group, 0,
+						    &bitmap_bh);
 		if (ret < 0) {
 			brelse(desc_bh);
 			return ret;
