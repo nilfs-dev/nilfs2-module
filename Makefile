@@ -1,8 +1,6 @@
 #
 # Makefile - for NILFS (top)
 #
-# Written by Seiji Kihara <kihara@osrg.net>
-#
 
 SUBDIRS = fs
 
