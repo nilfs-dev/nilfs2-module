@@ -61,10 +61,6 @@
 #define NILFS_FL_USER_VISIBLE	0x0003DFFF /* User visible flags */
 #define NILFS_FL_USER_MODIFIABLE	0x000380FF /* User modifiable flags */
 
-/* Flags for inode allocators */
-#define NILFS_INODE_NEW		0x10000000 /* i_mode has free link chain */
-#define NILFS_INODE_UNUSED	0x20000000 /* i_mode has free link chain */
-
 
 #define NILFS_INODE_BMAP_SIZE	7
 /**
