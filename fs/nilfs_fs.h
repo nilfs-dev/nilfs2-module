@@ -136,15 +136,6 @@ struct nilfs_super_root {
 #define NILFS_DFL_MAX_MNT_COUNT		50      /* 50 mounts */
 
 /*
- * Retry count for IO errors
- *
- * Basically retry for the same block is entrusted to device drivers.
- * Recovery process gives up any further attempts to find a last valid
- * segment when IO errors repeatedly occur.
- */
-#define NILFS_EIO_RETRY_COUNT		4
-
-/*
  * File system states (sbp->s_state, nilfs->ns_mount_state)
  */
 #define NILFS_VALID_FS			0x0001  /* Unmounted cleanly */
