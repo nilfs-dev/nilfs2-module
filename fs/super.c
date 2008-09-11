@@ -44,6 +44,7 @@
 #include <linux/blkdev.h>
 #include <linux/parser.h>
 #include <linux/random.h>
+#include <linux/crc32.h>
 #include <linux/smp_lock.h>
 #include <linux/vfs.h>
 #include <linux/writeback.h>
@@ -59,6 +60,8 @@
 #include "cpfile.h"
 #include "ifile.h"
 #include "dat.h"
+#include "segment.h"
+#include "segbuf.h"
 
 MODULE_AUTHOR("NTT Corp.");
 MODULE_DESCRIPTION("A New Implementation of the Log-structured Filesystem "
@@ -66,11 +69,9 @@ MODULE_DESCRIPTION("A New Implementation of the Log-structured Filesystem "
 MODULE_VERSION(NILFS_VERSION);
 MODULE_LICENSE("GPL");
 
-
 static int nilfs_remount(struct super_block *sb, int *flags, char *data);
 static int test_exclusive_mount(struct file_system_type *fs_type,
 				struct block_device *bdev, int flags);
-
 
 /**
  * nilfs_error() - report failure condition on a filesystem
@@ -84,9 +85,8 @@ static int test_exclusive_mount(struct file_system_type *fs_type,
  * The segment constructor must not call this function because it can
  * kill itself.
  */
-void
-nilfs_error(struct super_block *sb, const char *function,
-	    const char *fmt, ...)
+void nilfs_error(struct super_block *sb, const char *function,
+		 const char *fmt, ...)
 {
 	struct nilfs_sb_info *sbi = NILFS_SB(sb);
 	va_list args;

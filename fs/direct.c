@@ -22,6 +22,7 @@
 
 #include <linux/errno.h>
 #include "nilfs.h"
+#include "page.h"
 #include "direct.h"
 #include "alloc.h"
 

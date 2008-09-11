@@ -25,6 +25,7 @@
 #include <linux/mpage.h>
 #include <linux/writeback.h>
 #include "nilfs.h"
+#include "segment.h"
 #include "page.h"
 #include "mdt.h"
 #include "cpfile.h"
@@ -747,7 +748,7 @@ void nilfs_truncate(struct inode *inode)
 		return;
 
 	blocksize = sb->s_blocksize;
-	blkoff = (inode->i_size + blocksize - 1) >> NILFS_BLOCK_SIZE_BITS(sb);
+	blkoff = (inode->i_size + blocksize - 1) >> sb->s_blocksize_bits;
 	ret = nilfs_transaction_begin(sb, &ti, 0);
 	BUG_ON(ret);
 

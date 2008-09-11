@@ -31,7 +31,6 @@
 #include "nilfs.h"
 #include "page.h"
 #include "mdt.h"
-//#include "btnode.h"
 
 
 #define NILFS_BUFFER_INHERENT_BITS  \

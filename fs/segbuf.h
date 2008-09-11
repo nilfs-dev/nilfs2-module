@@ -113,17 +113,13 @@ struct nilfs_segment_buffer {
 	for ((s) = NILFS_FIRST_SEGBUF(h); (s) != (t); \
 	     (s) = NILFS_NEXT_SEGBUF(s))
 
-struct nilfs_segsum_pointer {
-	struct buffer_head     *bh;
-	unsigned		offset; /* offset in bytes */
-};
-
 #define NILFS_SEGBUF_FIRST_BH(head)  \
 	(list_entry((head)->next, struct buffer_head, b_assoc_buffers))
 #define NILFS_SEGBUF_NEXT_BH(bh)  \
 	(list_entry((bh)->b_assoc_buffers.next, struct buffer_head, \
 		    b_assoc_buffers))
 #define NILFS_SEGBUF_BH_IS_LAST(bh, head)  ((bh)->b_assoc_buffers.next == head)
+
 
 int __init nilfs_init_segbuf_cache(void);
 void nilfs_destroy_segbuf_cache(void);

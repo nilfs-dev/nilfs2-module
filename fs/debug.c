@@ -33,6 +33,7 @@
 #include "sufile.h"
 #include "page.h"
 #include "seglist.h"
+#include "segbuf.h"
 
 static int proc_calc_metrics(char *page, char **start, off_t off,
 			     int count, int *eof, int len);

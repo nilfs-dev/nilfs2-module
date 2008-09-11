@@ -23,11 +23,13 @@
 #include <linux/buffer_head.h>
 #include <linux/blkdev.h>
 #include <linux/swap.h>
+#include <linux/crc32.h>
 #include "nilfs.h"
+#include "segment.h"
 #include "sufile.h"
 #include "page.h"
 #include "seglist.h"
-
+#include "segbuf.h"
 
 /*
  * Segment check result

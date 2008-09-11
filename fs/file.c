@@ -25,6 +25,7 @@
 #include <linux/mm.h>
 #include <linux/writeback.h>
 #include "nilfs.h"
+#include "segment.h"
 
 int nilfs_sync_file(struct file *file, struct dentry *dentry, int datasync)
 {

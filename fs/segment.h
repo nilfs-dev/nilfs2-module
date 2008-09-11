@@ -23,11 +23,11 @@
 #ifndef _NILFS_SEGMENT_H
 #define _NILFS_SEGMENT_H
 
+#include <linux/types.h>
 #include <linux/fs.h>
 #include <linux/buffer_head.h>
 #include "nilfs_fs.h"
 #include "sb.h"
-#include "segbuf.h"
 
 /**
  * struct nilfs_recovery_info - Recovery infomation
@@ -63,35 +63,6 @@ struct nilfs_recovery_info {
 #define NILFS_RECOVERY_ROLLFORWARD_DONE	 2  /* Rollforward was carried out */
 
 /**
- * struct nilfs_transaction_info: Transaction information
- * @ti_magic: Magic number
- * @ti_save: Backup of journal_info field of task_struct
- * @ti_flags: Flags
- * @ti_count: Nest level
- * @ti_garbage:	List of inode to be put when releasing semaphore
- * @ti_ndirtied: Number of dirtied blocks
- */
-struct nilfs_transaction_info {
-	u32			ti_magic;
-	void		       *ti_save;
-				/* This should never used. If this happens,
-				   one of other filesystems has a bug. */
-	unsigned short		ti_flags;
-	unsigned short		ti_count;
-	struct list_head	ti_garbage;
-};
-/* ti_magic */
-#define NILFS_TI_MAGIC		0xd9e392fb
-
-/* ti_flags */
-#define NILFS_TI_DYNAMIC_ALLOC	0x0001
-#define NILFS_TI_SYNC		0x0002	/* Force to construct segment at the
-					   end of transaction. */
-#define NILFS_TI_GC		0x0004	/* GC context */
-#define NILFS_TI_COMMIT		0x0008	/* Change happened or not */
-#define NILFS_TI_WRITER		0x0010	/* Constructor context */
-
-/**
  * struct nilfs_cstage - Context of collection stage
  * @scnt: Stage count
  * @flags: State flags
@@ -103,6 +74,13 @@ struct nilfs_cstage {
 	unsigned 		flags;
 	struct nilfs_inode_info *dirty_file_ptr;
 	struct nilfs_inode_info *gc_inode_ptr;
+};
+
+struct nilfs_segment_buffer;
+
+struct nilfs_segsum_pointer {
+	struct buffer_head     *bh;
+	unsigned		offset; /* offset in bytes */
 };
 
 /**
@@ -240,9 +218,6 @@ enum {
 /* segment.c */
 extern int nilfs_init_transaction_cache(void);
 extern void nilfs_destroy_transaction_cache(void);
-extern int nilfs_transaction_begin(struct super_block *,
-				   struct nilfs_transaction_info *, int);
-extern int nilfs_transaction_end(struct super_block *, int);
 extern void nilfs_relax_pressure_in_lock(struct super_block *);
 
 extern int nilfs_construct_segment(struct super_block *);
@@ -267,28 +242,5 @@ extern int nilfs_search_super_root(struct the_nilfs *, struct nilfs_sb_info *,
 extern int nilfs_recover_logical_segments(struct the_nilfs *,
 					  struct nilfs_sb_info *,
 					  struct nilfs_recovery_info *);
-
-
-static inline struct nilfs_sc_info *NILFS_SC(struct nilfs_sb_info *sbi)
-{
-	return sbi->s_sc_info;
-}
-
-static inline void nilfs_set_transaction_flag(unsigned int flag)
-{
-	struct nilfs_transaction_info *ti = current->journal_info;
-
-	BUG_ON(!ti);
-	ti->ti_flags |= flag;
-}
-
-static inline int nilfs_test_transaction_flag(unsigned int flag)
-{
-	struct nilfs_transaction_info *ti = current->journal_info;
-
-	if (ti == NULL || ti->ti_magic != NILFS_TI_MAGIC)
-		return 0;
-	return !!(ti->ti_flags & flag);
-}
 
 #endif /* _NILFS_SEGMENT_H */

@@ -35,6 +35,7 @@
 #include <linux/suspend.h>
 #endif
 #include <linux/kthread.h>
+#include <linux/crc32.h>
 #include "nilfs.h"
 #include "btnode.h"
 #include "page.h"
@@ -43,6 +44,7 @@
 #include "cpfile.h"
 #include "ifile.h"
 #include "seglist.h"
+#include "segbuf.h"
 
 
 /*
@@ -124,10 +126,6 @@ static void nilfs_dispose_list(struct nilfs_sb_info *, struct list_head *,
 
 /*
  * Transaction
- *
- * We don't need the exclusion control among same task, because
- * all file operations are serialized through inode->i_mutex(i_sem) including
- * ones by the same task.
  */
 static struct kmem_cache *nilfs_transaction_cachep;
 

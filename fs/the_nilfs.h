@@ -173,7 +173,6 @@ struct the_nilfs {
 #define NILFS_GCINODE_HASH_BITS		8
 #define NILFS_GCINODE_HASH_SIZE		(1<<NILFS_GCINODE_HASH_BITS)
 
-
 #define THE_NILFS_FNS(bit, name)					\
 static inline void set_nilfs_##name(struct the_nilfs *nilfs)		\
 {									\

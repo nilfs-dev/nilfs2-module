@@ -24,8 +24,23 @@
 #ifndef _NILFS_PAGE_H
 #define _NILFS_PAGE_H
 
+#include <linux/buffer_head.h>
 #include "nilfs.h"
 #include "kern_feature.h"
+
+/*
+ * Extended buffer state bits
+ */
+enum {
+	BH_NILFS_Allocated = BH_PrivateStart,
+	BH_NILFS_Node,
+	BH_NILFS_Volatile,
+};
+
+BUFFER_FNS(NILFS_Allocated, nilfs_allocated)	/* nilfs private buffers */
+BUFFER_FNS(NILFS_Node, nilfs_node)		/* nilfs node buffers */
+BUFFER_FNS(NILFS_Volatile, nilfs_volatile)
+
 
 #if NEED_OLD_MARK_BUFFER_DIRTY
 void nilfs_mark_buffer_dirty(struct buffer_head *bh);

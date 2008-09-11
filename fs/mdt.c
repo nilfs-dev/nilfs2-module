@@ -27,6 +27,7 @@
 #include <linux/backing-dev.h>
 #include <linux/swap.h>
 #include "nilfs.h"
+#include "segment.h"
 #include "page.h"
 #include "mdt.h"
 

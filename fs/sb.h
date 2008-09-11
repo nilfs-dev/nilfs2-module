@@ -24,6 +24,9 @@
 #ifndef _NILFS_SB
 #define _NILFS_SB
 
+#include <linux/types.h>
+#include <linux/fs.h>
+
 /*
  * Mount options
  */
@@ -31,6 +34,9 @@ struct nilfs_mount_options {
 	unsigned long mount_opt;
 	__u64 snapshot_cno;
 };
+
+struct the_nilfs;
+struct nilfs_sc_info;
 
 /*
  * NILFS super-block data in memory
@@ -74,11 +80,10 @@ static inline struct nilfs_sb_info *NILFS_SB(struct super_block *sb)
 	return sb->s_fs_info;
 }
 
-
-#define NILFS_BLOCK_SIZE_BITS(s)   ((s)->s_blocksize_bits)
-#define NILFS_BLOCK_SIZE(s)        (NILFS_SB(s)->s_blocksize)
-#define NILFS_INODE_SIZE(s)        (NILFS_SB(s)->s_nilfs->ns_inode_size)
-#define NILFS_FIRST_INO(s)         (NILFS_SB(s)->s_nilfs->ns_first_ino)
+static inline struct nilfs_sc_info *NILFS_SC(struct nilfs_sb_info *sbi)
+{
+	return sbi->s_sc_info;
+}
 
 /*
  * Bit operations for the mount option

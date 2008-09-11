@@ -23,6 +23,7 @@
 
 #include <linux/buffer_head.h>
 #include <linux/writeback.h>
+#include <linux/crc32.h>
 #include "page.h"
 #include "segbuf.h"
 #include "seglist.h"

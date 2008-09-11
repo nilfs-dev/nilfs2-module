@@ -65,4 +65,8 @@ int nilfs_palloc_prepare_free_entry(struct inode *, struct nilfs_palloc_req *);
 void nilfs_palloc_abort_free_entry(struct inode *, struct nilfs_palloc_req *);
 int nilfs_palloc_freev(struct inode *, __u64 *, size_t);
 
+#define nilfs_set_bit_atomic		ext2_set_bit_atomic
+#define nilfs_clear_bit_atomic		ext2_clear_bit_atomic
+#define nilfs_find_next_zero_bit	ext2_find_next_zero_bit
+
 #endif	/* _NILFS_ALLOC_H */

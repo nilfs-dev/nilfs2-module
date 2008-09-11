@@ -28,15 +28,12 @@
 #include <linux/buffer_head.h>
 #include <linux/spinlock.h>
 #include <linux/blkdev.h>
-#include <linux/crc32.h>
 #include "kern_feature.h"
 #include "nilfs_fs.h"
 #include "the_nilfs.h"
 #include "sb.h"
-#include "btnode.h"
 #include "bmap.h"
 #include "bmap_union.h"
-#include "segment.h"
 
 /*
  * NILFS filesystem version
@@ -131,28 +128,78 @@ enum {
 #define NILFS_SYS_INO_BITS   \
   ((unsigned int)(1 << NILFS_ROOT_INO) | NILFS_MDT_INO_BITS)
 
+#define NILFS_FIRST_INO(sb)  (NILFS_SB(sb)->s_nilfs->ns_first_ino)
+
 #define NILFS_MDT_INODE(sb, ino) \
   ((ino) < NILFS_FIRST_INO(sb) && (NILFS_MDT_INO_BITS & (1 << (ino))))
 #define NILFS_VALID_INODE(sb, ino) \
   ((ino) >= NILFS_FIRST_INO(sb) || (NILFS_SYS_INO_BITS & (1 << (ino))))
 
-
-#define nilfs_set_bit_atomic		ext2_set_bit_atomic
-#define nilfs_clear_bit_atomic		ext2_clear_bit_atomic
-#define nilfs_find_next_zero_bit	ext2_find_next_zero_bit
-
-/*
- * Extended buffer state bits
+/**
+ * struct nilfs_transaction_info: context information for synchronization
+ * @ti_magic: Magic number
+ * @ti_save: Backup of journal_info field of task_struct
+ * @ti_flags: Flags
+ * @ti_count: Nest level
+ * @ti_garbage:	List of inode to be put when releasing semaphore
  */
-enum {
-	BH_NILFS_Allocated = BH_PrivateStart,
-	BH_NILFS_Node,
-	BH_NILFS_Volatile,
+struct nilfs_transaction_info {
+	u32			ti_magic;
+	void		       *ti_save;
+				/* This should never used. If this happens,
+				   one of other filesystems has a bug. */
+	unsigned short		ti_flags;
+	unsigned short		ti_count;
+	struct list_head	ti_garbage;
 };
 
-BUFFER_FNS(NILFS_Allocated, nilfs_allocated)	/* nilfs private buffers */
-BUFFER_FNS(NILFS_Node, nilfs_node)		/* nilfs node buffers */
-BUFFER_FNS(NILFS_Volatile, nilfs_volatile)
+/* ti_magic */
+#define NILFS_TI_MAGIC		0xd9e392fb
+
+/* ti_flags */
+#define NILFS_TI_DYNAMIC_ALLOC	0x0001  /* Allocated from slab */
+#define NILFS_TI_SYNC		0x0002	/* Force to construct segment at the
+					   end of transaction. */
+#define NILFS_TI_GC		0x0004	/* GC context */
+#define NILFS_TI_COMMIT		0x0008	/* Change happened or not */
+#define NILFS_TI_WRITER		0x0010	/* Constructor context */
+
+
+int nilfs_transaction_begin(struct super_block *,
+			    struct nilfs_transaction_info *, int);
+int nilfs_transaction_end(struct super_block *, int);
+
+static inline void nilfs_set_transaction_flag(unsigned int flag)
+{
+	struct nilfs_transaction_info *ti = current->journal_info;
+
+	BUG_ON(!ti);
+	ti->ti_flags |= flag;
+}
+
+static inline int nilfs_test_transaction_flag(unsigned int flag)
+{
+	struct nilfs_transaction_info *ti = current->journal_info;
+
+	if (ti == NULL || ti->ti_magic != NILFS_TI_MAGIC)
+		return 0;
+	return !!(ti->ti_flags & flag);
+}
+
+static inline int nilfs_doing_gc(void)
+{
+	return nilfs_test_transaction_flag(NILFS_TI_GC);
+}
+
+static inline int nilfs_doing_construction(void)
+{
+	return nilfs_test_transaction_flag(NILFS_TI_WRITER);
+}
+
+static inline struct inode *nilfs_dat_inode(const struct the_nilfs *nilfs)
+{
+	return nilfs_doing_gc() ? nilfs->ns_gc_dat : nilfs->ns_dat;
+}
 
 /*
  * debug primitives
@@ -264,37 +311,13 @@ int nilfs_init_gcdat_inode(struct the_nilfs *);
 void nilfs_commit_gcdat_inode(struct the_nilfs *);
 void nilfs_clear_gcdat_inode(struct the_nilfs *);
 
-/* super.c */
-static inline int nilfs_doing_gc(void)
-{
-	return nilfs_test_transaction_flag(NILFS_TI_GC);
-}
-
-static inline int nilfs_doing_construction(void)
-{
-	return nilfs_test_transaction_flag(NILFS_TI_WRITER);
-}
-
-static inline struct inode *nilfs_dat_inode(const struct the_nilfs *nilfs)
-{
-	return nilfs_doing_gc() ? nilfs->ns_gc_dat : nilfs->ns_dat;
-}
-
 /*
  * Inodes and files operations
  */
-
-/* dir.c */
 extern struct file_operations nilfs_dir_operations;
-
-/* file.c */
 extern struct inode_operations nilfs_file_inode_operations;
 extern struct file_operations nilfs_file_operations;
-
-/* inode.c */
 extern struct address_space_operations nilfs_aops;
-
-/* namei.c */
 extern struct inode_operations nilfs_dir_inode_operations;
 extern struct inode_operations nilfs_special_inode_operations;
 extern struct inode_operations nilfs_symlink_inode_operations;
@@ -303,7 +326,6 @@ extern struct inode_operations nilfs_symlink_inode_operations;
  * proc entry
  */
 extern struct proc_dir_entry *nilfs_proc_root;
-
 
 /*
  * filesystem type

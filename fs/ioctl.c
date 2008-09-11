@@ -25,9 +25,9 @@
 #include <linux/smp_lock.h>	/* lock_kernel(), unlock_kernel() */
 #include <linux/capability.h>	/* capable() */
 #include <asm/uaccess.h>	/* copy_from_user(), copy_to_user() */
-#include "nilfs.h"
 #include "nilfs_fs.h"
-#include "sb.h"
+#include "nilfs.h"
+#include "segment.h"
 #include "bmap.h"
 #include "cpfile.h"
 #include "sufile.h"
