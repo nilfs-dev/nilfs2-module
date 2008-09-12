@@ -468,7 +468,16 @@ static struct address_space_operations def_mdt_aops = {
 static struct inode_operations def_mdt_iops;
 static struct file_operations def_mdt_fops;
 
-
+/*
+ * NILFS2 uses pseudo inodes for meta data files such as DAT, cpfile, sufile,
+ * ifile, or gcinodes.  This allows the B-tree code and segment constructor
+ * to treat them like regular files, and this helps to simplify the
+ * implementation.
+ *   On the other hand, some of the pseudo inodes have an irregular point:
+ * They don't have valid inode->i_sb pointer because their lifetimes are
+ * longer than those of the super block structs; they may continue for
+ * several consecutive mounts/umounts.  This would need discussions.
+ */
 struct inode *
 nilfs_mdt_new_common(struct the_nilfs *nilfs, struct super_block *sb,
 		     ino_t ino, gfp_t gfp_mask)

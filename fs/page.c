@@ -56,6 +56,13 @@ __nilfs_get_page_block(struct page *page, unsigned long block, pgoff_t index,
 	return bh;
 }
 
+/*
+ * Since the page cache of B-tree node pages or data page cache of pseudo
+ * inodes does not have a valid mapping->host pointer, calling
+ * mark_buffer_dirty() for their buffers causes a NULL pointer dereference;
+ * it calls __mark_inode_dirty(NULL) through __set_page_dirty().
+ * To avoid this problem, the old style mark_buffer_dirty() is used instead.
+ */
 #if NEED_OLD_MARK_BUFFER_DIRTY
 void nilfs_mark_buffer_dirty(struct buffer_head *bh)
 {
@@ -516,6 +523,17 @@ unsigned nilfs_page_count_clean_buffers(struct page *page,
 	return nc;
 }
 
+/*
+ * NILFS2 needs clear_page_dirty() in the following two cases:
+ *
+ * 1) For B-tree node pages and data pages of the dat/gcdat, NILFS2 clears
+ *    page dirty flags when it copies back pages from the shadow cache
+ *    (gcdat->{i_mapping,i_btnode_cache}) to its original cache
+ *    (dat->{i_mapping,i_btnode_cache}).
+ *
+ * 2) Some B-tree operations like insertion or deletion may dispose buffers
+ *    in dirty state, and this needs to cancel the dirty state of their pages.
+ */
 #if !HAVE_CLEAR_PAGE_DIRTY
 int __nilfs_clear_page_dirty(struct page *page)
 {
