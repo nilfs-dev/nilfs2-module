@@ -159,8 +159,8 @@ the following meta data files:
  2) Checkpoint file (cpfile)       -- Stores checkpoints
  3) Segment usage file (sufile)    -- Stores allocation state of segments
  4) Data address translation file  -- Maps virtual block numbers to usual
-    (DAT)                             block numbers.  This file serves to make
-                                      on-disk blocks relocatable.
+    (DAT)                             block numbers.  This file serves to
+                                      make on-disk blocks relocatable.
  5) Sketch file (sketch)           -- Keeps read-only data which can be
                                       associated with checkpoints (optional)
 
@@ -178,8 +178,25 @@ summary.  The recovery code of nilfs2 looks this boundary information
 to ensure atomicity of updates.
 
 The super root block is inserted for every checkpoints.  It includes
-three special inodes, inodes for the DAT, cpfile, and sufile.  Other
-inodes are included in the ifile.  The inode of ifile is included in the
-corresponding checkpoint entry in the cpfile.
+three special inodes, inodes for the DAT, cpfile, and sufile.  Inodes
+of regular files, directories, symlinks and other special files, are
+included in the ifile.  The inode of ifile itself is included in the
+corresponding checkpoint entry in the cpfile.  Thus, the hierarchy
+among NILFS2 files can be depicted as follows:
+
+  Super block (SB)
+       |
+       v
+  Super root block (the latest cno=xx)
+       |-- DAT
+       |-- sufile
+       `-- cpfile
+              |-- ifile (cno=c1)
+              |-- ifile (cno=c2) ---- file (ino=i1)
+              :        :          |-- file (ino=i2)
+              `-- ifile (cno=xx)  |-- file (ino=i3)
+                                  :        :
+                                  `-- file (ino=yy)
+                                    ( regular file, directory, or symlink )
 
 For detail on the format of each file, please see include/linux/nilfs2_fs.h.
