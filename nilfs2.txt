@@ -117,14 +117,14 @@ block (SR):
    ______________________________________________________
   | |SB| | Segment | Segment | Segment | ... | Segment | |
   |_|__|_|____0____|____1____|____2____|_____|____N____|_|
-  0 +1K +4K       +8M       +16M      +32M  +(8MB x N) 
+  0 +1K +4K       +8M       +16M      +32M  +(8MB x N)
        .             .            (Typical offsets for 4KB-block)
     .                  .
   .______________________.
   | log | log |... | log |
   |__1__|__2__|____|__m__|
-        .       . 
-      .               . 
+        .       .
+      .               .
     .                       .
   .______________________________.
   | Summary | Payload blocks  |SR|
@@ -133,7 +133,7 @@ block (SR):
 The payload blocks are organized per file, and each file consists of
 data blocks and B-tree node blocks:
 
-    |<---       File-A        --->|<---       File-B        --->| 
+    |<---       File-A        --->|<---       File-B        --->|
    _______________________________________________________________
     | Data blocks | B-tree blocks | Data blocks | B-tree blocks | ...
    _|_____________|_______________|_____________|_______________|_
