@@ -110,14 +110,13 @@ Disk format
 
 A nilfs2 volume is equally divided into a number of segments except
 for the super block (SB) and segment #0.  A segment is the container
-of logs.  It can include multiple logs, each of which consists of
-summary information blocks, payload blocks, and an optional super root
-block (SR):
+of logs.  Each log is composed of summary information blocks, payload
+blocks, and an optional super root block (SR):
 
    ______________________________________________________
   | |SB| | Segment | Segment | Segment | ... | Segment | |
   |_|__|_|____0____|____1____|____2____|_____|____N____|_|
-  0 +1K +4K       +8M       +16M      +32M  +(8MB x N)
+  0 +1K +4K       +8M       +16M      +24M  +(8MB x N)
        .             .            (Typical offsets for 4KB-block)
     .                  .
   .______________________.
@@ -142,9 +141,9 @@ data blocks and B-tree node blocks:
 Since only the modified blocks are written in the log, it may have
 files without data blocks or B-tree node blocks.
 
-These organization is recorded in the summary information blocks,
-which contains a summary structure (nilfs_segment_summary), per file
-structures (nilfs_finfo), and per block structures (nilfs_binfo):
+The organization of the blocks is recorded in the summary information
+blocks, which contains a header structure (nilfs_segment_summary), per
+file structures (nilfs_finfo), and per block structures (nilfs_binfo):
 
   _________________________________________________________________________
  | Summary | finfo | binfo | ... | binfo | finfo | binfo | ... | binfo |...
@@ -156,18 +155,16 @@ and several meta data files.  The mata data files are the files used
 to maintain file system meta data.  The current version of NILFS2 uses
 the following meta data files:
 
- 1) Inode file (ifile)             -- Table file keeping on-disk inodes
- 2) Checkpoint file (cpfile)       -- Table file keeping checkpoints
- 3) Segment usage file (sufile)    -- Table file keeping allocation state
-                                      of segments
- 4) Data address translation file  -- Table file which maps virtual block
-    (DAT)                             numbers to usual block numbers.
-                                      This file is used to make on-disk blocks
-                                      relocatable.
- 5) Sketch file (sketch)           -- Read-only data which can be associated
-                                      with checkpoints (optional)
+ 1) Inode file (ifile)             -- Stores on-disk inodes
+ 2) Checkpoint file (cpfile)       -- Stores checkpoints
+ 3) Segment usage file (sufile)    -- Stores allocation state of segments
+ 4) Data address translation file  -- Maps virtual block numbers to usual
+    (DAT)                             block numbers.  This file serves to make
+                                      on-disk blocks relocatable.
+ 5) Sketch file (sketch)           -- Keeps read-only data which can be
+                                      associated with checkpoints (optional)
 
-Typical organization of the logs is as follows:
+The following figure shows a typical organization of the logs:
 
   _________________________________________________________________________
  | Summary | regular file | file  | ... | ifile | cpfile | sufile | DAT |SR|
@@ -175,15 +172,14 @@ Typical organization of the logs is as follows:
 
 
 To stride over segment boundaries, this sequence of files may be split
-into multiple logs.  A sequence of logs that should be treated as
-logically one log, is identified with boundary flags recorded in the
-segment summary.  The recovery code of nilfs2 sees this boundary
-information to ensure atomicity of updates.
+into multiple logs.  The sequence of logs that should be treated as
+logically one log, is delimited with flags marked in the segment
+summary.  The recovery code of nilfs2 looks this boundary information
+to ensure atomicity of updates.
 
 The super root block is inserted for every checkpoints.  It includes
 three special inodes, inodes for the DAT, cpfile, and sufile.  Other
 inodes are included in the ifile.  The inode of ifile is included in the
 corresponding checkpoint entry in the cpfile.
 
-For more detail on the format of each file, please see
-include/linux/nilfs2_fs.h.
+For detail on the format of each file, please see include/linux/nilfs2_fs.h.
