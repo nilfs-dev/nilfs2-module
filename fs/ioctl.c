@@ -51,13 +51,20 @@ static int nilfs_ioctl_wrap_copy(struct the_nilfs *nilfs,
 	if (argv->v_nmembs == 0)
 		return 0;
 
-	for (ksize = KMALLOC_SIZE_MAX; ksize >= KMALLOC_SIZE_MIN; ksize /= 2) {
-		buf = kmalloc(ksize, GFP_NOFS);
-		if (buf != NULL)
-			break;
+	ksize = min_t(unsigned long, argv->v_nmembs * argv->v_size,
+		      KMALLOC_SIZE_MAX);
+	while (ksize >= KMALLOC_SIZE_MIN) {
+		buf = kmalloc(ksize, GFP_NOWAIT | __GFP_NOWARN);
+		if (buf)
+			goto allocated;
+		ksize >>= 1;
 	}
-	if (ksize < KMALLOC_SIZE_MIN)
+	ksize = max_t(size_t, ksize, argv->v_size);
+	buf = kmalloc(ksize, GFP_NOFS);
+	if (unlikely(!buf))
 		return -ENOMEM;
+
+ allocated:
 	maxmembs = ksize / argv->v_size;
 
 	ret = 0;
