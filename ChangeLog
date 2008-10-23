@@ -1,3 +1,34 @@
+nilfs-2.0.5  Thu Oct 23, 2008 JST
+
+	* support kernel 2.6.27.
+	* fix problems of memory allocation in ioctl.
+	* fix reset problem of DAT block count.
+	* fix possible infinite loop in nilfs_dispose_gcinode_list.
+	* ensure writeback of super block;  sync_dirty_buffers() clears the
+	  dirty flag of specified buffer even if it returns -EOPNOTSUPP
+	  (failed barrier request) or -EIO (I/O error). The previous 
+	  implementation takes this wrong, and causes a possibility to miss
+	  writeback failure of the super block.  This version corrects the
+	  issue.
+	* make buffer read concurrent for gc cache. The previous gc cache
+	  code waits for buffers for each data or node block while reading
+	  blocks to be moved.  This makes it in parallel by separating their
+	  submissions and waitings, and this would mitigate I/O overhead during
+	  GC.
+	* enhance disk format compatibility of the cpfile, sufile, and dat
+	  file.  Althouth entry sizes of these meta data files are given in
+	  the super block, these values were not used in the meta data files.
+	* use standard page cache for btree node caches.  Former versions used
+	  a peculiar page cache for btree nodes.  This finally removed it, and
+	  greatly simplified the entire source code.
+	* unify dat allocator and inode allocator.  Finally these two similar
+	  allocators are integrated into one persistent object allocator.
+	* add nilfs2.txt, which is a document supplied with the nilfs2 kernel
+	  patch set.
+	* Cleanups; remove unused functions and macros. remove unnecessary
+	  gc inode spinlocks, redundant code. apply kernel common functions.
+	  remove new checkpatch warnings.
+
 nilfs-2.0.4  Wed Aug  6, 2008 JST
 
 	* fix hangup problem while deleteing huge files:
