@@ -36,6 +36,15 @@
  */
 #ifdef LINUX_VERSION_CODE
 /*
+ * Kernels before linux-2.6.28 require open_bdev_excl() and
+ * close_bdev_excl() which were replaced with open_bdev_exclusive() and
+ * close_bdev_exclusive(), respectively.
+ */
+#ifndef NEED_OPEN_CLOSE_BDEV_EXCL
+# define NEED_OPEN_CLOSE_BDEV_EXCL \
+	(LINUX_VERSION_CODE < KERNEL_VERSION(2, 6, 28))
+#endif
+/*
  * Page trylock and buffer trylock were renamed at linux-2.6.27-rc2.
  */
 #ifndef HAVE_NEW_TRYLOCKS
@@ -636,6 +645,12 @@ static inline void list_replace_init(struct list_head *old,
 
 #ifndef DIV_ROUND_UP
 # define DIV_ROUND_UP(n, d) (((n) + (d) - 1) / (d))
+#endif
+
+#if NEED_OPEN_CLOSE_BDEV_EXCL
+#define open_bdev_exclusive(path, mode, holder) \
+	open_bdev_excl(path, mode, holder)
+#define close_bdev_exclusive(path, mode) close_bdev_excl(path)
 #endif
 
 #endif /* NILFS_KERN_FEATURE_H */
