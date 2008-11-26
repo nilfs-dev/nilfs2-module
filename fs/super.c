@@ -1213,7 +1213,7 @@ nilfs_get_sb(struct file_system_type *fs_type, int flags,
 	struct the_nilfs *nilfs = NULL;
 	int err, need_to_close = 1;
 
-	sd.bdev = open_bdev_excl(dev_name, flags, fs_type);
+	sd.bdev = open_bdev_exclusive(dev_name, flags, fs_type);
 	if (IS_ERR(sd.bdev))
 #if NEED_SIMPLE_SET_MNT
 		return PTR_ERR(sd.bdev);
@@ -1282,9 +1282,9 @@ nilfs_get_sb(struct file_system_type *fs_type, int flags,
 			  nilfs_set_bdev_super, &sd);
 		deactivate_super(s);
 		/*
-		 * Although deactivate_super() invokes close_bdev_excl() at
+		 * Although deactivate_super() invokes close_bdev_exclusive() at
 		 * kill_block_super().  Here, s is an existent mount; we need
-		 * one more close_bdev_excl() call.
+		 * one more close_bdev_exclusive() call.
 		 */
 		s = s2;
 		if (IS_ERR(s))
@@ -1330,14 +1330,14 @@ nilfs_get_sb(struct file_system_type *fs_type, int flags,
 	nilfs_unlock_bdev(sd.bdev);
 	put_nilfs(nilfs);
 	if (need_to_close)
-		close_bdev_excl(sd.bdev);
+		close_bdev_exclusive(sd.bdev, flags);
 	return simple_set_mnt(mnt, s);
 
  error_s:
 	nilfs_unlock_bdev(sd.bdev);
 	if (nilfs)
 		put_nilfs(nilfs);
-	close_bdev_excl(sd.bdev);
+	close_bdev_exclusive(sd.bdev, flags);
 	return PTR_ERR(s);
 #else /* NEED_SIMPLE_SET_MNT */
  error_s:
@@ -1357,7 +1357,7 @@ nilfs_get_sb(struct file_system_type *fs_type, int flags,
  failed_unlock:
 	nilfs_unlock_bdev(sd.bdev);
  failed:
-	close_bdev_excl(sd.bdev);
+	close_bdev_exclusive(sd.bdev, flags);
 
 #if NEED_SIMPLE_SET_MNT
 	return err;
@@ -1373,7 +1373,7 @@ nilfs_get_sb(struct file_system_type *fs_type, int flags,
 	up_write(&s->s_umount);
 	deactivate_super(s);
 	/*
-	 * deactivate_super() invokes close_bdev_excl().
+	 * deactivate_super() invokes close_bdev_exclusive().
 	 * We must finish all post-cleaning before this call;
 	 * put_nilfs() and unlocking bd_mount_sem need the block device.
 	 */
