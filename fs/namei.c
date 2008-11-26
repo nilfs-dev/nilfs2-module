@@ -86,7 +86,6 @@ nilfs_lookup(struct inode *dir, struct dentry *dentry, struct nameidata *nd)
 struct dentry *nilfs_get_parent(struct dentry *child)
 {
 	unsigned long ino;
-	struct dentry *parent;
 	struct inode *inode;
 	struct dentry dotdot;
 
@@ -110,12 +109,7 @@ struct dentry *nilfs_get_parent(struct dentry *child)
 	if (IS_ERR(inode))
 		return ERR_CAST(inode);
 #endif
-	parent = d_alloc_anon(inode);
-	if (!parent) {
-		iput(inode);
-		parent = ERR_PTR(-ENOMEM);
-	}
-	return parent;
+	return d_obtain_alias(inode);
 }
 
 /*
