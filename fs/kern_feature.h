@@ -36,6 +36,14 @@
  */
 #ifdef LINUX_VERSION_CODE
 /*
+ * In linux-2.6.28, d_alloc_anon() was removed and d_obtain_alias()
+ * was introduced to find or allocate dentry for a given inode.
+ */
+#ifndef HAVE_D_OBTAIN_ALIAS
+# define HAVE_D_OBTAIN_ALIAS \
+	(LINUX_VERSION_CODE > KERNEL_VERSION(2, 6, 27))
+#endif
+/*
  * Kernels before linux-2.6.28 require open_bdev_excl() and
  * close_bdev_excl() which were replaced with open_bdev_exclusive() and
  * close_bdev_exclusive(), respectively.
@@ -523,6 +531,19 @@ static inline void inode_dec_link_count(struct inode *inode)
 {
 	drop_nlink(inode);
 	mark_inode_dirty(inode);
+}
+#endif
+
+#if !HAVE_D_OBTAIN_ALIAS
+static inline struct dentry *d_obtain_alias(struct inode *inode)
+{
+	struct dentry *parent = d_alloc_anon(inode);
+
+	if (!parent) {
+		iput(inode);
+		parent = ERR_PTR(-ENOMEM);
+	}
+	return parent;
 }
 #endif
 
