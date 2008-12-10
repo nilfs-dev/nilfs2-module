@@ -203,8 +203,6 @@ static inline void nilfs_destroy_inode_cache(void)
 static void nilfs_clear_inode(struct inode *inode)
 {
 	struct nilfs_inode_info *ii = NILFS_I(inode);
-	struct nilfs_transaction_info ti;
-	struct nilfs_sb_info *sbi = NILFS_SB(inode->i_sb);
 
 	inode_debug(3, "called (ino=%lu)\n", inode->i_ino);
 #ifdef CONFIG_NILFS_POSIX_ACL
@@ -220,17 +218,9 @@ static void nilfs_clear_inode(struct inode *inode)
 	/*
 	 * Free resources allocated in nilfs_read_inode(), here.
 	 */
-	nilfs_transaction_begin(inode->i_sb, &ti, 0);
-
-	spin_lock(&sbi->s_inode_lock);
-	if (!list_empty(&ii->i_dirty)) {
-		inode_debug(2, "canceling inode (ino=%lu) from a list\n",
-			    inode->i_ino);
-		list_del_init(&ii->i_dirty);
-	}
+	BUG_ON(!list_empty(&ii->i_dirty));
 	brelse(ii->i_bh);
 	ii->i_bh = NULL;
-	spin_unlock(&sbi->s_inode_lock);
 
 	if (test_bit(NILFS_I_BMAP, &ii->i_state))
 		nilfs_bmap_clear(ii->i_bmap);
@@ -239,7 +229,6 @@ static void nilfs_clear_inode(struct inode *inode)
 
 	NILFS_CHECK_PAGE_CACHE(inode->i_mapping, -1);
 
-	nilfs_transaction_end(inode->i_sb, 0);
 	inode_debug(3, "done (ino=%lu)\n", inode->i_ino);
 }
 
