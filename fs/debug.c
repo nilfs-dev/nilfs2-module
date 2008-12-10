@@ -713,27 +713,12 @@ int nilfs_releasepage(struct page *page, gfp_t gfp_mask)
 	return ret;
 }
 
-#if NEED_SYNC_PAGE_RETVAL
-int
-#else
-void
-#endif
-nilfs_sync_page(struct page *page)
+void nilfs_sync_page(struct page *page)
 {
 	page_debug(3, "called (page=%p)\n", page);
-#if NEED_SYNC_PAGE_RETVAL
-	return 0;
-#endif
 }
 
-#if NEED_INVALIDATEPAGE_RETVAL
-#define __ESC(f)   return (f)
-int
-#else
-#define __ESC(f)   do { (f); return; } while (1)
-void
-#endif /* NEED_INVALIDATEPAGE_RETVAL */
-nilfs_invalidatepage(struct page *page, unsigned long offset)
+void nilfs_invalidatepage(struct page *page, unsigned long offset)
 {
 	struct buffer_head *bh = NULL;
 
@@ -741,9 +726,8 @@ nilfs_invalidatepage(struct page *page, unsigned long offset)
 		bh = page_buffers(page);
 		BUG_ON(buffer_nilfs_allocated(bh));
 	}
-	__ESC(block_invalidatepage(page, offset));
+	block_invalidatepage(page, offset);
 }
-#undef __ESC
 
 /*
  * Radix-tree checker

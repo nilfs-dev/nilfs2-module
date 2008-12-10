@@ -37,10 +37,10 @@
 void nilfs_btnode_cache_init_once(struct address_space *btnc)
 {
 	INIT_RADIX_TREE(&btnc->page_tree, GFP_ATOMIC);
-#if (NEED_RWLOCK_FOR_PAGECACHE_LOCK && !HAVE_LOCKLESS_PAGECACHE)
-	rwlock_init(&btnc->tree_lock);
-#else
+#if HAVE_LOCKLESS_PAGECACHE
 	spin_lock_init(&btnc->tree_lock);
+#else
+	rwlock_init(&btnc->tree_lock);
 #endif
 	INIT_LIST_HEAD(&btnc->private_list);
 	spin_lock_init(&btnc->private_lock);

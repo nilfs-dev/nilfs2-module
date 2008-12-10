@@ -232,30 +232,16 @@ static int nilfs_prepare_write(struct file *file, struct page *page,
 	pgoff_t offset = page->index;
 	struct inode *inode = mapping->host;
 	int err;
-#if !HAVE_AOP_TRUNCATED_PAGE
-	struct buffer_head *bh;
-
-	if (!page_has_buffers(page))
-		create_empty_buffers(page, 1 << inode->i_blkbits, 0);
-	bh = page_buffers(page);
-	get_bh(bh); /* workaround to prevent the page from being released. */
-#endif
 
 	unlock_page(page);
 	err = nilfs_transaction_begin(inode->i_sb, NULL, 1);
 	lock_page(page);
-#if HAVE_AOP_TRUNCATED_PAGE
 	if (unlikely(page->mapping != mapping || page->index != offset)) {
 		unlock_page(page);
 		if (likely(!err))
 			nilfs_transaction_end(inode->i_sb, 0);
 		return AOP_TRUNCATED_PAGE;
 	}
-#else
-	brelse(bh);
-	if (unlikely(page->mapping != mapping || page->index != offset))
-		NILFS_PAGE_BUG(page, "page was truncated unexpectedly");
-#endif
 	if (unlikely(err))
 		return err;
 
@@ -279,20 +265,6 @@ static int nilfs_commit_write(struct file *file, struct page *page,
 }
 #endif /* HAVE_WRITE_BEGIN_WRITE_END */
 
-#if NEED_GET_BLOCKS_T
-static int nilfs_get_blocks(struct inode *inode, sector_t blkoff,
-			    unsigned long max_blocks,
-			    struct buffer_head *bh_result, int create)
-{
-	int ret;
-
-	ret = nilfs_get_block(inode, blkoff, bh_result, create);
-	if (likely(ret == 0))
-		bh_result->b_size = (1 << inode->i_blkbits);
-	return ret;
-}
-#endif
-
 static ssize_t
 nilfs_direct_IO(int rw, struct kiocb *iocb, const struct iovec *iov,
 		loff_t offset, unsigned long nr_segs)
@@ -314,13 +286,7 @@ nilfs_direct_IO(int rw, struct kiocb *iocb, const struct iovec *iov,
 	}
 	/* Needs synchronization with the cleaner */
 	size = blockdev_direct_IO(rw, iocb, inode, inode->i_sb->s_bdev, iov,
-				  offset, nr_segs,
-#if NEED_GET_BLOCKS_T
-				  nilfs_get_blocks,
-#else
-				  nilfs_get_block,
-#endif
-				  NULL);
+				  offset, nr_segs, nilfs_get_block, NULL);
 	inode_debug(3, "called blockdev_direct_IO() for a read request."
 		    "(ino=%lu, offset=%llu, nr_segs=%lu, result=%Zd)\n",
 		    inode->i_ino, offset, nr_segs, size);
@@ -774,19 +740,16 @@ void nilfs_delete_inode(struct inode *inode)
 	int err;
 
 	if (unlikely(is_bad_inode(inode))) {
-#if NEED_TRUNCATE_INODE_PAGES
 		if (inode->i_data.nrpages)
 			truncate_inode_pages(&inode->i_data, 0);
-#endif
 		clear_inode(inode);
 		return;
 	}
 	err = nilfs_transaction_begin(sb, &ti, 0);
 	BUG_ON(err);
-#if NEED_TRUNCATE_INODE_PAGES
 	if (inode->i_data.nrpages)
 		truncate_inode_pages(&inode->i_data, 0);
-#endif
+
 	nilfs_truncate_bmap(ii, 0);
 	nilfs_free_inode(inode);
 	/* nilfs_free_inode() marks inode buffer dirty */

@@ -2830,7 +2830,7 @@ static void nilfs_segctor_wakeup(struct nilfs_sc_info *sci, int err)
 		}
 		if (atomic_read(&wrq->done)) {
 			seg_debug(3, "wakeup task=%p seq=%d\n",
-				  WAIT_QUEUE_TASK(&wrq->wq), wrq->seq);
+				  &wrq->wq.private, wrq->seq);
 			wrq->wq.func(&wrq->wq,
 				     TASK_UNINTERRUPTIBLE | TASK_INTERRUPTIBLE,
 				     0, NULL);
@@ -3187,18 +3187,10 @@ static int nilfs_segctor_thread(void *arg)
 	}
 
 
-#if NEED_REFRIGERATOR_ARGS
-	if (current->flags & PF_FREEZE) {
-#else
 	if (freezing(current)) {
-#endif
 		seg_debug(2, "suspending segctord\n");
 		spin_unlock(&sci->sc_state_lock);
-#if NEED_REFRIGERATOR_ARGS
-		refrigerator(PF_FREEZE);
-#else
 		refrigerator();
-#endif
 		spin_lock(&sci->sc_state_lock);
 	} else {
 		DEFINE_WAIT(wait);

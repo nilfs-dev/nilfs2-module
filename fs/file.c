@@ -88,7 +88,6 @@ nilfs_file_aio_write(struct kiocb *iocb, const struct iovec *iov,
 	return ret;
 }
 
-#if HAVE_PAGE_MKWRITE
 static int
 nilfs_page_mkwrite(struct vm_area_struct *vma, struct page *page)
 {
@@ -108,28 +107,6 @@ struct vm_operations_struct nilfs_file_vm_ops = {
 #endif
 	.page_mkwrite	= nilfs_page_mkwrite,
 };
-#else
-static struct page *
-nilfs_filemap_nopage(struct vm_area_struct *vma, unsigned long address,
-		     int *type)
-{
-	struct page *page = filemap_nopage(vma, address, type);
-
-	if (likely(page)) {
-		if ((vma->vm_flags & (VM_WRITE | VM_MAYWRITE)) &&
-		    (vma->vm_flags & (VM_SHARED | VM_MAYSHARE))) {
-			SetPageChecked(page);
-			wait_on_page_writeback(page);
-		}
-	}
-	return page;
-}
-
-struct vm_operations_struct nilfs_file_vm_ops = {
-	.nopage		= nilfs_filemap_nopage,
-	.populate	= filemap_populate,
-};
-#endif /* HAVE_PAGE_MKWRITE */
 
 static int nilfs_file_mmap(struct file *file, struct vm_area_struct *vma)
 {

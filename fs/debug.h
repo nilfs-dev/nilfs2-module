@@ -165,16 +165,8 @@ extern void nilfs_print_segment_list(const char *, struct list_head *,
 				     struct inode *);
 
 extern int nilfs_releasepage(struct page *, gfp_t);
-#if NEED_SYNC_PAGE_RETVAL
-extern int nilfs_sync_page(struct page *);
-#else
 extern void nilfs_sync_page(struct page *);
-#endif
-#if NEED_INVALIDATEPAGE_RETVAL
-extern int nilfs_invalidatepage(struct page *, unsigned long);
-#else
 extern void nilfs_invalidatepage(struct page *, unsigned long);
-#endif
 extern void nilfs_check_radix_tree(const char *, int, struct address_space *,
 				   int);
 

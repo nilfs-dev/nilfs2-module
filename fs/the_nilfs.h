@@ -93,11 +93,7 @@ struct the_nilfs {
 	struct backing_dev_info *ns_bdi;
 	struct nilfs_sb_info   *ns_writer;
 	struct rw_semaphore	ns_sem;
-#if HAVE_PURE_MUTEX
 	struct mutex		ns_writer_mutex;
-#else
-	struct semaphore	ns_writer_mutex;
-#endif
 	atomic_t		ns_writer_refcount;
 
 	/*

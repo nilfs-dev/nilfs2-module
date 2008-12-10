@@ -494,14 +494,9 @@ static int nilfs_mark_recovery_complete(struct nilfs_sb_info *sbi)
 	return err;
 }
 
-#if NEED_STATFS_DENTRY_ARG
 static int nilfs_statfs(struct dentry *dentry, struct kstatfs *buf)
 {
 	struct super_block *sb = dentry->d_sb;
-#else
-static int nilfs_statfs(struct super_block *sb, struct kstatfs *buf)
-{
-#endif
 	struct nilfs_sb_info *sbi = NILFS_SB(sb);
 	unsigned long long blocks;
 	unsigned long overhead;
@@ -1198,15 +1193,9 @@ static int nilfs_test_bdev_super2(struct super_block *s, void *data)
 	return 0;
 }
 
-#if NEED_SIMPLE_SET_MNT
 static int
 nilfs_get_sb(struct file_system_type *fs_type, int flags,
 	     const char *dev_name, void *data, struct vfsmount *mnt)
-#else
-static struct super_block *
-nilfs_get_sb(struct file_system_type *fs_type, int flags,
-	  const char *dev_name, void *data)
-#endif
 {
 	struct nilfs_super_data sd;
 	struct super_block *s, *s2;
@@ -1215,11 +1204,7 @@ nilfs_get_sb(struct file_system_type *fs_type, int flags,
 
 	sd.bdev = open_bdev_exclusive(dev_name, flags, fs_type);
 	if (IS_ERR(sd.bdev))
-#if NEED_SIMPLE_SET_MNT
 		return PTR_ERR(sd.bdev);
-#else
-		return (struct super_block *)sd.bdev;
-#endif
 
 	/*
 	 * To get mount instance using sget() vfs-routine, NILFS needs
@@ -1296,12 +1281,8 @@ nilfs_get_sb(struct file_system_type *fs_type, int flags,
 
 		s->s_flags = flags;
 		strlcpy(s->s_id, bdevname(sd.bdev, b), sizeof(s->s_id));
-#if NEED_S_OLD_BLOCKSIZE
-		s->s_old_blocksize = block_size(sd.bdev);
-		sb_set_blocksize(s, s->s_old_blocksize);
-#else
 		sb_set_blocksize(s, block_size(sd.bdev));
-#endif
+
 		err = nilfs_fill_super(s, data, flags & MS_VERBOSE, nilfs);
 		if (err)
 			goto cancel_new;
@@ -1314,11 +1295,7 @@ nilfs_get_sb(struct file_system_type *fs_type, int flags,
 			if (sd.bdev->bd_part)
 				kobj = &sd.bdev->bd_part->kobj;
 
-#if NEED_KOBJECT_UEVENT_ATTRIBUTE_ARG
-			kobject_uevent(kobj, KOBJ_MOUNT, NULL);
-#else
 			kobject_uevent(kobj, KOBJ_MOUNT);
-#endif
 		}
 #endif
 		need_to_close = 0;
@@ -1326,7 +1303,6 @@ nilfs_get_sb(struct file_system_type *fs_type, int flags,
 		err = -EBUSY;
 	}
 
-#if NEED_SIMPLE_SET_MNT
 	nilfs_unlock_bdev(sd.bdev);
 	put_nilfs(nilfs);
 	if (need_to_close)
@@ -1339,31 +1315,13 @@ nilfs_get_sb(struct file_system_type *fs_type, int flags,
 		put_nilfs(nilfs);
 	close_bdev_exclusive(sd.bdev, flags);
 	return PTR_ERR(s);
-#else /* NEED_SIMPLE_SET_MNT */
- error_s:
-	nilfs_unlock_bdev(sd.bdev);
-	/*
-	 * This unlocking is delayed until the_nilfs is attached to
-	 * nilfs_sb_info. This ensures that the_nilfs is identical for
-	 * the same device in the list of fs_supers.
-	 */
-	if (nilfs)
-		put_nilfs(nilfs);
-	if (need_to_close)
-		close_bdev_excl(sd.bdev);
-	return s;
-#endif /* NEED_SIMPLE_SET_MNT */
 
  failed_unlock:
 	nilfs_unlock_bdev(sd.bdev);
  failed:
 	close_bdev_exclusive(sd.bdev, flags);
 
-#if NEED_SIMPLE_SET_MNT
 	return err;
-#else
-	return ERR_PTR(err);
-#endif
 
  cancel_new:
 	/* Abandoning the newly allocated superblock */
@@ -1377,11 +1335,7 @@ nilfs_get_sb(struct file_system_type *fs_type, int flags,
 	 * We must finish all post-cleaning before this call;
 	 * put_nilfs() and unlocking bd_mount_sem need the block device.
 	 */
-#if NEED_SIMPLE_SET_MNT
 	return err;
-#else
-	return ERR_PTR(err);
-#endif
 }
 
 static int nilfs_test_bdev_super3(struct super_block *s, void *data)
