@@ -125,7 +125,7 @@ static int nilfs_create(struct inode *dir, struct dentry *dentry, int mode,
 {
 	struct inode *inode;
 	struct nilfs_transaction_info ti;
-	int err, err2;
+	int err;
 
 	err = nilfs_transaction_begin(dir->i_sb, &ti, 1);
 	if (err)
@@ -139,8 +139,12 @@ static int nilfs_create(struct inode *dir, struct dentry *dentry, int mode,
 		mark_inode_dirty(inode);
 		err = nilfs_add_nondir(dentry, inode);
 	}
-	err2 = nilfs_transaction_end(dir->i_sb, !err);
-	return err ? : err2;
+	if (!err)
+		err = nilfs_transaction_commit(dir->i_sb);
+	else
+		nilfs_transaction_abort(dir->i_sb);
+
+	return err;
 }
 
 static int
@@ -148,7 +152,7 @@ nilfs_mknod(struct inode *dir, struct dentry *dentry, int mode, dev_t rdev)
 {
 	struct inode *inode;
 	struct nilfs_transaction_info ti;
-	int err, err2;
+	int err;
 
 	if (!new_valid_dev(rdev))
 		return -EINVAL;
@@ -163,8 +167,12 @@ nilfs_mknod(struct inode *dir, struct dentry *dentry, int mode, dev_t rdev)
 		mark_inode_dirty(inode);
 		err = nilfs_add_nondir(dentry, inode);
 	}
-	err2 = nilfs_transaction_end(dir->i_sb, !err);
-	return err ? : err2;
+	if (!err)
+		err = nilfs_transaction_commit(dir->i_sb);
+	else
+		nilfs_transaction_abort(dir->i_sb);
+
+	return err;
 }
 
 static int nilfs_symlink(struct inode *dir, struct dentry *dentry,
@@ -174,7 +182,7 @@ static int nilfs_symlink(struct inode *dir, struct dentry *dentry,
 	struct super_block *sb = dir->i_sb;
 	unsigned l = strlen(symname)+1;
 	struct inode *inode;
-	int err, err2;
+	int err;
 
 	if (l > sb->s_blocksize)
 		return -ENAMETOOLONG;
@@ -200,8 +208,12 @@ static int nilfs_symlink(struct inode *dir, struct dentry *dentry,
 
 	err = nilfs_add_nondir(dentry, inode);
 out:
-	err2 = nilfs_transaction_end(dir->i_sb, !err);
-	return err ? : err2;
+	if (!err)
+		err = nilfs_transaction_commit(dir->i_sb);
+	else
+		nilfs_transaction_abort(dir->i_sb);
+
+	return err;
 
 out_fail:
 	inode_dec_link_count(inode);
@@ -214,7 +226,7 @@ static int nilfs_link(struct dentry *old_dentry, struct inode *dir,
 {
 	struct inode *inode = old_dentry->d_inode;
 	struct nilfs_transaction_info ti;
-	int err, err2;
+	int err;
 
 	if (inode->i_nlink >= NILFS_LINK_MAX)
 		return -EMLINK;
@@ -228,15 +240,19 @@ static int nilfs_link(struct dentry *old_dentry, struct inode *dir,
 	atomic_inc(&inode->i_count);
 
 	err = nilfs_add_nondir(dentry, inode);
-	err2 = nilfs_transaction_end(dir->i_sb, !err);
-	return err ? : err2;
+	if (!err)
+		err = nilfs_transaction_commit(dir->i_sb);
+	else
+		nilfs_transaction_abort(dir->i_sb);
+
+	return err;
 }
 
 static int nilfs_mkdir(struct inode *dir, struct dentry *dentry, int mode)
 {
 	struct inode *inode;
 	struct nilfs_transaction_info ti;
-	int err, err2;
+	int err;
 
 	if (dir->i_nlink >= NILFS_LINK_MAX)
 		return -EMLINK;
@@ -268,8 +284,12 @@ static int nilfs_mkdir(struct inode *dir, struct dentry *dentry, int mode)
 
 	d_instantiate(dentry, inode);
 out:
-	err2 = nilfs_transaction_end(dir->i_sb, !err);
-	return err ? : err2;
+	if (!err)
+		err = nilfs_transaction_commit(dir->i_sb);
+	else
+		nilfs_transaction_abort(dir->i_sb);
+
+	return err;
 
 out_fail:
 	inode_dec_link_count(inode);
@@ -286,7 +306,7 @@ static int nilfs_unlink(struct inode *dir, struct dentry *dentry)
 	struct nilfs_dir_entry *de;
 	struct page *page;
 	struct nilfs_transaction_info ti;
-	int err, err2;
+	int err;
 
 	err = nilfs_transaction_begin(dir->i_sb, &ti, 0);
 	if (err)
@@ -316,15 +336,19 @@ static int nilfs_unlink(struct inode *dir, struct dentry *dentry)
 	inode_dec_link_count(inode);
 	err = 0;
 out:
-	err2 = nilfs_transaction_end(dir->i_sb, !err);
-	return err ? : err2;
+	if (!err)
+		err = nilfs_transaction_commit(dir->i_sb);
+	else
+		nilfs_transaction_abort(dir->i_sb);
+
+	return err;
 }
 
 static int nilfs_rmdir(struct inode *dir, struct dentry *dentry)
 {
 	struct inode *inode = dentry->d_inode;
 	struct nilfs_transaction_info ti;
-	int err, err2;
+	int err;
 
 	err = nilfs_transaction_begin(dir->i_sb, &ti, 0);
 	if (err)
@@ -339,8 +363,12 @@ static int nilfs_rmdir(struct inode *dir, struct dentry *dentry)
 			inode_dec_link_count(dir);
 		}
 	}
-	err2 = nilfs_transaction_end(dir->i_sb, !err);
-	return err ? : err2;
+	if (!err)
+		err = nilfs_transaction_commit(dir->i_sb);
+	else
+		nilfs_transaction_abort(dir->i_sb);
+
+	return err;
 }
 
 static int nilfs_rename(struct inode *old_dir, struct dentry *old_dentry,
@@ -420,7 +448,7 @@ static int nilfs_rename(struct inode *old_dir, struct dentry *old_dentry,
 		inode_dec_link_count(old_dir);
 	}
 
-	err = nilfs_transaction_end(old_dir->i_sb, 1);
+	err = nilfs_transaction_commit(old_dir->i_sb);
 	return err;
 
 out_dir:
@@ -432,7 +460,7 @@ out_old:
 	kunmap(old_page);
 	page_cache_release(old_page);
 out:
-	nilfs_transaction_end(old_dir->i_sb, 0);
+	nilfs_transaction_abort(old_dir->i_sb);
 	return err;
 }
 
