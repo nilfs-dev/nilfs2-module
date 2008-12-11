@@ -24,7 +24,7 @@
  */
 /*
  * This file adds the cache of on-disk blocks to be moved in garbage
- * collection.  Ths disk blocks are held with dummy inodes (called
+ * collection.  The disk blocks are held with dummy inodes (called
  * gcinodes), and this file provides lookup function of the dummy
  * inodes and their buffer read function.
  *
