@@ -31,26 +31,6 @@
 
 static struct kmem_cache *nilfs_segbuf_cachep;
 
-#if NEED_OLD_INIT_ONCE_ARGS
-static void nilfs_segbuf_init_once(void *obj, struct kmem_cache *cachep,
-				   unsigned long flags)
-#elif NEED_OLD_INIT_ONCE_ARGS2
-static void nilfs_segbuf_init_once(struct kmem_cache *cachep, void *obj)
-#else
-static void nilfs_segbuf_init_once(void *obj)
-#endif
-{
-	struct nilfs_segment_buffer *segbuf = obj;
-#if NEED_SLAB_CTOR_CONSTRUCTOR
-	if ((flags & (SLAB_CTOR_VERIFY | SLAB_CTOR_CONSTRUCTOR)) ==
-	   SLAB_CTOR_CONSTRUCTOR) {
-#endif
-		memset(segbuf, 0, sizeof(*segbuf));
-#if NEED_SLAB_CTOR_CONSTRUCTOR
-	}
-#endif
-}
-
 int __init nilfs_init_segbuf_cache(void)
 {
 	nilfs_segbuf_cachep =
@@ -58,9 +38,9 @@ int __init nilfs_init_segbuf_cache(void)
 				  sizeof(struct nilfs_segment_buffer),
 				  0, SLAB_RECLAIM_ACCOUNT,
 #if NEED_SLAB_DESTRUCTOR_ARG
-				  nilfs_segbuf_init_once, NULL);
+				  NULL, NULL);
 #else
-				  nilfs_segbuf_init_once);
+				  NULL);
 #endif
 	return (nilfs_segbuf_cachep == NULL) ? -ENOMEM : 0;
 }
@@ -79,10 +59,9 @@ struct nilfs_segment_buffer *nilfs_segbuf_new(struct super_block *sb)
 		return NULL;
 
 	segbuf->sb_super = sb;
-	INIT_LIST_HEAD(&segbuf->sb_list);
+	segbuf->sb_segent = NULL;
 	INIT_LIST_HEAD(&segbuf->sb_segsum_buffers);
 	INIT_LIST_HEAD(&segbuf->sb_payload_buffers);
-	segbuf->sb_segent = NULL;
 	return segbuf;
 }
 
@@ -90,11 +69,10 @@ void nilfs_segbuf_free(struct nilfs_segment_buffer *segbuf)
 {
 	struct nilfs_segment_entry *ent = segbuf->sb_segent;
 
-	if (ent != NULL && list_empty(&ent->list)) {
+	if (ent != NULL && list_empty(&ent->list))
 		/* free isolated segment list head */
 		nilfs_free_segment_entry(segbuf->sb_segent);
-		segbuf->sb_segent = NULL;
-	}
+
 	kmem_cache_free(nilfs_segbuf_cachep, segbuf);
 }
 
@@ -122,13 +100,6 @@ int nilfs_segbuf_map(struct nilfs_segment_buffer *segbuf, __u64 segnum,
 		ent->segnum = segnum;
 	}
 	return 0;
-}
-
-void nilfs_segbuf_set_next_segnum(struct nilfs_segment_buffer *segbuf,
-				  __u64 nextnum, struct the_nilfs *nilfs)
-{
-	segbuf->sb_nextnum = nextnum;
-	segbuf->sb_sum.next = nilfs_get_segment_start_blocknr(nilfs, nextnum);
 }
 
 int nilfs_segbuf_extend_segsum(struct nilfs_segment_buffer *segbuf)
@@ -179,7 +150,7 @@ int nilfs_segbuf_reset(struct nilfs_segment_buffer *segbuf, unsigned flags,
 }
 
 /*
- * Setup segument summary
+ * Setup segment summary
  */
 void nilfs_segbuf_fill_in_segsum(struct nilfs_segment_buffer *segbuf)
 {

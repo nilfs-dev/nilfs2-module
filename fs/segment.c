@@ -1583,7 +1583,8 @@ static int nilfs_segctor_begin_construction(struct nilfs_sc_info *sci,
 		nextnum = nilfs->ns_nextnum;
 
 	segbuf->sb_sum.seg_seq = nilfs->ns_seg_seq;
-	nilfs_segbuf_set_next_segnum(segbuf, nextnum, nilfs);
+	segbuf->sb_sum.next = nilfs_get_segment_start_blocknr(nilfs, nextnum);
+	segbuf->sb_nextnum = nextnum;
 
 	/* truncating segment buffers */
 	list_for_each_entry_safe_continue(segbuf, n, &sci->sc_segbufs,
@@ -1634,7 +1635,9 @@ static int nilfs_segctor_extend_segments(struct nilfs_sc_info *sci,
 			goto failed_segbuf;
 
 		segbuf->sb_sum.seg_seq = prev->sb_sum.seg_seq + 1;
-		nilfs_segbuf_set_next_segnum(segbuf, nextnextnum, nilfs);
+		segbuf->sb_sum.next =
+			nilfs_get_segment_start_blocknr(nilfs, nextnextnum);
+		segbuf->sb_nextnum = nextnextnum;
 
 		list_add_tail(&segbuf->sb_list, &list);
 		prev = segbuf;
