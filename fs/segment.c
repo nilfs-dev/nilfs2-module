@@ -490,6 +490,9 @@ static void nilfs_segctor_begin_finfo(struct nilfs_sc_info *sci,
 	sci->sc_binfo_ptr = sci->sc_finfo_ptr;
 	nilfs_segctor_map_segsum_entry(
 		sci, &sci->sc_binfo_ptr, sizeof(struct nilfs_finfo));
+
+	if (inode->i_sb && !test_bit(NILFS_SC_HAVE_DELTA, &sci->sc_flags))
+		set_bit(NILFS_SC_HAVE_DELTA, &sci->sc_flags);
 	/* skip finfo */
 }
 
@@ -992,6 +995,11 @@ static int nilfs_segctor_fill_in_checkpoint(struct nilfs_sc_info *sci)
 		cpu_to_le64(sci->sc_nblk_inc + sci->sc_nblk_this_inc);
 	raw_cp->cp_create = cpu_to_le64(sci->sc_seg_ctime);
 	raw_cp->cp_cno = cpu_to_le64(nilfs->ns_cno);
+
+	if (test_bit(NILFS_SC_HAVE_DELTA, &sci->sc_flags))
+		nilfs_checkpoint_clear_minor(raw_cp);
+	else
+		nilfs_checkpoint_set_minor(raw_cp);
 
 	nilfs_write_inode_common(sbi->s_ifile, &raw_cp->cp_ifile_inode, 1);
 	nilfs_cpfile_put_checkpoint(nilfs->ns_cpfile, nilfs->ns_cno, bh_cp);
@@ -2264,6 +2272,7 @@ static void nilfs_segctor_complete_write(struct nilfs_sc_info *sci)
 		nilfs_set_last_segment(nilfs, segbuf->sb_pseg_start,
 				       segbuf->sb_sum.seg_seq, nilfs->ns_cno);
 
+		clear_bit(NILFS_SC_HAVE_DELTA, &sci->sc_flags);
 		clear_bit(NILFS_SC_DIRTY, &sci->sc_flags);
 		set_bit(NILFS_SC_SUPER_ROOT, &sci->sc_flags);
 		seg_debug(2, "completed a segment having a super root "
