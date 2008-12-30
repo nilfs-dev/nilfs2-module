@@ -21,6 +21,10 @@
 
 tags
 TAGS
+GPATH
+GRTAGS
+GSYMS
+GTAGS
 !.gitignore
 Module.symvers
 modules.order
