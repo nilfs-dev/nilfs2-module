@@ -473,6 +473,19 @@ nilfs_btree_get_node(const struct nilfs_btree *btree,
 		nilfs_btree_get_nonroot_node(btree, path, level);
 }
 
+static inline int
+nilfs_btree_bad_node(const struct nilfs_btree *btree,
+		     struct nilfs_btree_node *node, int level)
+{
+	if (unlikely(nilfs_btree_node_get_level(btree, node) != level)) {
+		dump_stack();
+		printk(KERN_CRIT "NILFS: btree level mismatch: %d != %d\n",
+		       nilfs_btree_node_get_level(btree, node), level);
+		return 1;
+	}
+	return 0;
+}
+
 static int nilfs_btree_do_lookup(const struct nilfs_btree *btree,
 				 struct nilfs_btree_path *path,
 				 __u64 key, __u64 *ptrp, int minlevel)
@@ -500,7 +513,8 @@ static int nilfs_btree_do_lookup(const struct nilfs_btree *btree,
 		if (ret < 0)
 			return ret;
 		node = nilfs_btree_get_nonroot_node(btree, path, level);
-		BUG_ON(level != nilfs_btree_node_get_level(btree, node));
+		if (nilfs_btree_bad_node(btree, node, level))
+			return -EINVAL; /* btree corruption (internal code) */
 		if (!found)
 			found = nilfs_btree_node_lookup(btree, node, key,
 							&index);
@@ -547,7 +561,8 @@ static int nilfs_btree_do_lookup_last(const struct nilfs_btree *btree,
 		if (ret < 0)
 			return ret;
 		node = nilfs_btree_get_nonroot_node(btree, path, level);
-		BUG_ON(level != nilfs_btree_node_get_level(btree, node));
+		if (nilfs_btree_bad_node(btree, node, level))
+			return -EINVAL; /* btree corruption (internal code) */
 		index = nilfs_btree_node_get_nchildren(btree, node) - 1;
 		ptr = nilfs_btree_node_get_ptr(btree, node, index);
 		path[level].bp_index = index;
