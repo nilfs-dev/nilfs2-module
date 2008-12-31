@@ -80,6 +80,9 @@ int nilfs_btnode_submit_block(struct address_space *btnc, __u64 blocknr,
 	struct inode *inode = NILFS_BTNC_I(btnc);
 	int err;
 
+	btnode_debug(3, "called: blocknr=%llu pblocknr=%llu new=%d ino=%lu\n",
+		     (unsigned long long)blocknr, (unsigned long long)pblocknr,
+		     newblk, inode->i_ino);
 	bh = nilfs_grab_buffer(inode, btnc, blocknr, 1 << BH_NILFS_Node);
 	if (unlikely(!bh))
 		return -ENOMEM;
@@ -136,6 +139,7 @@ found:
 out_locked:
 	unlock_page(bh->b_page);
 	page_cache_release(bh->b_page);
+	btnode_debug(3, "done (err=%d)\n", err);
 	return err;
 }
 
