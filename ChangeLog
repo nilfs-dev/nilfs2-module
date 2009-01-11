@@ -1,3 +1,17 @@
+nilfs-2.0.6  Mon Jan 12, 2009 JST
+
+	* fix compilation errors on kernel 2.6.28.
+	* fix gc failure on volumes keeping numerous snapshots.
+	* remove compat code to support old kernels prior to 2.6.18.
+	* fix problem of memory allocation in ioctl (revised patch to use
+	  order 0 allocation).
+	* return error instead of causing a BUG_ON() failure when btree runs
+	  into an invalid node block.
+	* add tag files of gtags to .gitignore.
+	* avoid double error handlings of nilfs_transaction_end() by dividing
+	  it to nilfs_transaction_commit() and nilfs_transaction_abort().
+	* do cleanups, add some comments and debug code.
+
 nilfs-2.0.5  Thu Oct 23, 2008 JST
 
 	* support kernel 2.6.27.
