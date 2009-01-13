@@ -88,6 +88,39 @@ nilfs_file_aio_write(struct kiocb *iocb, const struct iovec *iov,
 	return ret;
 }
 
+#if !HAVE_BLOCK_PAGE_MKWRITE
+static int block_page_mkwrite(struct vm_area_struct *vma, struct page *page,
+			      get_block_t get_block)
+{
+	struct inode *inode = vma->vm_file->f_dentry->d_inode;
+	unsigned long end;
+	loff_t size;
+	int ret = -EINVAL;
+
+	lock_page(page);
+	size = i_size_read(inode);
+	if ((page->mapping != inode->i_mapping) ||
+	    (page_offset(page) > size)) {
+		/* page got truncated out from underneath us */
+		goto out_unlock;
+	}
+
+	/* page is wholly or partially inside EOF */
+	if (((page->index + 1) << PAGE_CACHE_SHIFT) > size)
+		end = size & ~PAGE_CACHE_MASK;
+	else
+		end = PAGE_CACHE_SIZE;
+
+	ret = block_prepare_write(page, 0, end, get_block);
+	if (!ret)
+		ret = block_commit_write(page, 0, end);
+
+out_unlock:
+	unlock_page(page);
+	return ret;
+}
+#endif
+
 static int
 nilfs_page_mkwrite(struct vm_area_struct *vma, struct page *page)
 {

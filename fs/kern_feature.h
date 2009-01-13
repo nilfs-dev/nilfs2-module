@@ -168,6 +168,13 @@
 	(LINUX_VERSION_CODE > KERNEL_VERSION(2, 6, 22))
 #endif
 /*
+ * block_page_mkwrite() was introduced at linux-2.6.23.
+ */
+#ifndef HAVE_BLOCK_PAGE_MKWRITE
+# define HAVE_BLOCK_PAGE_MKWRITE \
+	(LINUX_VERSION_CODE > KERNEL_VERSION(2, 6, 22))
+#endif
+/*
  * SLAB destructor argument was removed from kmem_cache_create()
  * at linux-2.6.23.
  */
