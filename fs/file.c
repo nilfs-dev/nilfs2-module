@@ -91,8 +91,62 @@ nilfs_file_aio_write(struct kiocb *iocb, const struct iovec *iov,
 static int
 nilfs_page_mkwrite(struct vm_area_struct *vma, struct page *page)
 {
-	if (!(vma->vm_flags & (VM_WRITE | VM_MAYWRITE)))
-		return -EPERM;
+	struct inode *inode = vma->vm_file->f_dentry->d_inode;
+	struct nilfs_transaction_info ti;
+	int ret;
+
+	if (unlikely(nilfs_near_disk_full(NILFS_SB(inode->i_sb)->s_nilfs)))
+		return -ENOSPC;
+
+	lock_page(page);
+	if (page->mapping != inode->i_mapping ||
+	    page_offset(page) >= i_size_read(inode) || !PageUptodate(page)) {
+		unlock_page(page);
+		return -EINVAL;
+	}
+
+	/*
+	 * check to see if the page is mapped already (no holes)
+	 */
+	if (PageMappedToDisk(page)) {
+		unlock_page(page);
+		goto mapped;
+	}
+	if (page_has_buffers(page)) {
+		struct buffer_head *bh, *head;
+		int fully_mapped = 1;
+
+		bh = head = page_buffers(page);
+		do {
+			if (!buffer_mapped(bh)) {
+				fully_mapped = 0;
+				break;
+			}
+		} while (bh = bh->b_this_page, bh != head);
+
+		if (fully_mapped) {
+			SetPageMappedToDisk(page);
+			unlock_page(page);
+			goto mapped;
+		}
+	}
+	unlock_page(page);
+
+	/*
+	 * fill hole blocks
+	 */
+	ret = nilfs_transaction_begin(inode->i_sb, &ti, 1);
+	if (unlikely(ret))
+		return ret;
+
+	ret = block_page_mkwrite(vma, page, nilfs_get_block);
+	if (unlikely(ret)) {
+		nilfs_transaction_abort(inode->i_sb);
+		return ret;
+	}
+	nilfs_transaction_commit(inode->i_sb);
+
+ mapped:
 	SetPageChecked(page);
 	wait_on_page_writeback(page);
 	return 0;

@@ -768,47 +768,6 @@ struct nilfs_sc_operations nilfs_sc_dsync_ops = {
 #endif
 };
 
-static int nilfs_prepare_data_page(struct inode *inode, struct page *page)
-{
-	int err = 0;
-
-	lock_page(page);
-	if (!page_has_buffers(page)) {
-		seg_debug(3, "page has no buffer heads. allocating.. "
-			  "(page=%p)\n", page);
-		create_empty_buffers(page, 1 << inode->i_blkbits, 0);
-	}
-	if (!PageMappedToDisk(page)) {
-		struct buffer_head *bh, *head;
-		sector_t blkoff
-			= page->index << (PAGE_SHIFT - inode->i_blkbits);
-
-		int non_mapped = 0;
-
-		bh = head = page_buffers(page);
-		do {
-			if (!buffer_mapped(bh)) {
-				if (!buffer_dirty(bh)) {
-					non_mapped++;
-					continue;
-				}
-				err = nilfs_get_block(inode, blkoff, bh, 1);
-				if (unlikely(err)) {
-					seg_debug(2, "nilfs_get_block() "
-						  "failed (err=%d)\n", err);
-					goto out_unlock;
-				}
-			}
-		} while (blkoff++, (bh = bh->b_this_page) != head);
-		if (!non_mapped)
-			SetPageMappedToDisk(page);
-	}
-
- out_unlock:
-	unlock_page(page);
-	return err;
-}
-
 static int nilfs_lookup_dirty_data_buffers(struct inode *inode,
 					   struct list_head *listp,
 					   struct nilfs_sc_info *sci)
@@ -835,9 +794,11 @@ static int nilfs_lookup_dirty_data_buffers(struct inode *inode,
 		struct page *page = pvec.pages[i];
 
 		if (mapping->host) {
-			err = nilfs_prepare_data_page(inode, page);
-			if (unlikely(err))
-				break;
+			lock_page(page);
+			if (!page_has_buffers(page))
+				create_empty_buffers(page,
+						     1 << inode->i_blkbits, 0);
+			unlock_page(page);
 		}
 
 		bh = head = page_buffers(page);
