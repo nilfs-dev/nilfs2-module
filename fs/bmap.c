@@ -100,7 +100,7 @@ static int nilfs_bmap_do_insert(struct nilfs_bmap *bmap, __u64 key, __u64 ptr)
 				bmap, keys, ptrs, NILFS_BMAP_SMALL_HIGH + 1);
 			if (n < 0)
 				return n;
-			ret = (*nilfs_bmap_large_convert_and_insert)(
+			ret = nilfs_btree_convert_and_insert(
 				bmap, key, ptr, keys, ptrs, n,
 				NILFS_BMAP_LARGE_LOW, NILFS_BMAP_LARGE_HIGH);
 			if (ret == 0)
@@ -167,7 +167,7 @@ static int nilfs_bmap_do_delete(struct nilfs_bmap *bmap, __u64 key)
 				bmap, keys, ptrs, NILFS_BMAP_LARGE_LOW + 1);
 			if (n < 0)
 				return n;
-			ret = (*nilfs_bmap_small_delete_and_convert)(
+			ret = nilfs_direct_delete_and_convert(
 				bmap, key, keys, ptrs, n,
 				NILFS_BMAP_SMALL_LOW, NILFS_BMAP_SMALL_HIGH);
 			if (ret == 0)
@@ -758,12 +758,12 @@ int nilfs_bmap_read(struct nilfs_bmap *bmap, struct nilfs_inode *raw_inode)
 	}
 
 	return (bmap->b_u.u_flags & NILFS_BMAP_LARGE) ?
-		nilfs_bmap_large_init(bmap,
-				      NILFS_BMAP_LARGE_LOW,
-				      NILFS_BMAP_LARGE_HIGH) :
-		nilfs_bmap_small_init(bmap,
-				      NILFS_BMAP_SMALL_LOW,
-				      NILFS_BMAP_SMALL_HIGH);
+		nilfs_btree_init(bmap,
+				 NILFS_BMAP_LARGE_LOW,
+				 NILFS_BMAP_LARGE_HIGH) :
+		nilfs_direct_init(bmap,
+			   	  NILFS_BMAP_SMALL_LOW,
+				  NILFS_BMAP_SMALL_HIGH);
 }
 
 /**

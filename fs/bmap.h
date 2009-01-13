@@ -246,11 +246,4 @@ static inline void nilfs_bmap_clear_dirty(struct nilfs_bmap *bmap)
 #define NILFS_BMAP_LARGE_LOW	NILFS_BTREE_ROOT_NCHILDREN_MAX
 #define NILFS_BMAP_LARGE_HIGH	NILFS_BTREE_KEY_MAX
 
-#define nilfs_bmap_small_init			nilfs_direct_init
-#define nilfs_bmap_small_convert_and_insert	NULL
-#define nilfs_bmap_small_delete_and_convert	nilfs_direct_delete_and_convert
-#define nilfs_bmap_large_init			nilfs_btree_init
-#define nilfs_bmap_large_convert_and_insert	nilfs_btree_convert_and_insert
-#define nilfs_bmap_large_delete_and_convert	NULL
-
 #endif	/* _NILFS_BMAP_H */
