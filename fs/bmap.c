@@ -762,7 +762,7 @@ int nilfs_bmap_read(struct nilfs_bmap *bmap, struct nilfs_inode *raw_inode)
 				 NILFS_BMAP_LARGE_LOW,
 				 NILFS_BMAP_LARGE_HIGH) :
 		nilfs_direct_init(bmap,
-			   	  NILFS_BMAP_SMALL_LOW,
+				  NILFS_BMAP_SMALL_LOW,
 				  NILFS_BMAP_SMALL_HIGH);
 }
 
