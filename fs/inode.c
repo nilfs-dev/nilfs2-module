@@ -341,13 +341,13 @@ struct inode *nilfs_new_inode(struct inode *dir, int mode)
 
 	atomic_inc(&sbi->s_inodes_count);
 
-	inode->i_uid = current->fsuid;
+	inode->i_uid = current_fsuid();
 	if (dir->i_mode & S_ISGID) {
 		inode->i_gid = dir->i_gid;
 		if (S_ISDIR(mode))
 			mode |= S_ISGID;
 	} else
-		inode->i_gid = current->fsgid;
+		inode->i_gid = current_fsgid();
 
 	inode->i_mode = mode;
 	inode->i_ino = ino;
