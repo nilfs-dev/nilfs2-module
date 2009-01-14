@@ -368,4 +368,9 @@ static inline void le64_add_cpu(__le64 *var, u64 val)
 #define close_bdev_exclusive(path, mode) close_bdev_excl(path)
 #endif
 
+#ifndef current_fsuid
+# define current_fsuid()	(current->fsuid)
+# define current_fsgid()	(current->fsgid)
+#endif
+
 #endif /* NILFS_KERN_FEATURE_H */
