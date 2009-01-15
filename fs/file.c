@@ -48,44 +48,12 @@ int nilfs_sync_file(struct file *file, struct dentry *dentry, int datasync)
 	inode_debug(3, "constructing segment (ino=%lu, datasync=%d)\n",
 		    inode->i_ino, datasync);
 	if (datasync)
-		err = nilfs_construct_dsync_segment(inode->i_sb, inode);
+		err = nilfs_construct_dsync_segment(inode->i_sb, inode, 0,
+						    LLONG_MAX);
 	else
 		err = nilfs_construct_segment(inode->i_sb);
 
 	return err;
-}
-
-static ssize_t
-#if NEED_READV_WRITEV
-nilfs_file_aio_write(struct kiocb *iocb, const char __user *buf, size_t count,
-		     loff_t pos)
-#else
-nilfs_file_aio_write(struct kiocb *iocb, const struct iovec *iov,
-		     unsigned long nr_segs, loff_t pos)
-#endif
-{
-	struct file *file = iocb->ki_filp;
-	struct inode *inode = file->f_dentry->d_inode;
-	ssize_t ret;
-
-#if NEED_READV_WRITEV
-	ret = generic_file_aio_write(iocb, buf, count, pos);
-#else
-	ret = generic_file_aio_write(iocb, iov, nr_segs, pos);
-#endif
-	if (ret <= 0)
-		return ret;
-
-	if ((file->f_flags & O_SYNC) || IS_SYNC(inode)) {
-		int err;
-
-		inode_debug(3, "constructing data sync segment (ino=%lu)\n",
-			    inode->i_ino);
-		err = nilfs_construct_dsync_segment(inode->i_sb, inode);
-		if (unlikely(err))
-			return err;
-	}
-	return ret;
 }
 
 #if !HAVE_BLOCK_PAGE_MKWRITE
@@ -214,7 +182,7 @@ struct file_operations nilfs_file_operations = {
 	.read		= do_sync_read,
 	.write		= do_sync_write,
 	.aio_read	= generic_file_aio_read,
-	.aio_write	= nilfs_file_aio_write,
+	.aio_write	= generic_file_aio_write,
 	.ioctl		= nilfs_ioctl,
 #ifdef CONFIG_COMPAT
 	.compat_ioctl	= nilfs_compat_ioctl,

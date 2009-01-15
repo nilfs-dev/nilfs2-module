@@ -770,28 +770,44 @@ struct nilfs_sc_operations nilfs_sc_dsync_ops = {
 
 static int nilfs_lookup_dirty_data_buffers(struct inode *inode,
 					   struct list_head *listp,
-					   struct nilfs_sc_info *sci)
+					   struct nilfs_sc_info *sci,
+					   loff_t start, loff_t end)
 {
 	struct nilfs_segment_buffer *segbuf = sci->sc_curseg;
 	struct address_space *mapping = inode->i_mapping;
 	struct pagevec pvec;
 	unsigned i, ndirties = 0, nlimit;
-	pgoff_t index = 0;
+	pgoff_t index = 0, last = ULONG_MAX;
 	int err = 0;
 
 	seg_debug(3, "called (ino=%lu)\n", inode->i_ino);
+	if (unlikely(start != 0 || end != LLONG_MAX)) {
+		/*
+		 * A valid range is given for sync-ing data pages. The
+		 * range is rounded to per-page; extra dirty buffers
+		 * may be included if blocksize < pagesize.
+		 */
+		index = start >> PAGE_SHIFT;
+		last = end >> PAGE_SHIFT;
+	}
 	nlimit = sci->sc_segbuf_nblocks -
 		(sci->sc_nblk_this_inc + segbuf->sb_sum.nblocks);
+		/* Remaining number of blocks within the segment */
 	pagevec_init(&pvec, 0);
  repeat:
-	if (!pagevec_lookup_tag(&pvec, mapping, &index, PAGECACHE_TAG_DIRTY,
-				PAGEVEC_SIZE)) {
+	if (unlikely(index > last) ||
+	    !pagevec_lookup_tag(&pvec, mapping, &index, PAGECACHE_TAG_DIRTY,
+				min_t(pgoff_t, last - index,
+				      PAGEVEC_SIZE - 1) + 1)) {
 		seg_debug(3, "done (ino=%lu)\n", inode->i_ino);
 		return 0;
 	}
 	for (i = 0; i < pagevec_count(&pvec); i++) {
 		struct buffer_head *bh, *head;
 		struct page *page = pvec.pages[i];
+
+		if (unlikely(page->index > last))
+			break;
 
 		if (mapping->host) {
 			lock_page(page);
@@ -803,18 +819,21 @@ static int nilfs_lookup_dirty_data_buffers(struct inode *inode,
 
 		bh = head = page_buffers(page);
 		do {
-			if (buffer_dirty(bh)) {
-				if (ndirties > nlimit) {
-					err = -E2BIG;
-					break;
-				}
-				get_bh(bh);
-				list_add_tail(&bh->b_assoc_buffers, listp);
-				ndirties++;
+			if (!buffer_dirty(bh))
+				continue;
+			if (unlikely(ndirties >= nlimit)) {
+				err = -E2BIG; /*
+					       * Internal code to indicate the
+					       * inode has more dirty buffers.
+					       */
+				goto bounded;
 			}
-			bh = bh->b_this_page;
-		} while (bh != head);
+			get_bh(bh);
+			list_add_tail(&bh->b_assoc_buffers, listp);
+			ndirties++;
+		} while (bh = bh->b_this_page, bh != head);
 	}
+ bounded:
 	pagevec_release(&pvec);
 	cond_resched();
 
@@ -1213,7 +1232,7 @@ static int nilfs_segctor_scan_file(struct nilfs_sc_info *sci,
 
 	if (!(sci->sc_stage.flags & NILFS_CF_NODE)) {
 		err = nilfs_lookup_dirty_data_buffers(inode, &data_buffers,
-						      sci);
+						      sci, 0, LLONG_MAX);
 		if (err) {
 			err2 = nilfs_segctor_apply_buffers(
 				sci, inode, &data_buffers,
@@ -1262,7 +1281,10 @@ static int nilfs_segctor_scan_file_dsync(struct nilfs_sc_info *sci,
 	LIST_HEAD(data_buffers);
 	int err, err2;
 
-	err = nilfs_lookup_dirty_data_buffers(inode, &data_buffers, sci);
+	err = nilfs_lookup_dirty_data_buffers(inode, &data_buffers, sci,
+					      sci->sc_dsync_start,
+					      sci->sc_dsync_end);
+
 	err2 = nilfs_segctor_apply_buffers(sci, inode, &data_buffers,
 					   (!err || err == -E2BIG) ?
 					   nilfs_collect_file_data : NULL);
@@ -1437,14 +1459,13 @@ static int nilfs_segctor_collect_blocks(struct nilfs_sc_info *sci, int mode)
 	case NILFS_ST_DSYNC:
  dsync_mode:
 		sci->sc_curseg->sb_sum.flags |= NILFS_SS_SYNDT;
-		ii = sci->sc_stage.dirty_file_ptr;
+		ii = sci->sc_dsync_inode;
 		if (!test_bit(NILFS_I_BUSY, &ii->i_state))
 			break;
 
 		err = nilfs_segctor_scan_file_dsync(sci, &ii->vfs_inode);
 		if (unlikely(err))
 			break;
-		sci->sc_stage.dirty_file_ptr = NULL;
 		sci->sc_curseg->sb_sum.flags |= NILFS_SS_LOGEND;
 		sci->sc_stage.scnt = NILFS_ST_DONE;
 		seg_debug(2, "** DSYNC END\n");
@@ -2852,7 +2873,9 @@ int nilfs_construct_segment(struct super_block *sb)
 /**
  * nilfs_construct_dsync_segment - construct a data-only logical segment
  * @sb: super block
- * @inode: the inode whose data blocks should be written out
+ * @inode: inode whose data blocks should be written out
+ * @start: start byte offset
+ * @end: end byte offset (inclusive)
  *
  * Return Value: On success, 0 is retured. On errors, one of the following
  * negative error code is returned.
@@ -2867,8 +2890,8 @@ int nilfs_construct_segment(struct super_block *sb)
  *
  * %-ENOMEM - Insufficient memory available.
  */
-int nilfs_construct_dsync_segment(struct super_block *sb,
-				  struct inode *inode)
+int nilfs_construct_dsync_segment(struct super_block *sb, struct inode *inode,
+				  loff_t start, loff_t end)
 {
 	struct nilfs_sb_info *sbi = NILFS_SB(sb);
 	struct nilfs_sc_info *sci = NILFS_SC(sbi);
@@ -2901,7 +2924,9 @@ int nilfs_construct_dsync_segment(struct super_block *sb,
 		return 0;
 	}
 	spin_unlock(&sbi->s_inode_lock);
-	sci->sc_stage.dirty_file_ptr = ii;
+	sci->sc_dsync_inode = ii;
+	sci->sc_dsync_start = start;
+	sci->sc_dsync_end = end;
 
 	seg_debug(2, "begin (mode=0x%x)\n", SC_LSEG_DSYNC);
 	err = nilfs_segctor_do_construct(sci, SC_LSEG_DSYNC);

@@ -34,7 +34,15 @@
 /*
  * defaults dependent to kernel versions
  */
+/*
+ * In kernels prior to linux-2.6.29, do_sync_mapping_range() calls
+ * writepages() with WB_SYNC_NONE intead of WB_SYNC_ALL.
+ */
 #ifdef LINUX_VERSION_CODE
+#ifndef NEED_WB_SYNC_NONE_CHECK_FOR_DO_SYNC_MAPPING_RANGE
+# define NEED_WB_SYNC_NONE_CHECK_FOR_DO_SYNC_MAPPING_RANGE \
+	(LINUX_VERSION_CODE < KERNEL_VERSION(2, 6, 29))
+#endif
 /*
  * In linux-2.6.28, d_alloc_anon() was removed and d_obtain_alias()
  * was introduced to find or allocate dentry for a given inode.
