@@ -331,7 +331,7 @@ int nilfs_sufile_freev(struct inode *sufile, __u64 *segnum, size_t nsegs)
 	kaddr = kmap_atomic(header_bh->b_page, KM_USER0);
 	header = nilfs_sufile_block_get_header(sufile, header_bh, kaddr);
 	le64_add_cpu(&header->sh_ncleansegs, nsegs);
-	le64_add_cpu(&header->sh_ndirtysegs, -nsegs);
+	le64_add_cpu(&header->sh_ndirtysegs, -(u64)nsegs);
 	kunmap_atomic(kaddr, KM_USER0);
 	nilfs_mdt_mark_buffer_dirty(header_bh);
 	nilfs_mdt_mark_dirty(sufile);
