@@ -1,3 +1,15 @@
+nilfs-2.0.7  Wed Feb 11, 2009 JST
+
+	* fix comilation errors on kernel 2.6.29-rc1.
+	* fix buggy behavior seen in enumerating checkpoints.
+	* fix wrong counting of checkpoints and dirty segments reported by
+	  Reinoud Zandijk.
+	* fix miss sync issue for do_sync_mapping_range which can be called
+	  from the sync_file_range() system call.
+	* remove several bmap wrapper macros.
+	* clean up indirect function calling convention used in
+	  bmap/btree/direct to follow the normal kernel coding style.
+	
 nilfs-2.0.6  Mon Jan 12, 2009 JST
 
 	* fix compilation errors on kernel 2.6.28.
