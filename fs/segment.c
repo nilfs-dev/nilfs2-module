@@ -2299,11 +2299,8 @@ static void nilfs_segctor_complete_write(struct nilfs_sc_info *sci)
 		nilfs_drop_collected_inodes(&sci->sc_gc_inodes);
 		if (update_sr)
 			nilfs_commit_gcdat_inode(nilfs);
-	} else {
+	} else
 		nilfs->ns_nongc_ctime = sci->sc_seg_ctime;
-		set_nilfs_cond_nongc_write(nilfs);
-		wake_up(&nilfs->ns_cleanerd_wq);
-	}
 
 	sci->sc_nblk_inc += sci->sc_nblk_this_inc;
 
