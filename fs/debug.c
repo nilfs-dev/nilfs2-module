@@ -536,7 +536,6 @@ static int snprint_su_flags(char *b, int size, struct nilfs_segment_usage *su)
 	TEST_SEGUSAGE_FLAG(su, active, ACTIVE, b, size, n, len);
 	TEST_SEGUSAGE_FLAG(su, dirty, DIRTY, b, size, n, len);
 	TEST_SEGUSAGE_FLAG(su, error, ERROR, b, size, n, len);
-	TEST_SEGUSAGE_FLAG(su, volatile_active, VACTIVE, b, size, n, len);
 	return len;
 }
 

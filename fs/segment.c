@@ -2402,15 +2402,6 @@ static void nilfs_segctor_reactivate_segments(struct nilfs_sc_info *sci,
 		nilfs_segment_usage_set_active(ent->raw_su);
 		nilfs_close_segment_entry(ent, sufile);
 	}
-
-	down_write(&nilfs->ns_sem);
-	head = &nilfs->ns_used_segments;
-	list_for_each_entry(ent, head, list) {
-		seg_debug(3, "set volatile active segment (segnum=%llu)\n",
-			  (unsigned long long)ent->segnum);
-		nilfs_segment_usage_set_volatile_active(ent->raw_su);
-	}
-	up_write(&nilfs->ns_sem);
 }
 
 static int nilfs_segctor_deactivate_segments(struct nilfs_sc_info *sci,
@@ -2419,7 +2410,6 @@ static int nilfs_segctor_deactivate_segments(struct nilfs_sc_info *sci,
 	struct nilfs_segment_buffer *segbuf, *last;
 	struct nilfs_segment_entry *ent;
 	struct inode *sufile = nilfs->ns_sufile;
-	struct list_head *head;
 	int err;
 
 	last = NILFS_LAST_SEGBUF(&sci->sc_segbufs);
@@ -2442,8 +2432,7 @@ static int nilfs_segctor_deactivate_segments(struct nilfs_sc_info *sci,
 			  (unsigned long long)ent->segnum);
 	}
 
-	head = &sci->sc_active_segments;
-	list_for_each_entry(ent, head, list) {
+	list_for_each_entry(ent, &sci->sc_active_segments, list) {
 		err = nilfs_open_segment_entry(ent, sufile);
 		if (unlikely(err))
 			goto failed;
@@ -2452,16 +2441,6 @@ static int nilfs_segctor_deactivate_segments(struct nilfs_sc_info *sci,
 		seg_debug(3, "deactivate written segment (segnum=%llu)\n",
 			  (unsigned long long)ent->segnum);
 	}
-
-	down_write(&nilfs->ns_sem);
-	head = &nilfs->ns_used_segments;
-	list_for_each_entry(ent, head, list) {
-		/* clear volatile active for segments of older generations */
-		seg_debug(3, "clear volatile active (segnum=%llu)\n",
-			  (unsigned long long)ent->segnum);
-		nilfs_segment_usage_clear_volatile_active(ent->raw_su);
-	}
-	up_write(&nilfs->ns_sem);
 	return 0;
 
  failed:
@@ -2485,21 +2464,15 @@ static void nilfs_segctor_bead_completed_segments(struct nilfs_sc_info *sci)
 	}
 }
 
-static void
-__nilfs_segctor_commit_deactivate_segments(struct nilfs_sc_info *sci,
-					   struct the_nilfs *nilfs)
-
+static void nilfs_segctor_commit_deactivate_segments(struct nilfs_sc_info *sci,
+						     struct the_nilfs *nilfs)
 {
-	struct nilfs_segment_entry *ent;
+	struct nilfs_segment_entry *ent, *n;
 
-	list_splice_init(&sci->sc_active_segments,
-			 nilfs->ns_used_segments.prev);
-
-	list_for_each_entry(ent, &nilfs->ns_used_segments, list) {
-		seg_debug(3, "set volatile active (segnum=%llu)\n",
-			  (unsigned long long)ent->segnum);
-		nilfs_segment_usage_set_volatile_active(ent->raw_su);
-		/* These segments are kept open */
+	list_for_each_entry_safe(ent, n, &sci->sc_active_segments, list) {
+		list_del(&ent->list);
+		nilfs_close_segment_entry(ent, nilfs->ns_sufile);
+		nilfs_free_segment_entry(ent);
 	}
 }
 
@@ -2590,8 +2563,8 @@ static int nilfs_segctor_do_construct(struct nilfs_sc_info *sci, int mode)
 		if (has_sr) {
 			down_write(&nilfs->ns_sem);
 			nilfs_update_last_segment(sbi, 1);
-			__nilfs_segctor_commit_deactivate_segments(sci, nilfs);
 			up_write(&nilfs->ns_sem);
+			nilfs_segctor_commit_deactivate_segments(sci, nilfs);
 			nilfs_segctor_commit_free_segments(sci);
 			nilfs_segctor_clear_metadata_dirty(sci);
 		}
