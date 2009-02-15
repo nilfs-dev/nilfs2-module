@@ -231,10 +231,11 @@ int nilfs_sufile_cancel_free(struct inode *sufile, __u64 segnum)
 	kaddr = kmap_atomic(su_bh->b_page, KM_USER0);
 	su = nilfs_sufile_block_get_segment_usage(
 		sufile, segnum, su_bh, kaddr);
-	if (!nilfs_segment_usage_clean(su)) {
-		printk(KERN_CRIT "%s: segment %llu must be clean\n",
+	if (unlikely(!nilfs_segment_usage_clean(su))) {
+		printk(KERN_WARNING "%s: segment %llu must be clean\n",
 		       __func__, (unsigned long long)segnum);
-		BUG();
+		kunmap_atomic(kaddr, KM_USER0);
+		goto out_su_bh;
 	}
 	nilfs_segment_usage_set_dirty(su);
 	kunmap_atomic(kaddr, KM_USER0);
@@ -249,11 +250,10 @@ int nilfs_sufile_cancel_free(struct inode *sufile, __u64 segnum)
 	nilfs_mdt_mark_buffer_dirty(su_bh);
 	nilfs_mdt_mark_dirty(sufile);
 
+ out_su_bh:
 	brelse(su_bh);
-
  out_header:
 	brelse(header_bh);
-
  out_sem:
 	up_write(&NILFS_MDT(sufile)->mi_sem);
 	return ret;
@@ -317,12 +317,10 @@ int nilfs_sufile_freev(struct inode *sufile, __u64 *segnum, size_t nsegs)
 		kaddr = kmap_atomic(su_bh[i]->b_page, KM_USER0);
 		su = nilfs_sufile_block_get_segment_usage(
 			sufile, segnum[i], su_bh[i], kaddr);
-		BUG_ON(nilfs_segment_usage_error(su));
+		WARN_ON(nilfs_segment_usage_error(su));
 #ifdef CONFIG_NILFS_DEBUG
-		/* XXX: sh_ncleansegs will be destroyed if true */
-		BUG_ON(nilfs_segment_usage_clean(su));
-		/* XXX: sh_ndirtysegs will be destroyed if true */
-		BUG_ON(!nilfs_segment_usage_dirty(su));
+		WARN_ON(nilfs_segment_usage_clean(su));
+		WARN_ON(!nilfs_segment_usage_dirty(su));
 #endif
 		nilfs_segment_usage_set_clean(su);
 		kunmap_atomic(kaddr, KM_USER0);
@@ -391,8 +389,8 @@ int nilfs_sufile_get_segment_usage(struct inode *sufile, __u64 segnum,
 	int ret;
 
 	/* segnum is 0 origin */
-	BUG_ON(segnum >= nilfs_sufile_get_nsegments(sufile));
-
+	if (segnum >= nilfs_sufile_get_nsegments(sufile))
+		return -EINVAL;
 	down_write(&NILFS_MDT(sufile)->mi_sem);
 	ret = nilfs_sufile_get_segment_usage_block(sufile, segnum, 1, &bh);
 	if (ret < 0)
@@ -517,6 +515,8 @@ int nilfs_sufile_get_ncleansegs(struct inode *sufile, unsigned long *nsegsp)
  * %-EIO - I/O error.
  *
  * %-ENOMEM - Insufficient amount of memory available.
+ *
+ * %-EINVAL - Invalid segment usage number.
  */
 int nilfs_sufile_set_error(struct inode *sufile, __u64 segnum)
 {
@@ -526,8 +526,11 @@ int nilfs_sufile_set_error(struct inode *sufile, __u64 segnum)
 	void *kaddr;
 	int ret;
 
-	BUG_ON(segnum >= nilfs_sufile_get_nsegments(sufile));
-
+	if (unlikely(segnum >= nilfs_sufile_get_nsegments(sufile))) {
+		printk(KERN_WARNING "%s: invalid segment number: %llu\n",
+		       __func__, (unsigned long long)segnum);
+		return -EINVAL;
+	}
 	down_write(&NILFS_MDT(sufile)->mi_sem);
 
 	ret = nilfs_sufile_get_header_block(sufile, &header_bh);
