@@ -930,7 +930,7 @@ nilfs_fill_super(struct super_block *sb, void *data, int silent,
 	}
 
 	if (!(sb->s_flags & MS_RDONLY)) {
-		err = nilfs_attach_segment_constructor(sbi, NULL);
+		err = nilfs_attach_segment_constructor(sbi);
 		if (err)
 			goto failed_checkpoint;
 	}
@@ -1075,7 +1075,7 @@ static int nilfs_remount(struct super_block *sb, int *flags, char *data)
 		nilfs_clear_opt(sbi, SNAPSHOT);
 		sbi->s_snapshot_cno = 0;
 
-		err = nilfs_attach_segment_constructor(sbi, NULL);
+		err = nilfs_attach_segment_constructor(sbi);
 		if (err)
 			goto rw_remount_failed;
 
