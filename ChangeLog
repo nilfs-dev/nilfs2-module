@@ -1,3 +1,10 @@
+nilfs-2.0.9  Wed Mar  4, 2009 JST
+
+	* fix endian issue in checksumming on super block. Big endian
+	  machines are affected by this change.  For big endian machines,
+	  you can keep compatibility against future releases of existing
+	  partitions by once mounting them with this version.
+
 nilfs-2.0.8  Thu Feb 19, 2009 JST
 
 	* change ioctl API to fix architecture dependent problems. In the
