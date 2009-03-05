@@ -529,6 +529,7 @@ int init_nilfs(struct the_nilfs *nilfs, struct nilfs_sb_info *sbi, char *data)
 			       "NILFS: blocksize %d too small for device "
 			       "(sector-size = %d).\n",
 			       blocksize, hw_blocksize);
+			err = -EINVAL;
 			goto failed_sbh;
 		}
 		nilfs_release_super_block(nilfs);
