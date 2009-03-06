@@ -1,3 +1,14 @@
+nilfs-2.0.10  Sat Mar  7, 2009 JST
+
+	* introduce secondary super block for improving reliability
+	* mark minor flag for checkpoints created by internal operation.
+	  This allows userland application to identify whether each
+	  checkpoint is created by file system change or internal operations
+	  such as garbage collection or checkpoint mode change.
+	* simplify handling of active state of segments; this reduces loc
+	  of segment constructor.
+	* clean up sketch file. Now .sketch is treated as a regular file.
+
 nilfs-2.0.9  Wed Mar  4, 2009 JST
 
 	* fix endian issue in checksumming on super block. Big endian
