@@ -483,7 +483,7 @@ int init_nilfs(struct the_nilfs *nilfs, struct nilfs_sb_info *sbi, char *data)
 	struct nilfs_super_block *sbp;
 	struct backing_dev_info *bdi;
 	int blocksize;
-	int err = 0;
+	int err;
 
 	nilfs_debug(2, "called\n");
 	down_write(&nilfs->ns_sem);
