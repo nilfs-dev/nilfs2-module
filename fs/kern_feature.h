@@ -34,11 +34,19 @@
 /*
  * defaults dependent to kernel versions
  */
+#ifdef LINUX_VERSION_CODE
+/*
+ * BIO_RW_SYNC was removed in linux-2.6.29; BIO_RW_SYNCIO and 
+ * BIO_RW_UNPLUG was introduced instead.
+ */
+#ifndef NEED_BIO_RW_SYNC
+# define NEED_BIO_RW_SYNC \
+	(LINUX_VERSION_CODE < KERNEL_VERSION(2, 6, 29))
+#endif
 /*
  * In kernels prior to linux-2.6.29, do_sync_mapping_range() calls
  * writepages() with WB_SYNC_NONE intead of WB_SYNC_ALL.
  */
-#ifdef LINUX_VERSION_CODE
 #ifndef NEED_WB_SYNC_NONE_CHECK_FOR_DO_SYNC_MAPPING_RANGE
 # define NEED_WB_SYNC_NONE_CHECK_FOR_DO_SYNC_MAPPING_RANGE \
 	(LINUX_VERSION_CODE < KERNEL_VERSION(2, 6, 29))

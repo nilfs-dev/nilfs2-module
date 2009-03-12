@@ -24,6 +24,7 @@
 #include <linux/buffer_head.h>
 #include <linux/writeback.h>
 #include <linux/crc32.h>
+#include "kern_feature.h"
 #include "page.h"
 #include "segbuf.h"
 #include "seglist.h"
@@ -421,7 +422,11 @@ int nilfs_segbuf_write(struct nilfs_segment_buffer *segbuf,
 		 * Last BIO is always sent through the following
 		 * submission.
 		 */
+#if NEED_BIO_RW_SYNC
+		rw |= (1 << BIO_RW_SYNC);
+#else
 		rw |= (1 << BIO_RW_SYNCIO);
+#endif
 		res = nilfs_submit_seg_bio(wi, rw);
 		if (unlikely(res))
 			goto failed_bio;
