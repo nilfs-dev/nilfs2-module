@@ -421,7 +421,7 @@ int nilfs_segbuf_write(struct nilfs_segment_buffer *segbuf,
 		 * Last BIO is always sent through the following
 		 * submission.
 		 */
-		rw |= (1 << BIO_RW_SYNC);
+		rw |= (1 << BIO_RW_SYNCIO);
 		res = nilfs_submit_seg_bio(wi, rw);
 		if (unlikely(res))
 			goto failed_bio;
