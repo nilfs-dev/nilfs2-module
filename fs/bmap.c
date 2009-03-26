@@ -716,6 +716,8 @@ static const struct nilfs_bmap_ptr_operations nilfs_bmap_ptr_ops_gc = {
 	.bpop_translate		=	NULL,
 };
 
+static struct lock_class_key nilfs_bmap_dat_lock_key;
+
 /**
  * nilfs_bmap_read - read a bmap from an inode
  * @bmap: bmap
@@ -743,6 +745,7 @@ int nilfs_bmap_read(struct nilfs_bmap *bmap, struct nilfs_inode *raw_inode)
 		bmap->b_pops = &nilfs_bmap_ptr_ops_p;
 		bmap->b_last_allocated_key = 0;	/* XXX: use macro */
 		bmap->b_last_allocated_ptr = NILFS_BMAP_NEW_PTR_INIT;
+		lockdep_set_class(&bmap->b_sem, &nilfs_bmap_dat_lock_key);
 		break;
 	case NILFS_CPFILE_INO:
 	case NILFS_SUFILE_INO:
@@ -800,6 +803,7 @@ void nilfs_bmap_init_gcdat(struct nilfs_bmap *gcbmap, struct nilfs_bmap *bmap)
 {
 	memcpy(gcbmap, bmap, sizeof(union nilfs_bmap_union));
 	init_rwsem(&gcbmap->b_sem);
+	lockdep_set_class(&bmap->b_sem, &nilfs_bmap_dat_lock_key);
 	gcbmap->b_inode = &NILFS_BMAP_I(gcbmap)->vfs_inode;
 }
 
@@ -807,5 +811,6 @@ void nilfs_bmap_commit_gcdat(struct nilfs_bmap *gcbmap, struct nilfs_bmap *bmap)
 {
 	memcpy(bmap, gcbmap, sizeof(union nilfs_bmap_union));
 	init_rwsem(&bmap->b_sem);
+	lockdep_set_class(&bmap->b_sem, &nilfs_bmap_dat_lock_key);
 	bmap->b_inode = &NILFS_BMAP_I(bmap)->vfs_inode;
 }
