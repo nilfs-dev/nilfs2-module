@@ -51,7 +51,7 @@ Prerequisites
 
 Make sure you have installed all of the followings:
 
-- Linux 2.6.18~2.6.28
+- Linux 2.6.18~2.6.29
   The kernel should be used on the build machine, and it should be
   compiled from the source.  In some distros, kernel header packages
   are available instead.  For example, Debian users can skip a
