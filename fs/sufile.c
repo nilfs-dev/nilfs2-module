@@ -553,7 +553,6 @@ int nilfs_sufile_set_error(struct inode *sufile, __u64 segnum)
 
 	nilfs_segment_usage_set_error(su);
 	kunmap_atomic(kaddr, KM_USER0);
-	brelse(su_bh);
 
 	kaddr = kmap_atomic(header_bh->b_page, KM_USER0);
 	header = nilfs_sufile_block_get_header(sufile, header_bh, kaddr);
