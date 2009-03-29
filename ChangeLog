@@ -1,3 +1,14 @@
+nilfs-2.0.12  Mon Mar 30, 2009 JST
+
+	* support kernel 2.6.29 for the record.
+	* fix malfunction of nilfs_get_suinfo ioctl in which active flags
+	  were marked on wrong segments.  This will fix the recent GC
+	  problem causing filesystem corruption which was reported by
+	  David Arendt and Andreas Hartmetz.  Thanks for feedback!
+	* fix duplicate brelse calls in nilfs_sufile_set_error().
+	* fix false detection of lockdep checks for recursive locking
+	  around meta data files and bmap semaphores.
+
 nilfs-2.0.11  Fri Mar 13, 2009 JST
 
 	* fix a compilation error on kernel 2.6.29-rc7.
