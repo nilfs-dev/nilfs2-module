@@ -384,7 +384,7 @@ int nilfs_dat_translate(struct inode *dat, __u64 vblocknr, sector_t *blocknrp)
 #ifdef CONFIG_NILFS_DEBUG
 		printk(KERN_DEBUG "%s: invalid virtual block number: %llu\n",
 		       __func__, (unsigned long long)vblocknr);
-		BUG();
+		WARN_ON(1);
 #endif
 		ret = -ENOENT;
 		goto out;
