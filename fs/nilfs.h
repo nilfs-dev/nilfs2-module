@@ -29,7 +29,7 @@
 #include <linux/spinlock.h>
 #include <linux/blkdev.h>
 #include "kern_feature.h"
-#include "nilfs_fs.h"
+#include "nilfs2_fs.h"
 #include "the_nilfs.h"
 #include "sb.h"
 #include "bmap.h"

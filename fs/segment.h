@@ -26,7 +26,7 @@
 #include <linux/types.h>
 #include <linux/fs.h>
 #include <linux/buffer_head.h>
-#include "nilfs_fs.h"
+#include "nilfs2_fs.h"
 #include "sb.h"
 
 /**

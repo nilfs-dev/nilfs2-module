@@ -25,7 +25,7 @@
 
 #include <linux/fs.h>
 #include <linux/buffer_head.h>
-#include "nilfs_fs.h"
+#include "nilfs2_fs.h"
 
 #define NILFS_CPFILE_GFP	NILFS_MDT_GFP
 

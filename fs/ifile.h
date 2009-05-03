@@ -27,7 +27,7 @@
 
 #include <linux/fs.h>
 #include <linux/buffer_head.h>
-#include "nilfs_fs.h"
+#include "nilfs2_fs.h"
 #include "mdt.h"
 #include "alloc.h"
 

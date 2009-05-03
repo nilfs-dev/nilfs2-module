@@ -26,7 +26,7 @@
 
 #include <linux/fs.h>
 #include <linux/buffer_head.h>
-#include "nilfs_fs.h"
+#include "nilfs2_fs.h"
 #include "sufile.h"
 
 struct nilfs_segment_entry {

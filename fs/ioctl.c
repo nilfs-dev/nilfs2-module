@@ -26,7 +26,7 @@
 #include <linux/capability.h>	/* capable() */
 #include <asm/uaccess.h>	/* copy_from_user(), copy_to_user() */
 #include <linux/vmalloc.h>
-#include "nilfs_fs.h"
+#include "nilfs2_fs.h"
 #include "nilfs.h"
 #include "segment.h"
 #include "bmap.h"
