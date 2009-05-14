@@ -36,6 +36,13 @@
  */
 #ifdef LINUX_VERSION_CODE
 /*
+ * memdup_user() was introduced in linux-2.6.30
+ */
+#ifndef HAVE_MEMDUP_USER
+# define HAVE_MEMDUP_USER \
+	(LINUX_VERSION_CODE > KERNEL_VERSION(2, 6, 29))
+#endif
+/*
  * BIO_RW_SYNC was removed in linux-2.6.29; BIO_RW_SYNCIO and 
  * BIO_RW_UNPLUG was introduced instead.
  */
@@ -387,6 +394,29 @@ static inline void le64_add_cpu(__le64 *var, u64 val)
 #ifndef current_fsuid
 # define current_fsuid()	(current->fsuid)
 # define current_fsgid()	(current->fsgid)
+#endif
+
+#if !HAVE_MEMDUP_USER  /* back-ported from 2.6.30 */
+static inline void *memdup_user(const void __user *src, size_t len)
+{
+	void *p;
+
+	/*
+	 * Always use GFP_KERNEL, since copy_from_user() can sleep and
+	 * cause pagefault, which makes it pointless to use GFP_NOFS
+	 * or GFP_ATOMIC.
+	 */
+	p = kmalloc(len, GFP_KERNEL);
+	if (!p)
+		return ERR_PTR(-ENOMEM);
+
+	if (copy_from_user(p, src, len)) {
+		kfree(p);
+		return ERR_PTR(-EFAULT);
+	}
+
+	return p;
+}
 #endif
 
 #endif /* NILFS_KERN_FEATURE_H */
