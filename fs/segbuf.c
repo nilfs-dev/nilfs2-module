@@ -425,7 +425,7 @@ int nilfs_segbuf_write(struct nilfs_segment_buffer *segbuf,
 #if NEED_BIO_RW_SYNC
 		rw |= (1 << BIO_RW_SYNC);
 #else
-		rw |= (1 << BIO_RW_SYNCIO);
+		rw |= (1 << BIO_RW_SYNCIO) | (1 << BIO_RW_UNPLUG);
 #endif
 		res = nilfs_submit_seg_bio(wi, rw);
 		if (unlikely(res))
