@@ -1,3 +1,26 @@
+nilfs-2.0.13  Sun May 17, 2009 JST
+
+	* check size of array structured data exchanged via ioctls; this
+	  adds missing sanity checks to ioctls and prevents memory access
+	  overrun in kernel code due to incorrect argument data of the
+	  ioctls.
+	* ensure to clear dirty state when deleting metadata file block;
+	  this will fix the following failure during GC:
+	     nilfs_cpfile_delete_checkpoints: cannot delete block
+	     NILFS: GC failed during preparation: cannot delete checkpoints:
+	     err=-2
+	* fix lock order reversal in nilfs_clean_segments ioctl
+	* fix possible circular locking for get information ioctls
+	* fix circular locking dependency of writer mutex
+	* fix possible recovery failure due to block creation without
+	  writer; this will fix a boundary condition bug on mount time
+	  recovery.
+	* replace BUG call in nilfs_dat_translate with WARN_ON
+	* fix possible mismatch of sufile counters on recovery
+	* fix wrong accounting in nilfs_sufile_set_error
+	* fix improper return values of nilfs_get_cpinfo ioctl
+	* rename nilfs_fs.h to nilfs2_fs.h to catch up in-tree code.
+
 nilfs-2.0.12  Mon Mar 30, 2009 JST
 
 	* support kernel 2.6.29 for the record.
