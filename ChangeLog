@@ -1,3 +1,11 @@
+nilfs-2.0.14  Sat May 23, 2009 JST
+
+	* fix memory leak in nilfs_ioctl_clean_segments; this will fix the
+	  memory leak problem slipped into nilfs-2.0.13.  The memory leak
+	  arises every time the garbage collection of nilfs runs.  Thanks
+	  to Kentaro Suzuki for finding this problem.
+	* set bio unplug flag for the last bio in segment
+
 nilfs-2.0.13  Sun May 17, 2009 JST
 
 	* check size of array structured data exchanged via ioctls; this
