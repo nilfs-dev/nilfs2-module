@@ -811,7 +811,7 @@ int nilfs_store_magic_and_option(struct super_block *sb,
  * @silent: silent mode flag
  * @nilfs: the_nilfs struct
  *
- * This function is called exclusively by bd_mount_mutex.
+ * This function is called exclusively by nilfs->ns_mount_mutex.
  * So, the recovery process is protected from other simultaneous mounts.
  */
 static int
@@ -1162,7 +1162,7 @@ nilfs_get_sb(struct file_system_type *fs_type, int flags,
 		goto failed;
 	}
 
-	nilfs_lock_bdev(sd.bdev);
+	mutex_lock(&nilfs->ns_mount_mutex);
 
 	if (!sd.cno) {
 		/*
@@ -1231,14 +1231,14 @@ nilfs_get_sb(struct file_system_type *fs_type, int flags,
 		need_to_close = 0;
 	}
 
-	nilfs_unlock_bdev(sd.bdev);
+	mutex_unlock(&nilfs->ns_mount_mutex);
 	put_nilfs(nilfs);
 	if (need_to_close)
 		close_bdev_exclusive(sd.bdev, flags);
 	return simple_set_mnt(mnt, s);
 
  failed_unlock:
-	nilfs_unlock_bdev(sd.bdev);
+	mutex_unlock(&nilfs->ns_mount_mutex);
 	put_nilfs(nilfs);
  failed:
 	close_bdev_exclusive(sd.bdev, flags);
@@ -1247,14 +1247,14 @@ nilfs_get_sb(struct file_system_type *fs_type, int flags,
 
  cancel_new:
 	/* Abandoning the newly allocated superblock */
-	nilfs_unlock_bdev(sd.bdev);
+	mutex_unlock(&nilfs->ns_mount_mutex);
 	put_nilfs(nilfs);
 	up_write(&s->s_umount);
 	deactivate_super(s);
 	/*
 	 * deactivate_super() invokes close_bdev_exclusive().
 	 * We must finish all post-cleaning before this call;
-	 * put_nilfs() and unlocking bd_mount_sem need the block device.
+	 * put_nilfs() needs the block device.
 	 */
 	return err;
 }
