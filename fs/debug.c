@@ -32,7 +32,6 @@
 #include "nilfs.h"
 #include "sufile.h"
 #include "page.h"
-#include "seglist.h"
 #include "segbuf.h"
 
 static int proc_calc_metrics(char *page, char **start, off_t off,
@@ -525,51 +524,6 @@ void nilfs_print_seginfo(struct nilfs_segment_buffer *segbuf)
 	printk(KERN_DEBUG "============================================\n");
 }
 
-#define TEST_SEGUSAGE_FLAG(su, f, fn, b, sz, n, l) \
-	snprint_flag(b, sz, nilfs_segment_usage_##f(su), fn, n, l)
-
-static int snprint_su_flags(char *b, int size, struct nilfs_segment_usage *su)
-{
-	int n = 0, len = 0;
-
-	TEST_SEGUSAGE_FLAG(su, active, ACTIVE, b, size, n, len);
-	TEST_SEGUSAGE_FLAG(su, dirty, DIRTY, b, size, n, len);
-	TEST_SEGUSAGE_FLAG(su, error, ERROR, b, size, n, len);
-	return len;
-}
-
-void nilfs_print_segment_list(const char *name, struct list_head *head,
-			      struct inode *sufile)
-{
-	struct nilfs_segment_entry *ent;
-
-	printk(KERN_DEBUG "segment list: %s\n", name);
-	list_for_each_entry(ent, head, list) {
-		struct nilfs_segment_usage *raw_su;
-		struct buffer_head *bh_su;
-		char b[MSIZ];
-		int len = 0;
-		int err;
-
-		b[0] = '\0';
-
-		err = nilfs_sufile_get_segment_usage(sufile, ent->segnum,
-						     &raw_su, &bh_su);
-		if (likely(!err)) {
-			len += snprintf(b + len, MSIZ - len, " su-flags=");
-			len += snprint_su_flags(b + len, MSIZ - len, raw_su);
-			nilfs_sufile_put_segment_usage(sufile, ent->segnum,
-						       bh_su);
-		}
-		printk(KERN_DEBUG "SLH(segnum=%llu) %s bh_su=%p raw_su=%p\n",
-		       (unsigned long long)ent->segnum, b, ent->bh_su,
-		       ent->raw_su);
-	}
-}
-#undef MSIZ
-#undef nbar
-
-#define MSIZ 512
 void nilfs_print_finfo(sector_t blocknr, ino_t ino,
 		       unsigned long nblocks, unsigned long ndatablk)
 {
@@ -616,6 +570,7 @@ void nilfs_print_binfo(sector_t blocknr, union nilfs_binfo *binfo,
 	}
 }
 #undef MSIZ
+#undef nbar
 
 /*
  * Proc-fs entries

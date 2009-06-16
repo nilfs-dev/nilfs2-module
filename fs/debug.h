@@ -165,8 +165,6 @@ extern void nilfs_print_seginfo(struct nilfs_segment_buffer *);
 extern void nilfs_print_finfo(sector_t, ino_t, unsigned long, unsigned long);
 extern void nilfs_print_binfo(sector_t, union nilfs_binfo *,
 			      int (*print)(char *, int, union nilfs_binfo *));
-extern void nilfs_print_segment_list(const char *, struct list_head *,
-				     struct inode *);
 
 extern int nilfs_releasepage(struct page *, gfp_t);
 extern void nilfs_sync_page(struct page *);
@@ -184,7 +182,6 @@ extern void nilfs_check_radix_tree(const char *, int, struct address_space *,
 #define nilfs_print_seginfo(segbuf)  do {} while (0)
 #define nilfs_print_finfo(blocknr, ino, nblocks, ndatablk)  do {} while (0)
 #define nilfs_print_binfo(blocknr, binfo, print)  do {} while (0)
-#define nilfs_print_segment_list(name, head, sufile)  do {} while (0)
 #define nilfs_releasepage	NULL
 #define nilfs_sync_page		NULL
 #define nilfs_invalidatepage	block_invalidatepage
