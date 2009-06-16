@@ -43,7 +43,6 @@
 #include "sufile.h"
 #include "cpfile.h"
 #include "ifile.h"
-#include "seglist.h"
 #include "segbuf.h"
 
 
@@ -83,7 +82,8 @@ enum {
 /* State flags of collection */
 #define NILFS_CF_NODE		0x0001	/* Collecting node blocks */
 #define NILFS_CF_IFILE_STARTED	0x0002	/* IFILE stage has started */
-#define NILFS_CF_HISTORY_MASK	(NILFS_CF_IFILE_STARTED)
+#define NILFS_CF_SUFREED	0x0004	/* segment usages has been freed */
+#define NILFS_CF_HISTORY_MASK	(NILFS_CF_IFILE_STARTED | NILFS_CF_SUFREED)
 
 /* Operations depending on the construction mode and file type */
 struct nilfs_sc_operations {
@@ -914,7 +914,7 @@ static int nilfs_segctor_clean(struct nilfs_sc_info *sci)
 {
 	return list_empty(&sci->sc_dirty_files) &&
 		!test_bit(NILFS_SC_DIRTY, &sci->sc_flags) &&
-		list_empty(&sci->sc_cleaning_segments) &&
+		sci->sc_nfreesegs == 0 &&
 		(!nilfs_doing_gc() || list_empty(&sci->sc_gc_inodes));
 }
 
@@ -1120,46 +1120,6 @@ static void nilfs_drop_collected_inodes(struct list_head *head)
 	}
 }
 
-static void nilfs_segctor_cancel_free_segments(struct nilfs_sc_info *sci,
-					       struct inode *sufile)
-
-{
-	struct list_head *head = &sci->sc_cleaning_segments;
-	struct nilfs_segment_entry *ent;
-	int err;
-
-	list_for_each_entry(ent, head, list) {
-		if (!(ent->flags & NILFS_SLH_FREED))
-			break;
-		err = nilfs_sufile_cancel_free(sufile, ent->segnum);
-		WARN_ON(err); /* do not happen */
-		ent->flags &= ~NILFS_SLH_FREED;
-	}
-}
-
-static int nilfs_segctor_prepare_free_segments(struct nilfs_sc_info *sci,
-					       struct inode *sufile)
-{
-	struct list_head *head = &sci->sc_cleaning_segments;
-	struct nilfs_segment_entry *ent;
-	int err;
-
-	list_for_each_entry(ent, head, list) {
-		err = nilfs_sufile_free(sufile, ent->segnum);
-		if (unlikely(err))
-			return err;
-		seg_debug(2, "free segment (segnum=%llu) on sufile\n",
-			  (unsigned long long)ent->segnum);
-		ent->flags |= NILFS_SLH_FREED;
-	}
-	return 0;
-}
-
-static void nilfs_segctor_commit_free_segments(struct nilfs_sc_info *sci)
-{
-	nilfs_dispose_segment_list(&sci->sc_cleaning_segments);
-}
-
 static int nilfs_segctor_apply_buffers(struct nilfs_sc_info *sci,
 				       struct inode *inode,
 				       struct list_head *listp,
@@ -1282,6 +1242,7 @@ static int nilfs_segctor_collect_blocks(struct nilfs_sc_info *sci, int mode)
 	struct the_nilfs *nilfs = sbi->s_nilfs;
 	struct list_head *head;
 	struct nilfs_inode_info *ii;
+	size_t ndone;
 	int err = 0;
 
 	switch (sci->sc_stage.scnt) {
@@ -1380,10 +1341,16 @@ static int nilfs_segctor_collect_blocks(struct nilfs_sc_info *sci, int mode)
 		sci->sc_stage.scnt++;  /* Fall through */
 	case NILFS_ST_SUFILE:
 		seg_debug(3, "** SUFILE STAGE\n");
-		err = nilfs_segctor_prepare_free_segments(sci,
-							  nilfs->ns_sufile);
-		if (unlikely(err))
+		err = nilfs_sufile_freev(nilfs->ns_sufile, sci->sc_freesegs,
+					 sci->sc_nfreesegs, &ndone);
+		if (unlikely(err)) {
+			nilfs_sufile_cancel_freev(nilfs->ns_sufile,
+						  sci->sc_freesegs, ndone,
+						  NULL);
 			break;
+		}
+		sci->sc_stage.flags |= NILFS_CF_SUFREED;
+
 		err = nilfs_segctor_scan_file(sci, nilfs->ns_sufile,
 					      &nilfs_sc_file_ops);
 		if (unlikely(err))
@@ -1632,7 +1599,15 @@ static void nilfs_segctor_end_construction(struct nilfs_sc_info *sci,
 {
 	if (unlikely(err)) {
 		nilfs_segctor_free_incomplete_segments(sci, nilfs);
-		nilfs_segctor_cancel_free_segments(sci, nilfs->ns_sufile);
+		if (sci->sc_stage.flags & NILFS_CF_SUFREED) {
+			int ret;
+
+			ret = nilfs_sufile_cancel_freev(nilfs->ns_sufile,
+							sci->sc_freesegs,
+							sci->sc_nfreesegs,
+							NULL);
+			WARN_ON(ret); /* do not happen */
+		}
 	}
 	nilfs_segctor_clear_segment_buffers(sci);
 }
@@ -1733,7 +1708,13 @@ static int nilfs_segctor_collect(struct nilfs_sc_info *sci,
 		if (mode != SC_LSEG_SR || sci->sc_stage.scnt < NILFS_ST_CPFILE)
 			break;
 
-		nilfs_segctor_cancel_free_segments(sci, nilfs->ns_sufile);
+		if (sci->sc_stage.flags & NILFS_CF_SUFREED) {
+			err = nilfs_sufile_cancel_freev(nilfs->ns_sufile,
+							sci->sc_freesegs,
+							sci->sc_nfreesegs,
+							NULL);
+			WARN_ON(err); /* do not happen */
+		}
 		nilfs_segctor_clear_segment_buffers(sci);
 
 		err = nilfs_segctor_extend_segments(sci, nilfs, nadd);
@@ -2393,10 +2374,8 @@ static int nilfs_segctor_do_construct(struct nilfs_sc_info *sci, int mode)
 		nilfs_segctor_complete_write(sci);
 
 		/* Commit segments */
-		if (has_sr) {
-			nilfs_segctor_commit_free_segments(sci);
+		if (has_sr)
 			nilfs_segctor_clear_metadata_dirty(sci);
-		}
 
 		nilfs_segctor_end_construction(sci, nilfs, 0);
 
@@ -2470,48 +2449,6 @@ void nilfs_flush_segment(struct super_block *sb, ino_t ino)
 		return;
 	nilfs_segctor_do_flush(sci, NILFS_MDT_INODE(sb, ino) ? ino : 0);
 					/* assign bit 0 to data files */
-}
-
-int nilfs_segctor_add_segments_to_be_freed(struct nilfs_sc_info *sci,
-					   __u64 *segnum, size_t nsegs)
-{
-	struct nilfs_segment_entry *ent;
-	struct the_nilfs *nilfs = sci->sc_sbi->s_nilfs;
-	struct inode *sufile = nilfs->ns_sufile;
-	LIST_HEAD(list);
-	__u64 *pnum;
-	size_t i;
-	int err;
-
-	for (pnum = segnum, i = 0; i < nsegs; pnum++, i++) {
-		ent = nilfs_alloc_segment_entry(*pnum);
-		if (unlikely(!ent)) {
-			err = -ENOMEM;
-			goto failed;
-		}
-		list_add_tail(&ent->list, &list);
-
-		err = nilfs_open_segment_entry(ent, sufile);
-		if (unlikely(err))
-			goto failed;
-
-		if (unlikely(!nilfs_segment_usage_dirty(ent->raw_su)))
-			printk(KERN_WARNING "NILFS: unused segment is "
-			       "requested to be cleaned (segnum=%llu)\n",
-			       (unsigned long long)ent->segnum);
-		nilfs_close_segment_entry(ent, sufile);
-	}
-	list_splice(&list, sci->sc_cleaning_segments.prev);
-	return 0;
-
- failed:
-	nilfs_dispose_segment_list(&list);
-	return err;
-}
-
-void nilfs_segctor_clear_segments_to_be_freed(struct nilfs_sc_info *sci)
-{
-	nilfs_dispose_segment_list(&sci->sc_cleaning_segments);
 }
 
 struct nilfs_segctor_wait_request {
@@ -2793,10 +2730,13 @@ int nilfs_clean_segments(struct super_block *sb, struct nilfs_argv *argv,
 	err = nilfs_init_gcdat_inode(nilfs);
 	if (unlikely(err))
 		goto out_unlock;
+
 	err = nilfs_ioctl_prepare_clean_segments(nilfs, argv, kbufs);
 	if (unlikely(err))
 		goto out_unlock;
 
+	sci->sc_freesegs = kbufs[4];
+	sci->sc_nfreesegs = argv[4].v_nmembs;
 	list_splice_init(&nilfs->ns_gc_inodes, sci->sc_gc_inodes.prev);
 
 	for (;;) {
@@ -2818,6 +2758,8 @@ int nilfs_clean_segments(struct super_block *sb, struct nilfs_argv *argv,
 			       PAGECACHE_TAG_DIRTY);
 
  out_unlock:
+	sci->sc_freesegs = NULL;
+	sci->sc_nfreesegs = 0;
 	nilfs_clear_gcdat_inode(nilfs);
 	nilfs_transaction_unlock(sbi);
 	return err;
@@ -3033,7 +2975,6 @@ static struct nilfs_sc_info *nilfs_segctor_new(struct nilfs_sb_info *sbi)
 	INIT_LIST_HEAD(&sci->sc_dirty_files);
 	INIT_LIST_HEAD(&sci->sc_segbufs);
 	INIT_LIST_HEAD(&sci->sc_gc_inodes);
-	INIT_LIST_HEAD(&sci->sc_cleaning_segments);
 	INIT_LIST_HEAD(&sci->sc_copied_buffers);
 
 	sci->sc_interval = HZ * NILFS_SC_DEFAULT_TIMEOUT;
@@ -3102,10 +3043,7 @@ static void nilfs_segctor_destroy(struct nilfs_sc_info *sci)
 			      "dirty file(s) after the final construction\n");
 		nilfs_dispose_list(sbi, &sci->sc_dirty_files, 1);
 	}
-	if (!list_empty(&sci->sc_cleaning_segments)) {
-		seg_debug(1, "disposing uncommitted segments to be freed\n");
-		nilfs_dispose_segment_list(&sci->sc_cleaning_segments);
-	}
+
 	WARN_ON(!list_empty(&sci->sc_segbufs));
 
 	down_write(&sbi->s_nilfs->ns_segctor_sem);

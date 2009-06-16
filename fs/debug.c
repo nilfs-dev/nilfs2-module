@@ -525,8 +525,6 @@ void nilfs_print_seginfo(struct nilfs_segment_buffer *segbuf)
 	printk(KERN_DEBUG "============================================\n");
 }
 
-#define TEST_SLH_FLAG(flags, f, b, sz, n, l) \
-	snprint_flag(b, sz, flags & NILFS_SLH_##f, f, n, l)
 #define TEST_SEGUSAGE_FLAG(su, f, fn, b, sz, n, l) \
 	snprint_flag(b, sz, nilfs_segment_usage_##f(su), fn, n, l)
 
@@ -550,18 +548,11 @@ void nilfs_print_segment_list(const char *name, struct list_head *head,
 		struct nilfs_segment_usage *raw_su;
 		struct buffer_head *bh_su;
 		char b[MSIZ];
-		int n = 0, len = 0;
-		unsigned flags = ent->flags;
+		int len = 0;
 		int err;
 
 		b[0] = '\0';
 
-		len += snprintf(b + len, MSIZ - len, "ent-flags=");  n++;
-		if (!flags) {
-			len += snprintf(b + len, MSIZ - len, "<none>");  n++;
-		} else {
-			TEST_SLH_FLAG(flags, FREED, b, MSIZ, n, len);
-		}
 		err = nilfs_sufile_get_segment_usage(sufile, ent->segnum,
 						     &raw_su, &bh_su);
 		if (likely(!err)) {
