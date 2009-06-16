@@ -261,14 +261,6 @@
 	(LINUX_VERSION_CODE > KERNEL_VERSION(2, 6, 19))
 #endif
 /*
- * bd_mount_mutex replaced semaphore counterpart in linux-2.6.17,
- * and was reverted to the semaphore in linux-2.6.20
- */
-#ifndef NEED_MOUNT_SEMAPHORE
-# define NEED_MOUNT_SEMAPHORE		\
-	(LINUX_VERSION_CODE > KERNEL_VERSION(2, 6, 19))
-#endif
-/*
  * inode->i_security became configurable since linux-2.6.19
  */
 #if !defined(CONFIG_SECURITY) && \
@@ -359,16 +351,6 @@ static inline void le64_add_cpu(__le64 *var, u64 val)
 #if !HAVE_NEW_TRYLOCKS
 # define trylock_page(page)		(!TestSetPageLocked(page))
 # define trylock_buffer(bh)		(!test_set_buffer_locked(bh))
-#endif
-
-#if NEED_MOUNT_SEMAPHORE
-#define nilfs_lock_bdev(bdev)  do { down(&(bdev)->bd_mount_sem); } while (0)
-#define nilfs_unlock_bdev(bdev)  do { up(&(bdev)->bd_mount_sem); } while (0)
-#else
-#define nilfs_lock_bdev(bdev)  \
-	do { mutex_lock(&(bdev)->bd_mount_mutex); } while (0)
-#define nilfs_unlock_bdev(bdev)  \
-	do { mutex_unlock(&(bdev)->bd_mount_mutex); } while (0)
 #endif
 
 #if HAVE_LOCKLESS_PAGECACHE
