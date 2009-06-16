@@ -1253,8 +1253,6 @@ nilfs_get_sb(struct file_system_type *fs_type, int flags,
 		}
 #endif
 		need_to_close = 0;
-	} else if (!(s->s_flags & MS_RDONLY)) {
-		err = -EBUSY;
 	}
 
 	nilfs_unlock_bdev(sd.bdev);
