@@ -53,10 +53,9 @@
 #include "ifile.h"
 
 static struct address_space_operations def_gcinode_aops = {
-	/* .writepage should be NULL because gcinodes are not writable */
 	.releasepage		= nilfs_releasepage,
+	.sync_page		= block_sync_page,
 };
-/* XXX need def_gcinode_iops/fops? */
 
 /*
  * nilfs_gccache_submit_read_data() - add data buffer and submit read request
