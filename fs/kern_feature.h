@@ -76,6 +76,13 @@
 	(LINUX_VERSION_CODE < KERNEL_VERSION(2, 6, 28))
 #endif
 /*
+ * Kernels later than 2.6.26 have aops->is_partially_uptodate method
+ */
+#ifndef HAVE_IS_PARTIALLY_UPTODATE
+# define HAVE_IS_PARTIALLY_UPTODATE \
+	(LINUX_VERSION_CODE > KERNEL_VERSION(2, 6, 26))
+#endif
+/*
  * Page trylock and buffer trylock were renamed at linux-2.6.27-rc2.
  */
 #ifndef HAVE_NEW_TRYLOCKS

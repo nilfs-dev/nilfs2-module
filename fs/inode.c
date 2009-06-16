@@ -311,6 +311,9 @@ struct address_space_operations nilfs_aops = {
 	.releasepage		= nilfs_releasepage,
 	.invalidatepage		= nilfs_invalidatepage,
 	.direct_IO		= nilfs_direct_IO,
+#if HAVE_IS_PARTIALLY_UPTODATE
+	.is_partially_uptodate  = block_is_partially_uptodate,
+#endif
 };
 
 struct inode *nilfs_new_inode(struct inode *dir, int mode)
