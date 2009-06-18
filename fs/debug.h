@@ -57,6 +57,8 @@
 	nilfs_debug_verbose(NILFS_VERBOSE_BTNODE, l, "btnode", f, ## a)
 #define page_debug(l, f, a...)  \
 	nilfs_debug_verbose(NILFS_VERBOSE_PAGE, l, "page", f, ## a)
+#define trans_debug(l, f, a...)  \
+	nilfs_debug_verbose(NILFS_VERBOSE_TRANSACTION, l, "trans", f, ## a)
 
 #else /* CONFIG_NILFS_DEBUG */
 #define nilfs_debug(l, f, a...)  do {} while (0)
@@ -70,6 +72,7 @@
 #define dat_debug(l, f, a...)  do {} while (0)
 #define btnode_debug(l, f, a...)  do {} while (0)
 #define page_debug(l, f, a...)  do {} while (0)
+#define trans_debug(l, f, a...)  do {} while (0)
 #endif /* CONFIG_NILFS_DEBUG */
 
 
@@ -138,6 +141,7 @@ enum {
 	NILFS_VERBOSE_DAT,	 /* DAT file operations */
 	NILFS_VERBOSE_BTNODE,	 /* B-tree node operations */
 	NILFS_VERBOSE_PAGE,	 /* Page operations */
+	NILFS_VERBOSE_TRANSACTION, /* Transaction */
 	NILFS_VERBOSE_LIMIT
 };
 

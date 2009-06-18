@@ -74,6 +74,7 @@ static match_table_t class_tokens = {
 	{NILFS_VERBOSE_DAT, "dat"},
 	{NILFS_VERBOSE_BTNODE, "btnode"},
 	{NILFS_VERBOSE_PAGE, "page"},
+	{NILFS_VERBOSE_TRANSACTION, "trans"},
 	{-1, NULL},
 };
 

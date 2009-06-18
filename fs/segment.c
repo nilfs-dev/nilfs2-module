@@ -171,9 +171,9 @@ static int nilfs_prepare_segment_lock(struct nilfs_transaction_info *ti)
 
 	if (cur_ti) {
 		if (cur_ti->ti_magic == NILFS_TI_MAGIC) {
-			seg_debug(3, "increment transaction refcnt "
-				  "(ti=%p, cnt=%d)\n",
-				  cur_ti, cur_ti->ti_count);
+			trans_debug(3, "increment transaction refcnt "
+				    "(ti=%p, cnt=%d)\n",
+				    cur_ti, cur_ti->ti_count);
 			return ++cur_ti->ti_count;
 		} else {
 			/*
@@ -242,7 +242,7 @@ int nilfs_transaction_begin(struct super_block *sb,
 	if (ret > 0)
 		return 0;
 
-	seg_debug(3, "task %p locking segment semaphore\n", current);
+	trans_debug(3, "task %p locking segment semaphore\n", current);
 	sbi = NILFS_SB(sb);
 	nilfs = sbi->s_nilfs;
 	down_read(&nilfs->ns_segctor_sem);
@@ -251,7 +251,7 @@ int nilfs_transaction_begin(struct super_block *sb,
 		ret = -ENOSPC;
 		goto failed;
 	}
-	seg_debug(3, "locked\n");
+	trans_debug(3, "locked\n");
 	return 0;
 
  failed:
@@ -284,8 +284,8 @@ int nilfs_transaction_commit(struct super_block *sb)
 	ti->ti_flags |= NILFS_TI_COMMIT;
 	if (ti->ti_count > 0) {
 		ti->ti_count--;
-		seg_debug(3, "decrement transaction refcnt (ti=%p, cnt=%d)\n",
-			  ti, ti->ti_count);
+		trans_debug(3, "decrement transaction refcnt(ti=%p, cnt=%d)\n",
+			    ti, ti->ti_count);
 		return 0;
 	}
 	sbi = NILFS_SB(sb);
@@ -298,7 +298,7 @@ int nilfs_transaction_commit(struct super_block *sb)
 			nilfs_segctor_do_flush(sci, 0);
 	}
 	up_read(&sbi->s_nilfs->ns_segctor_sem);
-	seg_debug(3, "task %p unlocked segment semaphore\n", current);
+	trans_debug(3, "task %p unlocked segment semaphore\n", current);
 	current->journal_info = ti->ti_save;
 
 	if (ti->ti_flags & NILFS_TI_SYNC)
@@ -362,7 +362,7 @@ static void nilfs_transaction_lock(struct nilfs_sb_info *sbi,
 	INIT_LIST_HEAD(&ti->ti_garbage);
 	current->journal_info = ti;
 
-	seg_debug(3, "task %p locking segment semaphore\n", current);
+	trans_debug(3, "task %p locking segment semaphore\n", current);
 	for (;;) {
 		down_write(&sbi->s_nilfs->ns_segctor_sem);
 		if (!test_bit(NILFS_SC_PRIOR_FLUSH, &NILFS_SC(sbi)->sc_flags))
@@ -375,7 +375,7 @@ static void nilfs_transaction_lock(struct nilfs_sb_info *sbi,
 	}
 	if (gcflag)
 		ti->ti_flags |= NILFS_TI_GC;
-	seg_debug(3, "locked\n");
+	trans_debug(3, "locked\n");
 }
 
 static void nilfs_transaction_unlock(struct nilfs_sb_info *sbi)
@@ -386,7 +386,7 @@ static void nilfs_transaction_unlock(struct nilfs_sb_info *sbi)
 	BUG_ON(ti->ti_count > 0);
 
 	up_write(&sbi->s_nilfs->ns_segctor_sem);
-	seg_debug(3, "task %p unlocked segment semaphore\n", current);
+	trans_debug(3, "task %p unlocked segment semaphore\n", current);
 	current->journal_info = ti->ti_save;
 	if (!list_empty(&ti->ti_garbage))
 		nilfs_dispose_list(sbi, &ti->ti_garbage, 0);
