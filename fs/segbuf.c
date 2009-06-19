@@ -334,12 +334,12 @@ static struct bio *nilfs_alloc_seg_bio(struct super_block *sb, sector_t start,
 {
 	struct bio *bio;
 
-	bio = bio_alloc(GFP_NOWAIT, nr_vecs);
+	bio = bio_alloc(GFP_NOIO, nr_vecs);
 	if (bio == NULL) {
 		seg_debug(1, "bio_alloc() failed. retrying (nr_vecs=%d)\n",
 			  nr_vecs);
 		while (!bio && (nr_vecs >>= 1))
-			bio = bio_alloc(GFP_NOWAIT, nr_vecs);
+			bio = bio_alloc(GFP_NOIO, nr_vecs);
 		seg_debug(1, "done retry (nr_vecs=%d, bio=%p)\n",
 			  nr_vecs, bio);
 	}
