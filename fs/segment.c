@@ -2729,7 +2729,7 @@ static void nilfs_segctor_notify(struct nilfs_sc_info *sci,
 
 	if (req->mode == SC_LSEG_SR) {
 		seg_debug(3, "complete requests from seq=%d to seq=%d\n",
-			  sci->sc_seq_done + 1, req->seq_accepted);
+			  sci->sc_seq_done, req->seq_accepted);
 		sci->sc_seq_done = req->seq_accepted;
 		nilfs_segctor_wakeup(sci, req->sc_err ? : req->sb_err);
 		sci->sc_flush_request = 0;
