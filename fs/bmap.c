@@ -717,6 +717,7 @@ static const struct nilfs_bmap_ptr_operations nilfs_bmap_ptr_ops_gc = {
 };
 
 static struct lock_class_key nilfs_bmap_dat_lock_key;
+static struct lock_class_key nilfs_bmap_mdt_lock_key;
 
 /**
  * nilfs_bmap_read - read a bmap from an inode
@@ -752,7 +753,11 @@ int nilfs_bmap_read(struct nilfs_bmap *bmap, struct nilfs_inode *raw_inode)
 		bmap->b_pops = &nilfs_bmap_ptr_ops_vmdt;
 		bmap->b_last_allocated_key = 0;	/* XXX: use macro */
 		bmap->b_last_allocated_ptr = NILFS_BMAP_INVALID_PTR;
+		lockdep_set_class(&bmap->b_sem, &nilfs_bmap_mdt_lock_key);
 		break;
+	case NILFS_IFILE_INO:
+		lockdep_set_class(&bmap->b_sem, &nilfs_bmap_mdt_lock_key);
+		/* Fall through */
 	default:
 		bmap->b_pops = &nilfs_bmap_ptr_ops_v;
 		bmap->b_last_allocated_key = 0;	/* XXX: use macro */
