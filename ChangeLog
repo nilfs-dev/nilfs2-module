@@ -1,3 +1,20 @@
+nilfs-2.0.15  Sat Jul 11, 2009 JST
+
+	* enable sync_page method; this adds a missing sync_page method
+	  which unplugs bio requests during lock retries on pages. This
+	  will improve read performance of nilfs.
+	* fix bh leak in nilfs_cpfile_delete_checkpoints function
+	* fix disorder in checkpoint count on error during deleting
+	  checkpoints
+	* fix hang problem of log writer which occurs after write failures
+	* remove unlikely directive causing mis-conversion of error code
+	* fix lockdep warning between regular file and inode file
+	* fix incorrect KERN_CRIT messages in case of write failures
+	* correct display of sequence counter printed when request has
+	  completed
+	* separate debug message related to transaction from ones for
+	  segment
+
 nilfs-2.0.14  Sat May 23, 2009 JST
 
 	* fix memory leak in nilfs_ioctl_clean_segments; this will fix the
