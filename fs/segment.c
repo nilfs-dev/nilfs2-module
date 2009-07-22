@@ -2704,7 +2704,8 @@ static int nilfs_segctor_construct(struct nilfs_sc_info *sci,
 		if (test_bit(NILFS_SC_SUPER_ROOT, &sci->sc_flags) &&
 		    nilfs_discontinued(nilfs)) {
 			down_write(&nilfs->ns_sem);
-			req->sb_err = nilfs_commit_super(sbi, 0);
+			req->sb_err = nilfs_commit_super(sbi,
+					nilfs_altsb_need_update(nilfs));
 			up_write(&nilfs->ns_sem);
 		}
 	}
@@ -2902,6 +2903,7 @@ static int nilfs_segctor_thread(void *arg)
 	} else {
 		DEFINE_WAIT(wait);
 		int should_sleep = 1;
+		struct the_nilfs *nilfs;
 
 		prepare_to_wait(&sci->sc_wait_daemon, &wait,
 				TASK_INTERRUPTIBLE);
@@ -2922,6 +2924,9 @@ static int nilfs_segctor_thread(void *arg)
 		finish_wait(&sci->sc_wait_daemon, &wait);
 		timeout = ((sci->sc_state & NILFS_SEGCTOR_COMMIT) &&
 			   time_after_eq(jiffies, sci->sc_timer->expires));
+		nilfs = sci->sc_sbi->s_nilfs;
+		if (sci->sc_super->s_dirt && nilfs_sb_need_update(nilfs))
+			set_nilfs_discontinued(nilfs);
 	}
 	seg_debug(2, "woke %s\n", timeout ? "(timeout)" : "");
 	goto loop;
