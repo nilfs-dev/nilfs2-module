@@ -523,7 +523,8 @@ static int __nilfs_read_inode(struct super_block *sb, unsigned long ino,
 	ii->i_acl = NILFS_ACL_NOT_CACHED;
 	ii->i_default_acl = NILFS_ACL_NOT_CACHED;
 #endif
-	if (nilfs_read_inode_common(inode, raw_inode))
+	err = nilfs_read_inode_common(inode, raw_inode);
+	if (err)
 		goto failed_unmap;
 
 	if (S_ISREG(inode->i_mode)) {
