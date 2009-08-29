@@ -221,11 +221,12 @@ int nilfs_btnode_prepare_change_key(struct address_space *btnc,
 
 	if (inode->i_blkbits == PAGE_CACHE_SHIFT) {
 		lock_page(obh->b_page);
-#if HAVE_EXPORTED_RADIX_TREE_PRELOAD
 		/*
 		 * We cannot call radix_tree_preload for the kernels older
 		 * than 2.6.23, because it is not exported for modules.
 		 */
+retry:
+#if HAVE_EXPORTED_RADIX_TREE_PRELOAD
 		err = radix_tree_preload(GFP_NOFS & ~__GFP_HIGHMEM);
 		if (err)
 			goto failed_unlock;
@@ -237,7 +238,6 @@ int nilfs_btnode_prepare_change_key(struct address_space *btnc,
 				       (unsigned long long)oldkey,
 				       (unsigned long long)newkey);
 
-retry:
 		WRITE_LOCK_IRQ(&btnc->tree_lock);
 		err = radix_tree_insert(&btnc->page_tree, newkey, obh->b_page);
 		WRITE_UNLOCK_IRQ(&btnc->tree_lock);
