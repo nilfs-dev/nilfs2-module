@@ -32,6 +32,27 @@
  */
 
 /*
+ * for Red Hat Enterprise Linux / CentOS 5.x
+ */
+#if defined(RHEL_MAJOR) && (RHEL_MAJOR == 5)
+# define	NEED_MOUNT_SEMAPHORE	1
+# define	NEED_INODE_GENERIC_IP	0
+# define	NEED_INODE_BLKSIZE	0
+# if (RHEL_MINOR < 1)
+#  define	PageChecked	PageFsMisc
+#  define	SetPageChecked	SetPageFsMisc
+#  define	ClearPageChecked	ClearPageFsMisc
+# endif
+# if (RHEL_MINOR > 0)
+#  define	NEED_INC_NLINK		0
+#  if (RHEL_MINOR > 2)
+#   define	NEED_DROP_NLINK		0
+#   define	HAVE_LE32_64_ADD_CPU	1
+#  endif
+# endif
+#endif
+
+/*
  * defaults dependent to kernel versions
  */
 #ifdef LINUX_VERSION_CODE
