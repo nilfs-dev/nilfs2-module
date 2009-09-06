@@ -109,15 +109,12 @@ static int nilfs_mdt_create_block(struct inode *inode, unsigned long block,
 		goto failed_unlock;
 
 	err = -EEXIST;
-	if (buffer_uptodate(bh) || buffer_mapped(bh))
+	if (buffer_uptodate(bh))
 		goto failed_bh;
-#if 0
-	/* The uptodate flag is not protected by the page lock, but
-	   the mapped flag is.  Thus, we don't have to wait the buffer. */
+
 	wait_on_buffer(bh);
 	if (buffer_uptodate(bh))
 		goto failed_bh;
-#endif
 
 	bh->b_bdev = nilfs->ns_bdev;
 	err = nilfs_mdt_insert_new_block(inode, block, bh, init_block);
@@ -169,20 +166,19 @@ nilfs_mdt_submit_block(struct inode *inode, unsigned long blkoff,
 		unlock_buffer(bh);
 		goto out;
 	}
-	if (!buffer_mapped(bh)) { /* unused buffer */
-		ret = nilfs_bmap_lookup(NILFS_I(inode)->i_bmap, blkoff,
-					&blknum);
-		mdt_debug(3, "lookup: blkoff=%lu -> blocknr=%lu "
-			  "(ret=%d, ino=%lu)\n",
-			  blkoff, blknum, ret, inode->i_ino);
-		if (unlikely(ret)) {
-			unlock_buffer(bh);
-			goto failed_bh;
-		}
-		bh->b_bdev = NILFS_MDT(inode)->mi_nilfs->ns_bdev;
-		bh->b_blocknr = blknum;
-		set_buffer_mapped(bh);
+
+	ret = nilfs_bmap_lookup(NILFS_I(inode)->i_bmap, blkoff,
+				&blknum);
+	mdt_debug(3, "lookup: blkoff=%lu -> blocknr=%lu "
+		  "(ret=%d, ino=%lu)\n",
+		  blkoff, blknum, ret, inode->i_ino);
+	if (unlikely(ret)) {
+		unlock_buffer(bh);
+		goto failed_bh;
 	}
+	bh->b_bdev = NILFS_MDT(inode)->mi_nilfs->ns_bdev;
+	bh->b_blocknr = blknum;
+	set_buffer_mapped(bh);
 
 	bh->b_end_io = end_buffer_read_sync;
 	get_bh(bh);
