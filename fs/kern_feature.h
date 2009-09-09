@@ -49,6 +49,10 @@
 #   define	NEED_DROP_NLINK		0
 #   define	HAVE_LE32_64_ADD_CPU	1
 #  endif
+#  if (RHEL_MINOR > 3)
+#   define	HAVE_D_OBTAIN_ALIAS	1
+#   define	HAVE_BLOCK_PAGE_MKWRITE	1
+#  endif
 # endif
 #endif
 
