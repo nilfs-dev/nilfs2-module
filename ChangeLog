@@ -5,7 +5,7 @@ nilfs-2.0.16  Sat Sep 12, 2009 JST
 	  nodes
 	* fix missing a read lock for segment writer in
 	  nilfs_attach_checkpoint()
-	* fix missing unlock in error patch of nilfs_mdt_write_page
+	* fix missing unlock in error path of nilfs_mdt_write_page
 	* support is_partially_uptodate aops
 	* support contiguous lookup of blocks
 	* include RHEL/CentOS configuration in kern feature
