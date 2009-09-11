@@ -1,3 +1,25 @@
+nilfs-2.0.16  Sat Sep 12, 2009 JST
+
+	* fix preempt count underflow in nilfs_btnode_prepare_change_key
+	* fix oops due to inconsistent state in page with discreate b-tree
+	  nodes
+	* fix missing a read lock for segment writer in
+	  nilfs_attach_checkpoint()
+	* fix missing unlock in error patch of nilfs_mdt_write_page
+	* support is_partially_uptodate aops
+	* support contiguous lookup of blocks
+	* include RHEL/CentOS configuration in kern feature
+	* add sync_page method to page caches of meta data
+	* use device's backing_dev_info for btree node caches
+	* return EBUSY against delete request on snapshot
+	* allow future expansion of metadata read out via get info ioctl
+	* cleanup bmap/btree code
+	* eliminate removal list of segments and header file for segment
+	  list operations
+	* correct exclusion control in nilfs_remount() function
+	* correct misuse of sget() function
+	* get rid of bd_mount_sem use from nilfs
+
 nilfs-2.0.15  Sat Jul 11, 2009 JST
 
 	* enable sync_page method; this adds a missing sync_page method
