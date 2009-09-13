@@ -98,6 +98,7 @@ int nilfs_btnode_submit_block(struct address_space *btnc, __u64 blocknr,
 			BH_DEBUG(bh, "invalid new bh");
 			BUG();
 		}
+		memset(bh->b_data, 0, 1 << inode->i_blkbits);
 		bh->b_bdev = NILFS_I_NILFS(inode)->ns_bdev;
 		bh->b_blocknr = blocknr;
 		set_buffer_mapped(bh);
