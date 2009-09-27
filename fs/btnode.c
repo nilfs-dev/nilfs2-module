@@ -36,6 +36,7 @@
 
 void nilfs_btnode_cache_init_once(struct address_space *btnc)
 {
+	memset(btnc, 0, sizeof(*btnc));
 	INIT_RADIX_TREE(&btnc->page_tree, GFP_ATOMIC);
 #if HAVE_LOCKLESS_PAGECACHE
 	spin_lock_init(&btnc->tree_lock);
