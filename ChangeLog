@@ -1,3 +1,14 @@
+nilfs-2.0.17  Sun Oct 04, 2009 JST
+
+	* fix missing zero-fill initialization of btree node cache
+	* fix missing initialization of i_dir_start_lookup member
+	* An unassigned variable is assigned to a never used structure
+	  member.
+	* add more check routines in mount process
+	* use semaphore to protect pointer to a writable FS-instance
+	* fix format string compile warning (ino_t)
+	* fix ignored error code in __nilfs_read_inode()
+
 nilfs-2.0.16  Sat Sep 12, 2009 JST
 
 	* fix preempt count underflow in nilfs_btnode_prepare_change_key
