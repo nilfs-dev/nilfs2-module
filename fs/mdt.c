@@ -197,7 +197,7 @@ nilfs_mdt_submit_block(struct inode *inode, unsigned long blkoff,
 }
 
 static int nilfs_mdt_read_block(struct inode *inode, unsigned long block,
-				struct buffer_head **out_bh)
+				int readahead, struct buffer_head **out_bh)
 {
 	struct buffer_head *first_bh, *bh;
 	unsigned long blkoff;
@@ -219,23 +219,25 @@ static int nilfs_mdt_read_block(struct inode *inode, unsigned long block,
 		  (unsigned long long)first_bh->b_blocknr, inode->i_ino,
 		  block);
 
-	blkoff = block + 1;
-	for (i = 0; i < nr_ra_blocks; i++, blkoff++) {
-		err = nilfs_mdt_submit_block(inode, blkoff, READA, &bh);
-		if (likely(!err || err == -EEXIST)) {
-			if (!err)
-				mdt_debug(3, "requested readahead "
-					  "(ino=%lu, blkoff=%lu)\n",
-					  inode->i_ino, blkoff);
-			brelse(bh);
-		} else if (err != -EBUSY) {
-			mdt_debug(3, "abort readahead due to an error "
-				  "(err=%d, ino=%lu, blkfoff=%lu)\n",
-				  err, inode->i_ino, blkoff);
-			break; /* abort readahead if bmap lookup failed */
+	if (readahead) {
+		blkoff = block + 1;
+		for (i = 0; i < nr_ra_blocks; i++, blkoff++) {
+			err = nilfs_mdt_submit_block(inode, blkoff, READA, &bh);
+			if (likely(!err || err == -EEXIST)) {
+				if (!err)
+					mdt_debug(3, "requested readahead "
+						  "(ino=%lu, blkoff=%lu)\n",
+						  inode->i_ino, blkoff);
+				brelse(bh);
+			} else if (err != -EBUSY) {
+				mdt_debug(3, "abort readahead due to an error "
+					  "(err=%d, ino=%lu, blkfoff=%lu)\n",
+					  err, inode->i_ino, blkoff);
+				break; /* abort readahead if bmap lookup failed */
+			}
+			if (!buffer_locked(first_bh))
+				goto out_no_wait;
 		}
-		if (!buffer_locked(first_bh))
-			goto out_no_wait;
 	}
 
 	wait_on_buffer(first_bh);
@@ -291,7 +293,7 @@ int nilfs_mdt_get_block(struct inode *inode, unsigned long blkoff, int create,
 
 	/* Should be rewritten with merging nilfs_mdt_read_block() */
  retry:
-	ret = nilfs_mdt_read_block(inode, blkoff, out_bh);
+	ret = nilfs_mdt_read_block(inode, blkoff, !create, out_bh);
 	if (!create || ret != -ENOENT)
 		return ret;
 
@@ -403,7 +405,7 @@ int nilfs_mdt_mark_block_dirty(struct inode *inode, unsigned long block)
 	struct buffer_head *bh;
 	int err;
 
-	err = nilfs_mdt_read_block(inode, block, &bh);
+	err = nilfs_mdt_read_block(inode, block, 0, &bh);
 	if (unlikely(err))
 		return err;
 	nilfs_mark_buffer_dirty(bh);
