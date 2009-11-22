@@ -1,3 +1,12 @@
+nilfs-2.0.18  Sun Nov 22, 2009 JST
+
+	* fix kernel oops in error case of nilfs_ioctl_move_blocks
+	* fix lock order reversal in chcp operation
+	* fix dirty page accounting leak causing hang at write
+	* add zero-fill for new btree node buffers
+	* fix irregular checkpoint creation due to data flush
+	* Cleanups; remove unused functions and inconsistent comment
+
 nilfs-2.0.17  Sun Oct 04, 2009 JST
 
 	* fix missing zero-fill initialization of btree node cache

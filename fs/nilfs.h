@@ -38,7 +38,7 @@
 /*
  * NILFS filesystem version
  */
-#define NILFS_VERSION		"2.0.17"
+#define NILFS_VERSION		"2.0.18"
 
 /*
  * nilfs inode data in memory
