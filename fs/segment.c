@@ -2147,8 +2147,7 @@ static void nilfs_segctor_complete_write(struct nilfs_sc_info *sci)
 {
 	struct nilfs_segment_buffer *segbuf;
 	struct page *bd_page = NULL, *fs_page = NULL;
-	struct nilfs_sb_info *sbi = sci->sc_sbi;
-	struct the_nilfs *nilfs = sbi->s_nilfs;
+	struct the_nilfs *nilfs = sci->sc_sbi->s_nilfs;
 	int update_sr = (sci->sc_super_root != NULL);
 
 	list_for_each_entry(segbuf, &sci->sc_segbufs, sb_list) {
@@ -2235,7 +2234,7 @@ static void nilfs_segctor_complete_write(struct nilfs_sc_info *sci)
 	if (update_sr) {
 		nilfs_set_last_segment(nilfs, segbuf->sb_pseg_start,
 				       segbuf->sb_sum.seg_seq, nilfs->ns_cno++);
-		sbi->s_super->s_dirt = 1;
+		set_nilfs_sb_dirty(nilfs);
 
 		clear_bit(NILFS_SC_HAVE_DELTA, &sci->sc_flags);
 		clear_bit(NILFS_SC_DIRTY, &sci->sc_flags);
@@ -2865,6 +2864,7 @@ static int nilfs_segctor_flush_mode(struct nilfs_sc_info *sci)
 static int nilfs_segctor_thread(void *arg)
 {
 	struct nilfs_sc_info *sci = (struct nilfs_sc_info *)arg;
+	struct the_nilfs *nilfs = sci->sc_sbi->s_nilfs;
 	struct timer_list timer;
 	int timeout = 0;
 
@@ -2915,7 +2915,6 @@ static int nilfs_segctor_thread(void *arg)
 	} else {
 		DEFINE_WAIT(wait);
 		int should_sleep = 1;
-		struct the_nilfs *nilfs;
 
 		prepare_to_wait(&sci->sc_wait_daemon, &wait,
 				TASK_INTERRUPTIBLE);
@@ -2936,8 +2935,8 @@ static int nilfs_segctor_thread(void *arg)
 		finish_wait(&sci->sc_wait_daemon, &wait);
 		timeout = ((sci->sc_state & NILFS_SEGCTOR_COMMIT) &&
 			   time_after_eq(jiffies, sci->sc_timer->expires));
-		nilfs = sci->sc_sbi->s_nilfs;
-		if (sci->sc_super->s_dirt && nilfs_sb_need_update(nilfs))
+
+		if (nilfs_sb_dirty(nilfs) && nilfs_sb_need_update(nilfs))
 			set_nilfs_discontinued(nilfs);
 	}
 	seg_debug(2, "woke %s\n", timeout ? "(timeout)" : "");
