@@ -484,7 +484,7 @@ static int nilfs_btree_do_lookup(const struct nilfs_btree *btree,
 			return ret;
 		node = nilfs_btree_get_nonroot_node(path, level);
 		if (nilfs_btree_bad_node(node, level))
-			return -EIO;
+			return -EINVAL;
 		if (!found)
 			found = nilfs_btree_node_lookup(node, key, &index);
 		else
@@ -530,7 +530,7 @@ static int nilfs_btree_do_lookup_last(const struct nilfs_btree *btree,
 			return ret;
 		node = nilfs_btree_get_nonroot_node(path, level);
 		if (nilfs_btree_bad_node(node, level))
-			return -EIO;
+			return -EINVAL;
 		index = nilfs_btree_node_get_nchildren(node) - 1;
 		ptr = nilfs_btree_node_get_ptr(btree, node, index);
 		path[level].bp_index = index;
