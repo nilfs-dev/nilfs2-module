@@ -122,6 +122,14 @@
 	(LINUX_VERSION_CODE > KERNEL_VERSION(2, 6, 26))
 #endif
 /*
+ * linux-2.6.26 and the later kernels have mnt_want_write() and
+ * mnt_drop_write().
+ */
+#ifndef HAVE_MNT_WANT_DROP_WRITE
+# define HAVE_MNT_WANT_DROP_WRITE \
+	(LINUX_VERSION_CODE > KERNEL_VERSION(2, 6, 25))
+#endif
+/*
  * linux-2.6.25 and the later kernels have le32_add_cpu() and le64_add_cpu().
  */
 #ifndef HAVE_LE32_64_ADD_CPU
@@ -337,6 +345,7 @@
 #include <linux/fs.h>
 #include <linux/pagevec.h>
 #include <linux/buffer_head.h>
+#include <linux/mount.h>
 
 /*
  * definitions dependent to above macros
@@ -431,6 +440,12 @@ static inline void *memdup_user(const void __user *src, size_t len)
 
 	return p;
 }
+#endif
+
+#if !HAVE_MNT_WANT_DROP_WRITE
+# define mnt_want_write(mnt) \
+	((mnt)->mnt_sb->s_flags & MS_RDONLY ? -EROFS : 0)
+# define mnt_drop_write(mnt)	do {} while(0)
 #endif
 
 #endif /* NILFS_KERN_FEATURE_H */
