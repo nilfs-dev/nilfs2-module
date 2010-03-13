@@ -1,3 +1,20 @@
+nilfs-2.0.19  Sat Mar 13, 2010 JST
+
+	* update mailing list address
+	* fix potential hang in nilfs_error on errors=remount-ro
+	* add missing reader's lock in nilfs_ioctl_sync
+	* fix potential leak of dirty data on umount
+	* show missing mount options in /proc/mounts.
+	* change mount option to disable write barriers; "nobarrier" is
+	  used instead of "barrier=off".
+	* add "norecovery" mount option
+	* use mnt_want_write in ioctls where write access is needed
+	* apply readahead for recovery on mount
+	* sync superblock by nilfs thread instead of periodic write_super
+	  callback
+	* fix C99 violation about storage-class specifier
+	* trivial coding style fix
+
 nilfs-2.0.18  Sun Nov 22, 2009 JST
 
 	* fix kernel oops in error case of nilfs_ioctl_move_blocks
