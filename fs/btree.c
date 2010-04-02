@@ -1966,7 +1966,7 @@ static int nilfs_btree_propagate_v(struct nilfs_btree *btree,
 				   int level,
 				   struct buffer_head *bh)
 {
-	int maxlevel, ret;
+	int maxlevel = 0, ret;
 	struct nilfs_btree_node *parent;
 	__u64 ptr;
 
