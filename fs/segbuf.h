@@ -38,6 +38,7 @@
  * @sumbytes: Byte count of segment summary
  * @nfileblk: Total number of file blocks
  * @seg_seq: Segment sequence number
+ * @cno: Checkpoint number
  * @ctime: Creation time
  * @next: Block number of the next full segment
  */
@@ -49,6 +50,7 @@ struct nilfs_segsum_info {
 	unsigned long		sumbytes;
 	unsigned long		nfileblk;
 	u64			seg_seq;
+	__u64			cno;
 	time_t			ctime;
 	sector_t		next;
 };
@@ -125,7 +127,7 @@ struct nilfs_segment_buffer *nilfs_segbuf_new(struct super_block *);
 void nilfs_segbuf_free(struct nilfs_segment_buffer *);
 void nilfs_segbuf_map(struct nilfs_segment_buffer *, __u64, unsigned long,
 		      struct the_nilfs *);
-int nilfs_segbuf_reset(struct nilfs_segment_buffer *, unsigned, time_t);
+int nilfs_segbuf_reset(struct nilfs_segment_buffer *, unsigned, time_t, __u64);
 int nilfs_segbuf_extend_segsum(struct nilfs_segment_buffer *);
 int nilfs_segbuf_extend_payload(struct nilfs_segment_buffer *,
 				struct buffer_head **);
