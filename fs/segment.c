@@ -645,7 +645,7 @@ nilfs_print_file_node_binfo(char *buf, int size, union nilfs_binfo *binfo)
 }
 #endif
 
-struct nilfs_sc_operations nilfs_sc_file_ops = {
+static struct nilfs_sc_operations nilfs_sc_file_ops = {
 	.collect_data = nilfs_collect_file_data,
 	.collect_node = nilfs_collect_file_node,
 	.collect_bmap = nilfs_collect_file_bmap,
@@ -721,7 +721,7 @@ static int nilfs_print_dat_node_binfo(char *buf, int size,
 }
 #endif
 
-struct nilfs_sc_operations nilfs_sc_dat_ops = {
+static struct nilfs_sc_operations nilfs_sc_dat_ops = {
 	.collect_data = nilfs_collect_dat_data,
 	.collect_node = nilfs_collect_file_node,
 	.collect_bmap = nilfs_collect_dat_bmap,
@@ -750,7 +750,7 @@ nilfs_print_dsync_node_binfo(char *buf, int size, union nilfs_binfo *binfo)
 }
 #endif
 
-struct nilfs_sc_operations nilfs_sc_dsync_ops = {
+static struct nilfs_sc_operations nilfs_sc_dsync_ops = {
 	.collect_data = nilfs_collect_file_data,
 	.collect_node = NULL,
 	.collect_bmap = NULL,
