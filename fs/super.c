@@ -1093,10 +1093,14 @@ nilfs_get_sb(struct file_system_type *fs_type, int flags,
 {
 	struct nilfs_super_data sd;
 	struct super_block *s;
+	fmode_t mode = FMODE_READ;
 	struct the_nilfs *nilfs;
 	int err, need_to_close = 1;
 
-	sd.bdev = open_bdev_exclusive(dev_name, flags, fs_type);
+	if (!(flags & MS_RDONLY))
+		mode |= FMODE_WRITE;
+
+	sd.bdev = open_bdev_exclusive(dev_name, mode, fs_type);
 	if (IS_ERR(sd.bdev))
 		return PTR_ERR(sd.bdev);
 
@@ -1187,14 +1191,14 @@ nilfs_get_sb(struct file_system_type *fs_type, int flags,
 	mutex_unlock(&nilfs->ns_mount_mutex);
 	put_nilfs(nilfs);
 	if (need_to_close)
-		close_bdev_exclusive(sd.bdev, flags);
+		close_bdev_exclusive(sd.bdev, mode);
 	return simple_set_mnt(mnt, s);
 
  failed_unlock:
 	mutex_unlock(&nilfs->ns_mount_mutex);
 	put_nilfs(nilfs);
  failed:
-	close_bdev_exclusive(sd.bdev, flags);
+	close_bdev_exclusive(sd.bdev, mode);
 
 	return err;
 
