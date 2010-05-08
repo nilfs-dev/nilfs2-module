@@ -100,6 +100,10 @@
 # define NEED_OPEN_CLOSE_BDEV_EXCLUSIVE \
 	(LINUX_VERSION_CODE < KERNEL_VERSION(2, 6, 28))
 #endif
+
+#ifndef HAVE_SB_S_MODE
+# define HAVE_SB_S_MODE !NEED_OPEN_CLOSE_BDEV_EXCLUSIVE
+#endif
 /*
  * Kernels later than 2.6.26 have aops->is_partially_uptodate method
  */
