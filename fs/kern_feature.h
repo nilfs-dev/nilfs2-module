@@ -92,12 +92,12 @@
 	(LINUX_VERSION_CODE > KERNEL_VERSION(2, 6, 27))
 #endif
 /*
- * Kernels before linux-2.6.28 require open_bdev_excl() and
- * close_bdev_excl() which were replaced with open_bdev_exclusive() and
- * close_bdev_exclusive(), respectively.
+ * Kernels prior to 2.6.28 use open_bdev_excl()/close_bdev_excl()
+ * instead of open_bdev_exclusive()/close_bdev_exclusive(), and need
+ * stab code to convert a file mode argument to mount flags.
  */
-#ifndef NEED_OPEN_CLOSE_BDEV_EXCL
-# define NEED_OPEN_CLOSE_BDEV_EXCL \
+#ifndef NEED_OPEN_CLOSE_BDEV_EXCLUSIVE
+# define NEED_OPEN_CLOSE_BDEV_EXCLUSIVE \
 	(LINUX_VERSION_CODE < KERNEL_VERSION(2, 6, 28))
 #endif
 /*
@@ -408,9 +408,17 @@ static inline void le64_add_cpu(__le64 *var, u64 val)
 # define DIV_ROUND_UP(n, d) (((n) + (d) - 1) / (d))
 #endif
 
-#if NEED_OPEN_CLOSE_BDEV_EXCL
-#define open_bdev_exclusive(path, mode, holder) \
-	open_bdev_excl(path, mode, holder)
+#if NEED_OPEN_CLOSE_BDEV_EXCLUSIVE
+typedef mode_t fmode_t;
+
+static inline struct block_device *
+open_bdev_exclusive(const char *path, fmode_t mode, void *holder)
+{
+	int flags = (mode & FMODE_WRITE) ? 0 : MS_RDONLY;
+
+	return open_bdev_excl(path, flags, holder);
+}
+
 #define close_bdev_exclusive(path, mode) close_bdev_excl(path)
 #endif
 
