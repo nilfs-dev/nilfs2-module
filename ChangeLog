@@ -1,3 +1,14 @@
+nilfs-2.0.20  Sun Jun 27, 2010 JST
+
+	* avoid readahead on metadata file for create mode
+	* do not return io error for bio allocation failure
+	* always lookup disk block address before reading metadata block
+	* return EINVAL when finding bad btree node
+	* add missing initialization of s_mode
+	* fix open_bdev_exclusive stab code
+	* enlarge s_volume_name member in nilfs_super_block
+	* fix typos, update comments, coding style fixes, and trivial fixes
+
 nilfs-2.0.19  Sat Mar 13, 2010 JST
 
 	* update mailing list address
