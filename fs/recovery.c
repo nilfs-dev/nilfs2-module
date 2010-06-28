@@ -874,6 +874,8 @@ int nilfs_recover_logical_segments(struct the_nilfs *nilfs,
  * %-EINVAL - No valid segment found
  *
  * %-EIO - I/O error
+ *
+ * %-ENOMEM - Insufficient memory available.
  */
 int nilfs_search_super_root(struct the_nilfs *nilfs, struct nilfs_sb_info *sbi,
 			    struct nilfs_recovery_info *ri)
