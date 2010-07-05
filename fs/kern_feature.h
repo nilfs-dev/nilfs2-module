@@ -52,6 +52,7 @@
 #  if (RHEL_MINOR > 3)
 #   define	HAVE_D_OBTAIN_ALIAS	1
 #   define	HAVE_BLOCK_PAGE_MKWRITE	1
+#   define	HAVE_FMODE_T		1
 #  endif
 # endif
 #endif
@@ -103,6 +104,9 @@
 
 #ifndef HAVE_SB_S_MODE
 # define HAVE_SB_S_MODE !NEED_OPEN_CLOSE_BDEV_EXCLUSIVE
+#endif
+#ifndef HAVE_FMODE_T
+# define HAVE_FMODE_T !NEED_OPEN_CLOSE_BDEV_EXCLUSIVE
 #endif
 /*
  * Kernels later than 2.6.26 have aops->is_partially_uptodate method
@@ -412,9 +416,11 @@ static inline void le64_add_cpu(__le64 *var, u64 val)
 # define DIV_ROUND_UP(n, d) (((n) + (d) - 1) / (d))
 #endif
 
-#if NEED_OPEN_CLOSE_BDEV_EXCLUSIVE
+#if !HAVE_FMODE_T
 typedef mode_t fmode_t;
+#endif
 
+#if NEED_OPEN_CLOSE_BDEV_EXCLUSIVE
 static inline struct block_device *
 open_bdev_exclusive(const char *path, fmode_t mode, void *holder)
 {
