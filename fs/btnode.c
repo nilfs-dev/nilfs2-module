@@ -82,6 +82,7 @@ int nilfs_btnode_submit_block(struct address_space *btnc, __u64 blocknr,
 {
 	struct buffer_head *bh;
 	struct inode *inode = NILFS_BTNC_I(btnc);
+	struct page *page;
 	int err;
 
 	btnode_debug(3, "called: blocknr=%llu pblocknr=%llu new=%d ino=%lu\n",
@@ -92,6 +93,8 @@ int nilfs_btnode_submit_block(struct address_space *btnc, __u64 blocknr,
 		return -ENOMEM;
 
 	err = -EEXIST; /* internal code */
+	page = bh->b_page;
+
 	if (newblk) {
 		if (unlikely(buffer_mapped(bh) || buffer_uptodate(bh) ||
 			     buffer_dirty(bh))) {
@@ -142,8 +145,8 @@ found:
 	*pbh = bh;
 
 out_locked:
-	unlock_page(bh->b_page);
-	page_cache_release(bh->b_page);
+	unlock_page(page);
+	page_cache_release(page);
 	btnode_debug(3, "done (err=%d)\n", err);
 	return err;
 }
