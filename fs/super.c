@@ -401,9 +401,10 @@ int nilfs_attach_checkpoint(struct nilfs_sb_info *sbi, __u64 cno)
 	list_add(&sbi->s_list, &nilfs->ns_supers);
 	up_write(&nilfs->ns_super_sem);
 
+	err = -ENOMEM;
 	sbi->s_ifile = nilfs_mdt_new(nilfs, sbi->s_super, NILFS_IFILE_INO);
 	if (!sbi->s_ifile)
-		return -ENOMEM;
+		goto delist;
 
 	err = nilfs_palloc_init_blockgroup(sbi->s_ifile, nilfs->ns_inode_size);
 	if (unlikely(err))
@@ -443,6 +444,7 @@ int nilfs_attach_checkpoint(struct nilfs_sb_info *sbi, __u64 cno)
 	nilfs_mdt_destroy(sbi->s_ifile);
 	sbi->s_ifile = NULL;
 
+ delist:
 	down_write(&nilfs->ns_super_sem);
 	list_del_init(&sbi->s_list);
 	up_write(&nilfs->ns_super_sem);
