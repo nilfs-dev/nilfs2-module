@@ -1,3 +1,12 @@
+nilfs-2.0.21  Mon Jan 10, 2011 JST
+
+	* fix compilation error on centos 5
+	* change default of 'errors' mount option to 'remount-ro' mode
+	* add sanity check in nilfs_btree_add_dirty_buffer
+	* fix list corruption after ifile creation failure
+	* fix buffer head leak in nilfs_btnode_submit_block
+	* fix leak of shadow dat inode in error path of load_nilfs
+
 nilfs-2.0.20  Sun Jun 27, 2010 JST
 
 	* avoid readahead on metadata file for create mode
