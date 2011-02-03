@@ -27,6 +27,7 @@
 #include <asm/uaccess.h>	/* copy_from_user(), copy_to_user() */
 #include <linux/vmalloc.h>
 #include <linux/mount.h>	/* mnt_want_write(), mnt_drop_write() */
+#include <linux/buffer_head.h>
 #include "nilfs2_fs.h"
 #include "nilfs.h"
 #include "segment.h"
