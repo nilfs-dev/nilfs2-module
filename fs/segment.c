@@ -1045,15 +1045,18 @@ static void nilfs_segctor_fill_in_file_bmap(struct nilfs_sc_info *sci,
 /*
  * CRC calculation routines
  */
-static void nilfs_fill_in_super_root_crc(struct buffer_head *bh_sr, u32 seed)
+static void nilfs_fill_in_super_root_crc(struct buffer_head *bh_sr, u32 seed,
+					 unsigned inode_size)
 {
 	struct nilfs_super_root *raw_sr =
 		(struct nilfs_super_root *)bh_sr->b_data;
+	unsigned srsize;
 	u32 crc;
 
+	srsize = NILFS_SR_BYTES(inode_size);
 	crc = crc32_le(seed,
 		       (unsigned char *)raw_sr + sizeof(raw_sr->sr_sum),
-		       NILFS_SR_BYTES - sizeof(raw_sr->sr_sum));
+		       srsize - sizeof(raw_sr->sr_sum));
 	raw_sr->sr_sum = cpu_to_le32(crc);
 }
 
@@ -1063,8 +1066,11 @@ static void nilfs_segctor_fill_in_checksums(struct nilfs_sc_info *sci,
 	struct nilfs_segment_buffer *segbuf;
 
 	seg_debug(3, "called\n");
-	if (sci->sc_super_root)
-		nilfs_fill_in_super_root_crc(sci->sc_super_root, seed);
+	if (sci->sc_super_root) {
+		unsigned isz = sci->sc_sbi->s_nilfs->ns_inode_size;
+
+		nilfs_fill_in_super_root_crc(sci->sc_super_root, seed, isz);
+	}
 
 	list_for_each_entry(segbuf, &sci->sc_segbufs, sb_list) {
 		nilfs_segbuf_fill_in_segsum_crc(segbuf, seed);
@@ -1081,7 +1087,7 @@ static void nilfs_segctor_fill_in_super_root(struct nilfs_sc_info *sci,
 		(struct nilfs_super_root *)bh_sr->b_data;
 	unsigned isz = nilfs->ns_inode_size;
 
-	raw_sr->sr_bytes = cpu_to_le16(NILFS_SR_BYTES);
+	raw_sr->sr_bytes = cpu_to_le16(NILFS_SR_BYTES(isz));
 	raw_sr->sr_nongc_ctime
 		= cpu_to_le64(nilfs_doing_gc() ?
 			      nilfs->ns_nongc_ctime : sci->sc_seg_ctime);
