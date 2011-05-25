@@ -1349,17 +1349,16 @@ static int nilfs_btree_prepare_delete(struct nilfs_btree *btree,
 	struct buffer_head *bh;
 	struct nilfs_btree_node *node, *parent, *sib;
 	__u64 sibptr;
-	int pindex, level, ret;
+	int pindex, dindex, level, ret;
 
 	ret = 0;
 	stats->bs_nblocks = 0;
-	for (level = NILFS_BTREE_LEVEL_NODE_MIN;
+	for (level = NILFS_BTREE_LEVEL_NODE_MIN, dindex = path[level].bp_index;
 	     level < nilfs_btree_height(btree) - 1;
 	     level++) {
 		node = nilfs_btree_get_nonroot_node(path, level);
 		path[level].bp_oldreq.bpr_ptr =
-			nilfs_btree_node_get_ptr(btree, node,
-						 path[level].bp_index);
+			nilfs_btree_node_get_ptr(btree, node, dindex);
 		ret = nilfs_bmap_prepare_end_ptr(&btree->bt_bmap,
 						 &path[level].bp_oldreq);
 		if (ret < 0)
@@ -1374,6 +1373,7 @@ static int nilfs_btree_prepare_delete(struct nilfs_btree *btree,
 
 		parent = nilfs_btree_get_node(btree, path, level + 1);
 		pindex = path[level + 1].bp_index;
+		dindex = pindex;
 
 		if (pindex > 0) {
 			/* left sibling */
@@ -1414,6 +1414,14 @@ static int nilfs_btree_prepare_delete(struct nilfs_btree *btree,
 				path[level].bp_sib_bh = bh;
 				path[level].bp_op = nilfs_btree_concat_right;
 				stats->bs_nblocks++;
+				/*
+				 * When merging right sibling node
+				 * into the current node, pointer to
+				 * the right sibling node must be
+				 * terminated instead.  The adjustment
+				 * below is required for that.
+				 */
+				dindex = pindex + 1;
 				/* continue; */
 			}
 		} else {
@@ -1436,7 +1444,7 @@ static int nilfs_btree_prepare_delete(struct nilfs_btree *btree,
 
 	node = nilfs_btree_get_root(btree);
 	path[level].bp_oldreq.bpr_ptr =
-		nilfs_btree_node_get_ptr(btree, node, path[level].bp_index);
+		nilfs_btree_node_get_ptr(btree, node, dindex);
 
 	ret = nilfs_bmap_prepare_end_ptr(&btree->bt_bmap,
 					 &path[level].bp_oldreq);
