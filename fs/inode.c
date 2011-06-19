@@ -420,17 +420,6 @@ struct inode *nilfs_new_inode(struct inode *dir, int mode)
 	return ERR_PTR(err);
 }
 
-void nilfs_free_inode(struct inode *inode)
-{
-	struct super_block *sb = inode->i_sb;
-	struct nilfs_sb_info *sbi = NILFS_SB(sb);
-
-	clear_inode(inode);
-	/* XXX: check error code? Is there any thing I can do? */
-	(void) nilfs_ifile_delete_inode(sbi->s_ifile, inode->i_ino);
-	atomic_dec(&sbi->s_inodes_count);
-}
-
 void nilfs_set_inode_flags(struct inode *inode)
 {
 	unsigned int flags = NILFS_I(inode)->i_flags;
@@ -728,8 +717,12 @@ void nilfs_delete_inode(struct inode *inode)
 
 	nilfs_truncate_bmap(ii, 0);
 	mark_inode_dirty(inode);
-	nilfs_free_inode(inode);
-	/* nilfs_free_inode() marks inode buffer dirty */
+
+	nilfs_ifile_delete_inode(NILFS_SB(sb)->s_ifile, inode->i_ino);
+	atomic_dec(&NILFS_SB(sb)->s_inodes_count);
+
+	clear_inode(inode);
+
 	if (IS_SYNC(inode))
 		nilfs_set_transaction_flag(NILFS_TI_SYNC);
 	nilfs_transaction_commit(sb);
