@@ -1,3 +1,31 @@
+nilfs-2.0.22  Sun Jun 19, 2011 JST
+
+	* fix problem in setting checkpoint interval
+	* fix missing block address termination in btree node shrinking
+	* fix incorrect block address termination in node concatenation
+	* avoid rec_len overflow with 64KB block size
+	* insert checkpoint number in segment summary header to ensure
+	  offline rollback operation.
+	* use checkpoint number instead of timestamp to select super block
+	* sync super blocks in turns instead of updating both super blocks
+	  at a time.
+	* do not update mount time on rw->ro remount
+	* support automatic rollback from the previous checkpoint.
+	* do not update log cursor for small change so that super blocks
+	  are not excessively written to disk.
+	* clarify byte offset in super block format
+	* add feature set fields to super block and reject incompatible
+	  filesystem
+	* append blocksize info to warnings during loading super blocks
+	* zero fill unused portion of super root block
+	* correct super root size calculation
+	* move out mark_inode_dirty calls from bmap routines to mitigate
+	  overhead for truncate and delete operations.
+	* add free entries count only if clear bit operation succeeded
+	* decrement inodes count only if raw inode was successfully
+	  deleted
+	* coding style fixes and cleanups
+
 nilfs-2.0.21  Mon Jan 10, 2011 JST
 
 	* fix compilation error on centos 5
