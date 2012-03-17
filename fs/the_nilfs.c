@@ -524,6 +524,12 @@ static int nilfs_store_disk_layout(struct the_nilfs *nilfs,
 	nilfs->ns_nsegments = le64_to_cpu(sbp->s_nsegments);
 	nilfs->ns_r_segments_percentage =
 		le32_to_cpu(sbp->s_r_segments_percentage);
+	if (nilfs->ns_r_segments_percentage < 1 ||
+	    nilfs->ns_r_segments_percentage > 99) {
+		printk(KERN_ERR "NILFS: invalid reserved segments percentage.\n");
+		return -EINVAL;
+	}
+
 	nilfs->ns_nrsvsegs =
 		max_t(unsigned long, NILFS_MIN_NRSVSEGS,
 		      DIV_ROUND_UP(nilfs->ns_nsegments *
