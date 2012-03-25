@@ -636,7 +636,7 @@ int nilfs_releasepage(struct page *page, gfp_t gfp_mask)
 		if (inode->i_sb && !(inode->i_sb->s_flags & MS_ACTIVE))
 			verbose = 1;
 	}
-	if (unlikely(!PagePrivate(page)))
+	if (unlikely(!page_has_buffers(page)))
 		NILFS_PAGE_BUG(page, "no buffers");
 
 	if (buffer_nilfs_allocated(page_buffers(page)))
@@ -670,7 +670,7 @@ void nilfs_invalidatepage(struct page *page, unsigned long offset)
 {
 	struct buffer_head *bh = NULL;
 
-	if (PagePrivate(page)) {
+	if (page_has_buffers(page)) {
 		bh = page_buffers(page);
 		BUG_ON(buffer_nilfs_allocated(bh));
 	}
