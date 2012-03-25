@@ -439,10 +439,12 @@ void nilfs_page_debug(const char *fname, int line, struct page *page,
 	len += snprintf(b + len, MSIZ - len, " %s(%d) flags=", fname, line);
 	len += snprint_page_flags(b + len, MSIZ - len, page);
 	if (mapping) {
-		if (buffer_nilfs_node(page_buffers(page)))
+		if (page_has_buffers(page) &&
+		    buffer_nilfs_node(page_buffers(page)))
 			inode = NILFS_BTNC_I(mapping);
-		else
-			inode = NILFS_AS_I(mapping);
+		else 
+			inode = mapping->host;
+
 		if (inode != NULL)
 			len += snprintf(b + len, MSIZ - len, " ino=%lu",
 					inode->i_ino);
