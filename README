@@ -61,7 +61,7 @@ Make sure you have installed all of the followings:
   Though it is not guaranteed to work on distro kernels,
   some patches are available on the following FAQ page:
 
-  http://www.nilfs.org/en/faq.html
+  http://nilfs.sourceforge.net/en/faq.html
 
 - GCC
 - GNU Make
@@ -84,7 +84,7 @@ Installation
    Or get source tar ball files for vanilla kernels.
 
    The unofficial binary packages and the source tar balls are 
-   available on http://www.nilfs.org/en/download.html.
+   available on http://nilfs.sourceforge.net/en/download.html.
 
 2. Compile and install NILFS2 (skip this if using the binary packages)
 
